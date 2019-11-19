@@ -1,0 +1,58 @@
+2013-12-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.2
+
+2013-11-09  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[icecast int] Avoid ‘fseek’; use ‘seek’ directly.
+
+	* icecast-server.scm (fseek): Delete.
+	(icecast-id3-tag): Use ‘seek’ directly.
+
+2013-11-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[int] Use object property and record for Mandelbrot server state.
+
+	* mandel-server.scm: Import SRFI 9.
+	(state-record): New record type.
+	(server-state): New object property.
+	(ss, ss!): New macros, via ‘define-macro’.
+	(mandel-init): Init the ‘server-state’ for ‘server’;
+	change all ‘svz:server:state-set!’ calls to ‘ss!’ calls.
+	(mandel-palette, mandel-save-palette, mandel-write, finished?)
+	(save-point!, index->z, next-index!, mandel-info, mandel-finalize):
+	Use ‘ss!’ and ‘ss’ instead of ‘svz:server:state-set!’
+	and ‘svz:server:state-ref’, respectively.
+
+2013-11-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[int] Use object property to record Icecast server files.
+
+	* icecast-server.scm (available): New object property.
+	(icecast-init, icecast-next-file): Use ‘available’
+	instead of ‘svz:server:state-set!’ and ‘svz:server:state-ref’.
+
+2013-04-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Avoid ‘svz:sock:data’ in Mandelbrot client.
+
+	* mandel-client.scm (todo): New top-level var.
+	(mandel-handle-request): Access/update top-level ‘todo’ directly.
+	(mandel-main): Rename arg to ‘max-todo’; init ‘todo’ w/ it.
+
+2013-04-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Avoid ‘svz:sock:data’ in Icecast server.
+
+	* icecast-server.scm (interesting, bye-bye): New procs.
+	(icecast-connect-socket): Don't use ‘svz:sock:data’;
+	instead, save and access the ‘data’ hash table via ‘interesting’;
+	and specify ‘bye-bye’ for the "disconnected" and "kicked' callbacks.
+	(icecast-next-file, icecast-trigger, icecast-send-buffer):
+	Access the ‘data’ hash table via ‘interesting’.
+
+
+Copyright (C) 2013 Thien-Thi Nguyen
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

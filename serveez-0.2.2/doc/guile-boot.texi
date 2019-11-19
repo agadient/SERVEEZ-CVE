@@ -1,0 +1,131 @@
+@c guile-boot.texh --- a -*-texinfo-*- fragment for built-in procedures
+@c
+@c Copyright (C) 2011-2013 Thien-Thi Nguyen
+@c
+@c This file is provided under the same terms as serveez.texi.
+
+@subsubsection output
+
+@set TSINCURMOD (guile)
+@deffn {Scheme Procedure} fs s [args@dots{}]
+Return a string made by applying @code{simple-format #f}
+to @var{s} and @var{args}.  For example:
+
+@example
+(fs "~A-~S" 'foo 42)
+@result{} "foo-42"
+@end example
+@end deffn
+
+@deffn {Scheme Procedure} println [object@dots{}]
+Do @code{display} on each @var{object}.
+Then, output a newline.
+@end deffn
+
+@deffn {Scheme Procedure} printsln spacer [object@dots{}]
+For each @var{object}, do @code{display} on it
+and on @var{spacer}, as well.  Then, output a newline.
+@end deffn
+
+@subsubsection augmenting
+
+@deffn {Scheme Procedure} interface-add! interface
+Add @var{interface} to the list of known network interfaces.
+You can get the list of known interfaces by running the shell
+command @samp{serveez -i}.  The @var{interface} argument must be in
+dotted decimal form (e.g., @samp{127.0.0.1}).  Serveez provides this
+procedure for systems where it is unable to detect the list of
+network interface automatically.
+@end deffn
+
+@deffn {Scheme Procedure} loadpath-add! [dir@dots{}]
+Append @var{dir}@dots{} to the server modules load path.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-load filename
+Try to load @var{filename} (via @code{primitive-load}).
+If @var{filename} is not absolute, search for it
+in the list of directories returned by @code{serveez-loadpath}.
+Return @code{#t} if successful, @code{#f} otherwise.
+@end deffn
+
+@subsubsection abstractions
+
+@deffn {Scheme Procedure} bind-servers! [args@dots{}]
+Bind all servers and ports in @var{args} to each other.
+This is a cross-product operation; given @var{s} servers, and
+@var{p} ports, @code{@var{s} * @var{p}} bindings will be created.
+@end deffn
+
+@deffn {Scheme Procedure} create-tcp-port! basename port
+Define a new TCP port named by concatenating
+@var{basename} and @var{port}.  Return the new name.
+@end deffn
+
+@deffn {Scheme Procedure} bind-tcp-port-range! from to [servers@dots{}]
+Bind the list of @var{servers} to simple TCP port configurations whose
+network ports range between @var{from} and @var{to} both inclusive.
+@end deffn
+
+@deffn {Scheme Procedure} create-udp-port! basename port
+Define a new UDP port named by concatenating
+@var{basename} and @var{port}.  Return the new name.
+@end deffn
+
+@deffn {Scheme Procedure} bind-udp-port-range! from to [servers@dots{}]
+Bind the list of @var{servers} to simple UDP port configurations whose
+network ports range between @var{from} and @var{to} both inclusive.
+@end deffn
+
+@subsubsection rpc
+
+@deffn {Scheme Procedure} getrpcent
+Return the next RPC entry as a vector of the form:
+@code{#(@var{name} @var{aliases} @var{program-number})}.
+@var{name} is a symbol, @var{aliases} is a list (possibly empty)
+of symbols, and @var{program-number} is an integer.
+If the list is exhausted, return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} getrpcbyname name
+Return the RPC entry for @var{name}, a string.
+(FIXME: Should be able to handle a symbol, too.)
+If no such service exists, signal error.
+@end deffn
+
+@deffn {Scheme Procedure} getrpcbynumber number
+Return the RPC entry for @var{number}, an integer.
+If no such service exists, signal error.
+@end deffn
+
+@deffn {Scheme Procedure} setrpcent [stayopen]
+Open and rewind the file @file{/etc/rpc}.
+If optional arg @var{stayopen} (an integer) is non-zero,
+the database will not be closed after each call to @code{getrpc}
+(or its derivatives @code{getrpcent}, @code{getrpcbyname},
+@code{getrpcbynumber}).
+@end deffn
+
+@deffn {Scheme Procedure} endrpcent
+Close the file @file{/etc/rpc}.
+@end deffn
+
+@subsubsection misc
+
+@deffn {Scheme Procedure} serveez-verbosity [level]
+Return the verbosity level (an integer).  Optional
+arg @var{level} means set it to that level, instead.  This
+setting is overridden by the command-line @samp{-v} option.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-maxsockets [max]
+Return the maximum number of open sockets permitted (an integer).
+Optional arg @var{max} means set it to that number, instead.
+This setting is overridden by the command-line @samp{-m} option.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-passwd [pw]
+Return the control password (a string).
+Optional arg @var{pw} sets it to that, instead.  This effectively
+does nothing if the control protocol is not enabled.
+@end deffn

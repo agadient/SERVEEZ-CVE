@@ -1,0 +1,130 @@
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.0
+
+2012-11-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Update PLATFORMS.
+
+	* PLATFORMS: Add entry for i686-pc-linux-gnu,
+	the first one for the upcoming 0.2.0 release.
+
+2011-06-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove "AWCS protocol / server" support.
+
+	* serveez.cfg
+	(textSure-port, textSure-port-pipe, aWCS-server)
+	("tunnel-source7", "tunnel-target7", tunnel-server7):
+	Delete ports, servers and their bindings.
+
+2011-05-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Decruft: Don't bother maintaining a makefile in data/.
+
+	* Makefile.am: Delete file.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[guile] Promote "convenience" Scheme to "built-in".
+
+	* serveez.cfg: Don't load "serveez.scm".
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Drop init.serveez, "make install-init".
+
+	* Makefile.am (install-init, init.serveez): Delete targets.
+	(CLEANFILES): Remove init.serveez.
+	* init.serveez.in: Delete file.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[guile] Add proc: libserveez-features
+
+	* serveez.cfg: Don't say "debugging enabled";
+	instead, display all features, per ‘libserveez-features’.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[guile] Drop var: guile-version
+
+	* serveez.cfg: Use proc ‘version’ directly.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Display uname(2) info in example config with equanimity.
+
+	* serveez.cfg: Don't say "good luck" for woe32;
+	instead, display ‘uname’ output unconditionally.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Let configure define ‘SED’ in makefiles.
+
+	* Makefile.am (SED): Delete var.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use $(FOO) in Makefile.am files, not @FOO@.
+
+	* Makefile.am (init.serveez): Use $(bindir).
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘MAINTAINERCLEANFILES’.
+
+	* Makefile.am (MAINTAINERCLEANFILES): Delete var.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘CLEANFILES’.
+
+	* Makefile.am: Include common.mk.
+	(CLEANFILES): Use ‘+=’; update.
+
+2011-01-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Drop defunct guile-projects support.
+
+	* guile-projects.txt: Delete file.
+	* Makefile.am (EXTRA_DIST): Remove guile-projects.txt.
+
+2003-05-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (EXTRA_DIST): Removed `libtool-MacOS.diff'
+	because it is not necessary anymore.
+
+2002-10-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* PLATFORMS: Added some more platforms to the list.
+
+2002-07-23  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (EXTRA_DIST): New file `libtool-MacOS.diff'
+	added.  The patch should be applied after `configure'ing on
+	`powerpc-apple-darwin*' platforms.  It corrects generation of
+	shared libraries.
+
+2002-07-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* PLATFORMS: Added some more platforms.  Tested at Compaq
+	Testdrive accounts.
+
+2001-10-30  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (install-init): New install target.  Creates
+	init.serveez and installs it.  Also drops a note about init
+	script conventions.
+
+	* init.serveez.in: New file.  Input file for the init script
+	of Serveez.
+
+	* ChangeLog: File created.
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2001, 2002, 2003 Stefan Jahn
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

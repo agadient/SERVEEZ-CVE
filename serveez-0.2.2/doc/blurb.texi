@@ -1,0 +1,39 @@
+@c blurb.texi --- standard GNU Serveez description
+@c
+@c Copyright (C) 2011-2013 Thien-Thi Nguyen
+@c Copyright (C) 2000, 2001, 2002 Stefan Jahn <stefan@lkcc.org>
+@c Copyright (C) 2000, 2001, 2002 Raimund Jacob <raimi@lkcc.org>
+@c Copyright (C) 1999 Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+@c
+@c Permission is granted to copy, distribute and/or modify this document
+@c under the terms of the GNU Free Documentation License, Version 1.1
+@c or any later version published by the Free Software Foundation.
+@c A copy of the license is included in the section entitled "GNU
+@c Free Documentation License".
+@c
+@c -------------------------------------------------------------------
+@c The following text is found in various places, not only in texinfo
+@c documentation, so we keep it simple (don't include any markup).
+@c
+GNU Serveez is a server framework.  It provides routines and help
+for implementing IP-based servers (currently TCP, UDP and ICMP).
+It supports named pipes for all connection-oriented protocols.
+
+We think it is worth the effort because many people need server
+functionality within their applications.  However, many people
+experience problems with select(2) or poll(2) loops, and with
+non-blocking operations.
+
+GNU Serveez demonstrates various aspects of advanced network
+programming in a portable manner.  It is known to compile and
+run on GNU/Linux systems, as well as on other 32-bit and 64-bit
+flavours of Unix and on Microsoft Windows (9x/ME/NT/2000/XP).
+
+You can use it for implementing your own servers or for
+understanding how certain network services and operations work.
+
+The package includes a number of servers that work already: an
+HTTP server, an IRC server, a Gnutella spider and some others.
+One of the highlights is that you can run all protocols on the
+same port.  The application itself is single threaded but it uses
+helper processes for concurrent name resolution and ident lookups.

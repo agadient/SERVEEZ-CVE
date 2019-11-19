@@ -1,0 +1,70 @@
+.so mb-rel
+.ds pr serveez
+.ds pb \fB\*(pr\fR
+.TH "\*(pr" 1 "\*(Dt" "\*(SZ \*(Rv"
+.SH NAME
+\*(SZ \- A server framework.
+.SH SYNOPSIS
+\*(pb [\fIoptions\fR]
+.SH DESCRIPTION
+.so mb-blurb
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+display this help and exit
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+display version information and exit
+.TP
+\fB\-L\fR, \fB\-\-list\-servers\fR
+display prefix and description of each builtin server and exit
+.TP
+\fB\-i\fR, \fB\-\-iflist\fR
+list local network interfaces and exit
+.TP
+\fB\-f\fR, \fB\-\-cfg\-file\fR=\fIFILENAME\fR
+file to use as configuration file (serveez.cfg)
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR=\fILEVEL\fR
+set level of verbosity
+.TP
+\fB\-l\fR, \fB\-\-log\-file\fR=\fIFILENAME\fR
+use FILENAME for logging (default is stderr)
+.TP
+\fB\-P\fR, \fB\-\-password\fR=\fISTRING\fR
+set the password for control connections
+.TP
+\fB\-m\fR, \fB\-\-max\-sockets\fR=\fICOUNT\fR
+set the max. number of socket descriptors
+.TP
+\fB\-d\fR, \fB\-\-daemon\fR
+start as daemon in background
+.TP
+\fB\-c\fR, \fB\-\-stdin\fR
+use standard input as configuration file
+.TP
+\fB\-s\fR, \fB\-\-solitary\fR
+don't start any coservers
+.SH "REPORTING BUGS"
+Please send bug reports to <bug-serveez@gnu.org>.
+.SH "COPYRIGHT"
+Copyright \(co 2013 Thien-Thi Nguyen
+.PP
+Copying and distribution of this manpage, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This manpage is offered as-is,
+without any warranty.
+.SH "SEE ALSO"
+The full documentation for \*(pb is maintained as a Texinfo manual.
+If the
+.BR info (1)
+and \*(pb programs are properly installed at your site, the command
+.IP
+.B info serveez
+.PP
+should give you access to the complete manual.
+Additionally, the \*(SZ homepage:
+.IP
+.B http://www.gnu.org/software/serveez/
+.PP
+has news and links to the latest release, development site, etc.

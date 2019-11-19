@@ -1,0 +1,2240 @@
+2013-12-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.2
+
+2013-11-19  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib] Redesign sock pre-free hook for multiple callers.
+
+	* serveez-api.texh (Socket management): Remove @deftypevar
+	for ‘svz_sock_pre_free’; update intro blurb to say "references";
+	add @tsin for "F svz_sock_prefree".
+
+2013-11-09  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[doc] Add blank lines to improve readability.
+
+	* guile-api.texh: ...here, throughout,
+	before ‘@example’, ‘@item’, ‘@table’, ‘@multitable’.
+	* serveez-api.texh: Likewise.
+	* serveez.texi: Likewise.
+
+2013-11-09  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Add option to list builtin servers.
+
+	* serveez.1in: Add ‘-L, --list-servers’.
+	* serveez.texi (Command line options): Likewise.
+
+2013-11-06  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib] Add API element: svz_sock_pre_free
+
+	* serveez-api.texh (Socket management): Don't mention
+	creation and destruction in intro blurb; add intro blurb
+	and ‘@deftypevar’ for ‘svz_sock_pre_free’.
+
+2013-11-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[Scheme] Remove procs: svz:server:state{-ref,-set!,->hash}
+
+	* guile-api.texh (Predefined Procedures): Delete
+	@tsin for ‘svz:server:state-set!’, ‘svz:server:state-ref’
+	and ‘svz:server:state->hash’.
+
+2013-10-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[maint] Decruft: Remove "make stage" support.
+
+	The web pages are now maintained elsewhere.
+
+	* index.html: Delete file.
+	* serveez.en.html: Likewise.
+	* Makefile.am (EXTRA_DIST): Remove index.html, serveez.en.html.
+	(MANUAL_FILES, genhtml, sednow): Delete vars.
+	(stage): Delete target.
+
+2013-04-25  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[Scheme] Remove proc: svz:sock:data
+
+	* guile-api.texh (Predefined Procedures):
+	Delete @tsin for ‘svz:sock:data’.
+
+2013-03-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.1
+
+2013-03-19  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[guile] New built-in: fs
+
+	* guile-boot.texh (output): Add @tsin for ‘fs’.
+
+2013-03-13  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[doc] Fix bug: Mention ‘--solitary’ in serveez(1).
+
+	* serveez.1in: ...here.
+
+2013-03-13  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[doc] Revamp manpages; include release info.
+
+	* mb-tail: New file.
+	* serveez-config.1in: Rename from serveez-config.1; revamp.
+	* serveez.1in: Rename from serveez.1; revamp.
+	* Makefile.am (BUILT_SOURCES) [MAINTAINER_MODE]: Add mb-rel, mb-blurb.
+	(mb-rel, mb-blurb): New targets.
+	(.1in.1): New pattern rule.
+	(EXTRA_DIST): Add mb-tail, serveez.1in, serveez-config.1in.
+
+2013-02-28  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[doc slog] Add blank lines around @tsin directives.
+
+	Apparently, makeinfo 5.0 doesn't automagically add blank
+	lines around @deftypefun et al, like makeinfo 4.13 used to do.
+	<http://lists.gnu.org/archive/html/bug-texinfo/2013-02/msg00129.html>
+
+	* guile-api.texh: ...here.
+	* guile-boot.texh: Likewise.
+	* serveez-api.texh: Likewise.
+
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.0
+
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[doc] Include logo on titlepage.
+
+	* serveez.texi <titlepage>: ...here, centered.
+
+2012-12-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Do ‘s/@PROC{}/{@PROC{}}/’.
+
+	This is to prepare for the next Texinfo release, which is more
+	strict about its tokenization, especially for XML output.  See:
+	<http://lists.gnu.org/archive/html/bug-texinfo/2012-12/msg00071.html>.
+
+	* guile-api.texh: ...here, throughout.
+
+2012-12-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Avoid "this"; use ``this'' or @{code,samp,file,var}.
+
+	* serveez-api.texh: ...here.
+	* serveez.texi: Likewise.
+
+2012-11-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Add option to inhibit coserver instances at startup.
+
+	* serveez.texi (Command line options): Document ‘-s’, ‘--solitary’.
+
+2012-11-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Explicitly declare UTF-8 correctly.
+
+	This fixes the botched 2011-12-27, "Explicitly declare UTF-8".
+
+	* serveez.texi <header>: Say "UTF-8";
+	move @documentencoding after @setfilename.
+
+2012-11-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Arrange for LF after (C function) return type (PDF only).
+
+	* serveez.texi <header>: Do ‘@set txideftypefnnl’.
+
+2012-11-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_hash_configure
+
+	* serveez-api.texh (Hashtable): Add ‘svz_hash_configure’.
+
+2011-12-27  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Explicitly declare UTF-8.
+
+	* serveez.texi <header>: Add ‘@documentencoding utf-8’.
+
+2011-07-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_p{malloc,realloc,strdup}.
+
+	* serveez-api.texh (Memory management):
+	Delete ‘svz_pmalloc’, ‘svz_prealloc’, ‘svz_pstrdup’.
+
+2011-06-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Don't define some procs that Guile might already provide.
+
+	* guile-api.texh: Delete @tsin for ‘svz:htons’, svz:‘ntohs’,
+	‘svz:htonl’, ‘svz:ntohl’, ‘svz:inet-aton’, ‘svz:inet-ntoa’.
+
+2011-06-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove "AWCS protocol / server" support.
+
+	* serveez.texi (Build and install): Remove
+	‘--enable-awcs-proto’ from table of configure options.
+	(Existing servers): Remove "Chat Server" from menu.
+	(Chat Server): Delete node/subsection.
+
+2011-06-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove "native MSVC" support.
+
+	* Makefile.am (MANUAL_FILES): Remove $(top_srcdir)/README-Win32.
+	* index.html: Remove link/blurb for README-Win32.
+	* serveez.en.html: Don't mention "native version" of Guile.
+	* serveez.texi (Build and install): Don't mention "native compiler".
+	(HTTP Server): Don't mention "native port" or "native host name".
+	(Porting issues) <woe>: Prune MSVC++, ref to README-Win32;
+	reflow accordingly; add caveat footnote re Cygwin connection limit.
+
+2011-05-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Drop ‘--with-guile’; use only guile-config(1).
+
+	* serveez.texi (Build and install): Suggest options for
+	building Guile under "Requirements"; remove ‘--with-guile’
+	from table of configure options; update example.
+
+2011-05-27  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[ipv6] Add lameness: STILL_NO_V6_DAMMIT
+
+	* serveez-api.texh (svz_address_t): Describe lameness.
+
+2011-05-26  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_address_t’ and related functions / macros.
+
+	* serveez-api.texh (Embedding API): Add "svz_address_t" to menu.
+	(svz_address_t): New node/subsection.
+
+2011-05-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Make libserveez + headers installation optional.
+
+	* Makefile.am (man_MANS): Split into ‘= serveez.1’ and
+	‘+= serveez-config.1’; conditionalize the latter with ‘COURAGEOUS’.
+	* serveez.texi (Build and install) <Configure the source
+	package for your system>: Document ‘--enable-libserveez-install’.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Build .tsar files under src/, only if MAINTAINER_MODE.
+
+	* Makefile.am (gen): Move earlier;
+	add guile-api.texi, guile-boot.texi.
+	(serveez_TEXINFOS): Add serveez.texi, $(gen);
+	remove serveez-api.texi, guile-api.texi, guile-boot.texi.
+	(srcsrcd, libserveez_scanroot, libserveez_root, libserveez_impl)
+	(libserveez_from, guile_impl, guile_from, BUILT_SOURCES): Delete vars.
+	(EXTRA_DIST): Add $(gen:%.texi=%.texh).
+	(maintainer-clean-local): Delete target.
+	(scm-snippets, c-snippets, c-c-snippets): Likewise.
+	(snippets): Rewrite dependency list.
+	(guile-boot.texi, guile-api.texi, serveez-api.texi):
+	Delete dependency decls.
+	[MAINTAINER_MODE] ($(gen)): New dependency decl.
+	(.texh.texi): Move inside ‘if MAINTAINER_MODE’.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_free_and_zero’, SVZ_{NUM2PTR,PTR2NUM}.
+
+	* serveez-api.texh
+	(Memory management): Delete ‘svz_free_and_zero’.
+	(Utility functions): Delete ‘SVZ_NUM2PTR’, ‘SVZ_PTR2NUM’.
+
+2011-05-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Use "/**" for lib API docs, s3as + tsin to wrangle them.
+
+	* serveez-api.texh: New file.
+	* serveez-api.texi.in: Delete file.
+	* Makefile.am (EXTRA_DIST): Remove serveez-doc-snarf.awk.
+	(SNARFER, genstems): Delete vars.
+	(gen): Remove $(genstems:%=%.sed), $(genstems:%=%.texi);
+	add serveez-api.texi.
+	(EXTRA_DIST): Remove $(genstems:%=%.texi.in).
+	(serveez-api.texi, serveez-api.sed): Delete targets.
+	(c-c-snippets): New target.
+	(snippets): Add c-c-snippets to dependency list.
+	(serveez-api.texi): Declare dependency on snippets.
+	* serveez-doc-snarf.awk: Delete file.
+
+2011-05-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Convert some "manual" @deffn to @tsin.
+
+	* guile-boot.texh (serveez-verbosity)
+	(serveez-maxsockets, serveez-passwd): Add @tsin.
+	* serveez.texi (Bind servers to ports): Delete @deffn for
+	‘serveez-verbosity’, ‘serveez-maxsockets’, ‘serveez-passwd’.
+
+2011-05-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Drop support for doc integration w/ Guile help system.
+
+	* guile-boot.texh (serveez-doc-add!): Delete @tsin.
+	* Makefile.am (GUILE_TXT_FILE, pkgdata_DATA): Delete vars.
+	(MAINTAINERCLEANFILES): Remove $(GUILE_TXT_FILE).
+	($(GUILE_TXT_FILE)): Delete target.
+
+2011-05-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use Guile-BAUX for "Scheme proc from C source" snarfing.
+
+	* guile-api.texh: Rename from guile-api.texi.in,
+	replacing ‘|P|’ directives with ‘@tsin’ directives.
+	* Makefile.am (guile_scanroot): Delete var.
+	(guile_from): Move earlier in file.
+	(genstems): Remove guile-api.
+	(guile-api.texi): Delete target.
+	(scm-snippets): Rename target from ‘snippets’.
+	(c-snippets): New target.
+	(snippets): New target.
+	(guile-api.texi): New dependency decl.
+	(guile-api.sed): Delete target.
+
+2011-05-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Add doc/Makefile.am var: srcsrcd
+
+	* Makefile.am (srcsrcd): New var.
+	(libserveez_root): Use $(srcsrcd).
+	(guile_root): Delete var.
+	(snippets, guile_from, guile-api.sed): Use $(srcsrcd).
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_udp_printf
+
+	* serveez-api.texi.in (UDP sockets): Delete ‘svz_udp_printf’.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Require a C99 compiler.
+
+	* serveez.texi (Build and install): Mention C99 requirement;
+	give example of ‘./configure ... CC=...’ invocation.
+
+2011-04-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename some *_updn funcs to svz_updn_all_*.
+
+	* serveez-api.texi.in (Coserver functions)
+	(Server functionality): Update all refs.
+
+2011-04-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop funcs: svz_hash_{keys,values,xfree}
+
+	* serveez-api.texi.in (Hashtable): Delete
+	‘svz_hash_keys’, ‘svz_hash_values’, ‘svz_hash_xfree’.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_servertype_print’ to unique client.
+
+	* serveez-api.texi.in (General server type functionality):
+	Delete ‘svz_servertype_print’.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_foreach_servertype
+
+	* serveez-api.texi.in (General server type functionality):
+	Add ‘svz_foreach_servertype’.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_portcfg_print’ to unique client.
+
+	* serveez-api.texi.in (Port config funcs):
+	Delete ‘svz_portcfg_print’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_pp_server_bindings’; drop ‘svz_server_bindings’.
+
+	* serveez-api.texi.in (Server binding):
+	Delete ‘svz_server_bindings’; add ‘svz_pp_server_bindings’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Purge defunct ‘vector’ implementation / interface.
+
+	* Makefile.am (libserveez_impl): Remove vector.c, vector.h.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename ‘svz_server_foreach’ to ‘svz_foreach_server’.
+
+	* serveez-api.texi.in (Server functionality): Update ref.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_foreach_codec’; move ‘svz_codec_list’ to client.
+
+	* serveez-api.texi.in (Codec functions):
+	Delete ‘svz_codec_list’; add ‘svz_foreach_codec’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_collect’ and conv. macros; zonk disparate funcs.
+
+	* serveez-api.texi.in (Server configuration): Delete
+	‘svz_config_intarray_create’, ‘svz_config_strarray_create’,
+	‘svz_config_hash_create’; add ‘svz_collect’, ‘SVZ_COLLECT_INTARRAY’,
+	‘SVZ_COLLECT_STRARRAY’, ‘SVZ_COLLECT_STRHASH’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_interface_list
+
+	* serveez-api.texi.in (Interface): Delete ‘svz_interface_list’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Rewrite simple example.
+
+	* serveez-api.texi.in (A simple example): Rewrite.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_server_single_listener’ into client.
+
+	This also reverts 2011-03-21,
+	"Internalize ‘svz_binding_contains_server’".
+
+	* serveez-api.texi.in (Server binding):
+	Add ‘svz_binding_contains_server’;
+	delete ‘svz_server_single_listener’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Combine windoze daemon control funcs.
+
+	* serveez-api.texi.in (Windoze): Delete
+	‘svz_windoze_start_daemon’, ‘svz_windoze_stop_daemon’;
+	add ‘svz_windoze_daemon_control’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_array_destroy_zero’.
+
+	* serveez-api.texi.in (Array): Delete ‘svz_array_destroy_zero’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_ins
+
+	* serveez-api.texi.in (Array): Delete ‘svz_array_ins’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_array_clear’.
+
+	* serveez-api.texi.in (Array): Delete ‘svz_array_clear’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_capacity
+
+	* serveez-api.texi.in (Array): Delete ‘svz_array_capacity’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_idx
+
+	* serveez-api.texi.in (Array): Delete ‘svz_array_idx’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_contains
+
+	* serveez-api.texi.in (Array): Delete ‘svz_array_contains’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_array_{dup,strdup}.
+
+	* serveez-api.texi.in (Array):
+	Delete ‘svz_array_dup’, ‘svz_array_strdup’.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_hash_clear
+
+	* serveez-api.texi.in (Hashtable): Delete ‘svz_hash_clear’.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_hash_capacity
+
+	* serveez-api.texi.in (Hashtable): Delete ‘svz_hash_capacity’.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘vector’ data structure and funcs.
+
+	* serveez-api.texi.in (Data structures):
+	Delete "Vectorlist" from menu.
+	(Vectorlist): Delete node/subsubsection.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_values
+
+	* serveez-api.texi.in (Array): Delete ‘svz_array_values’.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_vector_foreach’.
+
+	* serveez-api.texi.in (Vectorlist): Delete ‘svz_vector_foreach’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_servertype_finalize’.
+
+	* serveez-api.texi.in (General server type functionality):
+	Delete ‘svz_servertype_finalize’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Combine svz_server_{init,finalize}_all into ‘svz_server_all_updn’.
+
+	* serveez-api.texi.in (Server functionality):
+	Add ‘svz_server_all_updn’; delete
+	‘svz_server_init_all’, ‘svz_server_finalize_all’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Combine svz_coserver_{init,finalize} into ‘svz_coserver_updn’.
+
+	* serveez-api.texi.in (Coserver functions):
+	Add ‘svz_coserver_updn’; rework intro blurb;
+	delete ‘svz_coserver_init’, ‘svz_coserver_finalize’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstractions for runtime parameter manipulation.
+
+	* Makefile.am (libserveez_impl): Add boot.h.
+	* serveez-api.texi.in (Booting): Rewrite intro;
+	Add table to document SVZ_RUNPARM_* #define:s;
+	add ‘svz_runparm’, ‘SVZ_RUNPARM’, ‘SVZ_RUNPARM_X’;
+	delete ‘svz_config’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[int] Move control protocol password out of libserveez.
+
+	* serveez.texi (Command line options):
+	Document "-P" conditionality; add xref.
+	(Bind servers to ports): Document ‘serveez-passwd’ conditionality.
+	(Control Protocol Server): Document "-P"
+	and general control server conditionality.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize "boot time".
+
+	* serveez-api.texi.in (Booting): Add ‘svz_uptime’.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_most_recent_dead_child_p
+
+	* serveez-api.texi.in (Passthrough connections):
+	Add ‘svz_most_recent_dead_child_p’ and intro blurb.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib woe] Add abstraction: svz_mingw_child_dead_p
+
+	* serveez-api.texi.in (Passthrough connections):
+	Add ‘svz_mingw_child_dead_p’ and intro blurb.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Convert svz_sock_reduce_{recv,send} to functions.
+
+	* serveez-api.texi.in (Socket management): Convert
+	‘svz_sock_reduce_recv’, ‘svz_sock_reduce_send’ from ‘|M|’ to ‘|F|’.
+
+2011-04-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop macros svz_coserver_{dns,rdns,ident}.
+
+	* serveez-api.texi.in (Coserver functions): Delete
+	‘svz_coserver_dns’, ‘svz_coserver_rdns’, ‘svz_coserver_ident’.
+
+2011-04-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_coserver_send_request’.
+
+	* serveez-api.texi.in (Coserver functions):
+	Delete ‘svz_coserver_send_request’.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Convert svz_portcfg_{addr,port,ipaddr,device} to functions.
+
+	* serveez-api.texi.in (Port config funcs):
+	Move ‘svz_portcfg_addr’, ‘svz_portcfg_port’,
+	‘svz_portcfg_ipaddr’, ‘svz_portcfg_device’
+	earlier, converting from ‘|M|’ to ‘|F|’.
+
+2011-03-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix LOG_{FATAL,ERROR,WARNING,NOTICE,DEBUG} with "SVZ_".
+
+	* serveez-api.texi.in: Update all refs.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop funcs svz_config_{intarray,strarray,hash}_destroy.
+
+	* serveez-api.texi.in (Server configuration):
+	Delete ‘svz_config_intarray_destroy’,
+	‘svz_config_strarray_destroy’, ‘svz_config_hash_destroy’.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop unused "sparse vector" functionality.
+
+	* Makefile.am (libserveez_impl): Remove sparsevec.c.
+	* serveez-api.texi.in
+	(Data structures): Remove "Sparsevector" from menu.
+	(Sparsevector): Delete node/subsubsection.
+
+2011-03-27  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move client name specification to ‘svz_boot’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_executable’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_net_strerror’.
+
+	* serveez-api.texi.in (Utility functions): Delete ‘svz_net_strerror’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_raw_ip_checksum’.
+
+	* serveez-api.texi.in (Raw sockets): Delete ‘svz_raw_ip_checksum’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_portcfg_del
+
+	* serveez-api.texi.in (Port config funcs): Delete ‘svz_portcfg_del’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_servertype_del
+
+	* serveez-api.texi.in (General server type functionality):
+	Delete ‘svz_servertype_del’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_server_{instantiate,configure}.
+
+	* serveez-api.texi.in (Server functionality):
+	Delete ‘svz_server_instantiate’.
+	(Server configuration): Delete ‘svz_server_configure’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize several svz_icmp_* funcs.
+
+	* serveez-api.texi.in (ICMP sockets): Delete
+	‘svz_icmp_read_socket’, ‘svz_icmp_lazy_read_socket’,
+	‘svz_icmp_write_socket’, ‘svz_icmp_check_request’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_icmp_printf
+
+	* serveez-api.texi.in (ICMP sockets): Delete ‘svz_icmp_printf’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_process_create_child’.
+
+	* serveez-api.texi.in (Passthrough connections):
+	Delete ‘svz_process_create_child’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_envblock_free’.
+
+	* serveez-api.texi.in (Passthrough connections):
+	Delete ‘svz_envblock_free’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize several svz_process_* funcs.
+
+	* serveez-api.texi.in (Passthrough connections): Delete
+	‘svz_process_idle’, ‘svz_process_send_pipe’, ‘svz_process_recv_pipe’,
+	‘svz_process_send_socket’, ‘svz_process_recv_socket’,
+	‘svz_process_shuffle’, ‘svz_process_fork’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_process_split_usergroup’.
+
+	* serveez-api.texi.in (Passthrough connections):
+	Delete ‘svz_process_split_usergroup’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_process_check_{access,executable,request}.
+
+	* serveez-api.texi.in (Passthrough connections): Delete
+	‘svz_process_check_access’, ‘svz_process_check_executable’,
+	‘svz_process_check_request’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_process_disconnect{,_passthrough}.
+
+	* serveez-api.texi.in (Passthrough connections): Delete
+	‘svz_process_disconnect’, ‘svz_process_disconnect_passthrough’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_strsignal’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_strsignal’.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_raw_check_ip_header’.
+
+	* serveez-api.texi.in (Raw sockets):
+	Delete ‘svz_raw_check_ip_header’.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_raw_put_ip_header
+
+	* serveez-api.texi.in (Raw sockets): Delete ‘svz_raw_put_ip_header’.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_raw_get_ip_header’.
+
+	* serveez-api.texi.in (Raw sockets): Delete ‘svz_raw_get_ip_header’.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_windoze_[gs]et_reg_{unsigned,string}.
+
+	* serveez-api.texi.in (Windoze): Delete
+	‘svz_windoze_get_reg_unsigned’, ‘svz_windoze_set_reg_unsigned’
+	svz_windoze_get_reg_string', ‘svz_windoze_set_reg_string’.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop funcs: svz_pipe_{alloc,destroy}
+
+	* serveez-api.texi.in (Pipe connections):
+	Delete ‘svz_pipe_alloc’, ‘svz_pipe_destroy’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_pipe_{listener,check_{user,group}}.
+
+	* serveez-api.texi.in (Pipe connections): Delete
+	‘svz_pipe_listener’, ‘svz_pipe_check_user’, ‘svz_pipe_check_group’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_pipe_{{read,write}_socket,disconnect}.
+
+	* serveez-api.texi.in (Pipe connections):
+	Delete ‘svz_pipe_read_socket’,
+	‘svz_pipe_write_socket’, ‘svz_pipe_disconnect’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_pipe_valid’.
+
+	* serveez-api.texi.in (Pipe connections): Delete ‘svz_pipe_valid’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_socket_{create,create_pair}.
+
+	* serveez-api.texi.in (Core functions):
+	Delete ‘svz_socket_create’, ‘svz_socket_create_pair’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_socket_connect’.
+
+	* serveez-api.texi.in (Core functions): Delete ‘svz_socket_connect’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_socket_type
+
+	* serveez-api.texi.in (Core functions): Delete ‘svz_socket_type’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_fd_{block,nonblock}.
+
+	* serveez-api.texi.in (Core functions):
+	Delete ‘svz_fd_block’, ‘svz_fd_nonblock’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_interface_check’.
+
+	* serveez-api.texi.in (Interface): Delete ‘svz_interface_check’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_interface_get’.
+
+	* serveez-api.texi.in (Interface): Delete ‘svz_interface_get’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_interface_search’.
+
+	* serveez-api.texi.in (Interface): Delete ‘svz_interface_search’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_check_request’.
+
+	* serveez-api.texi.in (UDP sockets): Delete ‘svz_udp_check_request’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_write_socket’.
+
+	* serveez-api.texi.in (UDP sockets): Delete ‘svz_udp_write_socket’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_lazy_read_socket’.
+
+	* serveez-api.texi.in (UDP sockets):
+	Delete ‘svz_udp_lazy_read_socket’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_read_socket’.
+
+	* serveez-api.texi.in (UDP sockets): Delete ‘svz_udp_read_socket’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_tcp_recv_oob’.
+
+	* serveez-api.texi.in (TCP sockets): Delete ‘svz_tcp_recv_oob’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_tcp_write_socket’.
+
+	* serveez-api.texi.in (TCP sockets):
+	Delete ‘svz_tcp_write_socket’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_tcp_default_connect’.
+
+	* serveez-api.texi.in (TCP sockets):
+	Delete ‘svz_tcp_default_connect’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_servertype_load’.
+
+	* serveez-api.texi.in (Dynamic server loading):
+	Delete ‘svz_servertype_load’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_servertype_unload
+
+	* serveez-api.texi.in (Dynamic server loading):
+	Delete ‘svz_servertype_unload’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_{tcp,pipe}_accept.
+
+	* serveez-api.texi.in (Server socket):
+	Delete ‘svz_tcp_accept’, ‘svz_pipe_accept’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_server_create’.
+
+	* serveez-api.texi.in (Server socket): Delete ‘svz_server_create’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_dequeue’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_sock_dequeue’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_signal_handler’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_signal_handler’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_periodic_tasks’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_periodic_tasks’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_bogus’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_sock_check_bogus’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_children’.
+
+	* serveez-api.texi.in (Server core):
+	Delete ‘svz_sock_check_children’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_frequency’.
+
+	* serveez-api.texi.in (Server core):
+	Delete ‘svz_sock_check_frequency’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_access’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_sock_check_access’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_shutdown’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_sock_shutdown’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_shutdown_all’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_sock_shutdown_all’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_filter’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_binding_filter’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_contains_server’.
+
+	* serveez-api.texi.in (Server binding):
+	Delete ‘svz_binding_contains_server’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_find’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_binding_find’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_find_server’.
+
+	* serveez-api.texi.in (Server binding):
+	Delete ‘svz_binding_find_server’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_join’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_binding_join’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_contains’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_binding_contains’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_destroy’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_binding_destroy’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_create’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_binding_create’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_binding_filter_{pipe,net}.
+
+	* serveez-api.texi.in (Server binding):
+	Delete ‘svz_binding_filter_pipe’, ‘svz_binding_filter_net’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_bind_port’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_sock_bind_port’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_bindings’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_sock_bindings’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_find_portcfg’.
+
+	* serveez-api.texi.in (Server binding):
+	Delete ‘svz_sock_find_portcfg’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_find_portcfgs’.
+
+	* serveez-api.texi.in (Server binding):
+	Delete ‘svz_sock_find_portcfgs’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_del_server’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_sock_del_server’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_add_server’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_sock_add_server’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_server_unbind’.
+
+	* serveez-api.texi.in (Server binding): Delete ‘svz_server_unbind’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_os_version’.
+
+	* serveez-api.texi.in (Utility functions):
+	Delete ‘svz_os_version’; add ‘svz_mingw_at_least_nt4_p’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize several svz_server_* funcs.
+
+	* serveez-api.texi.in (Server functionality):
+	Delete ‘svz_server_add’, ‘svz_server_del’, ‘svz_server_free’,
+	‘svz_server_notifiers’, ‘svz_server_reset’, ‘svz_server_init’,
+	‘svz_server_finalize’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_portcfg_destroy_{accepted,access}.
+
+	* serveez-api.texi.in (Port config funcs): Delete
+	‘svz_portcfg_destroy_accepted’, ‘svz_portcfg_destroy_access’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_set_ipaddr’.
+
+	* serveez-api.texi.in (Port config funcs):
+	Delete ‘svz_portcfg_set_ipaddr’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_expand’.
+
+	* serveez-api.texi.in (Port config funcs):
+	Delete ‘svz_portcfg_expand’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_text’.
+
+	* serveez-api.texi.in (Port config funcs):
+	Delete ‘svz_portcfg_text’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_prepare’.
+
+	* serveez-api.texi.in (Port config funcs):
+	Delete ‘svz_portcfg_prepare’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_free’.
+
+	* serveez-api.texi.in (Port config funcs):
+	Delete ‘svz_portcfg_free’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_config_prototype_print’.
+
+	* serveez-api.texi.in (Server configuration):
+	Delete ‘svz_config_prototype_print’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_config_type_add’.
+
+	* serveez-api.texi.in (Server configuration):
+	Delete ‘svz_config_type_add’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_config_instantiate’.
+
+	* serveez-api.texi.in (Server configuration):
+	Delete ‘svz_config_instantiate’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_flood_protect’.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_flood_protect’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_idle_protect’.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_idle_protect’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_detect_proto’.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_detect_proto’.
+	* serveez.texi (Builtin servers):
+	Don't mention ‘svz_sock_detect_proto’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_unique_id’.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_unique_id’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_error_info’.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_error_info’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_intern_connection_info’.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_intern_connection_info’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_local_info’.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_local_info’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_sock_{create,disconnect}.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_create’, ‘svz_sock_disconnect’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_sock_{alloc,free}.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_alloc’, ‘svz_sock_free’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_valid’.
+
+	* serveez-api.texi.in (Socket management): Delete ‘svz_sock_valid’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_syserror’.
+
+	* serveez-api.texi.in (Utility functions): Delete ‘svz_syserror’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_errno’.
+
+	* serveez-api.texi.in (Utility functions): Delete ‘svz_errno’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add funcs: svz_{sys,net}_strerror
+
+	* serveez-api.texi.in (Utility functions):
+	Add ‘svz_sys_strerror’, ‘svz_net_strerror’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add funcs: svz_log_{sys,net}_error
+
+	* serveez-api.texi.in (Utility functions):
+	Add common blurb, ‘svz_log_sys_error’, ‘svz_log_net_error’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_hstrerror’.
+
+	* serveez-api.texi.in (Utility functions): Delete ‘svz_hstrerror’.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_socket_unavailable_error_p
+
+	* serveez-api.texi.in (Utility functions):
+	Add ‘svz_socket_unavailable_error_p’.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add funcs: svz_{invalid_handle_p,invalidate_handle}
+
+	* serveez-api.texi.in (Pipe connections):
+	Add ‘svz_invalid_handle_p’, ‘svz_invalidate_handle’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_closehandle
+
+	* serveez-api.texi.in (Pipe connections): Add ‘svz_closehandle’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_closesocket
+
+	* serveez-api.texi.in (Core functions): Add ‘svz_closesocket’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_icmp_{start,clean}up.
+
+	* serveez-api.texi.in (ICMP sockets):
+	Delete ‘svz_icmp_startup’, ‘svz_icmp_cleanup’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func/macros: svz_{all_servers,hash_foreach_{key,value}}
+
+	* serveez-api.texi.in (Hashtable):
+	Delete ‘svz_hash_foreach_key’, ‘svz_hash_foreach_value’.
+	(Server functionality): Delete ‘svz_all_servers’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_server_foreach
+
+	* serveez-api.texi.in
+	(Server functionality): Add ‘svz_server_foreach’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_hash_foreach
+
+	* serveez-api.texi.in (Hashtable): Add ‘svz_hash_foreach’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_config_{intarray,strarray,hash}_dup.
+
+	* serveez-api.texi.in (Server configuration):
+	Delete ‘svz_config_intarray_dup’,
+	‘svz_config_strarray_dup’, ‘svz_config_hash_dup’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_file_path’.
+
+	* serveez-api.texi.in (Core functions): Delete ‘svz_file_path’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_file_check
+
+	* serveez-api.texi.in (Core functions): Delete ‘svz_file_check’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[guile int] Re-implement ‘serveez-load’ in Scheme.
+
+	* guile-api.texi.in (Predefined Procedures):
+	Delete ‘serveez-load’.
+	* guile-boot.texh (augmenting): Rename from
+	"augmenting lists"; add @tsin for ‘serveez-load’.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_check_sockets’.
+
+	* serveez-api.texi.in (Server loop): Delete ‘svz_check_sockets’.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Snarf docstrings of built-in Scheme procs.
+
+	* guile-boot.texh: New file.
+	* Makefile.am (serveez_TEXINFOS): Add guile-boot.texi.
+	(snippets): New target.
+	(guile-boot.texi): Make depend on ‘snippets’.
+	(BUILT_SOURCES): New var.
+	(EXTRA_DIST): Add $(BUILT_SOURCES), guile-boot.texh.
+	(.texh.texi): New old-fashioned suffix rule.
+	* serveez.texi (Bind servers to ports): Remove @deffn
+	for ‘interface-add!’, ‘loadpath-add!’, ‘bind-servers!’,
+	‘bind-tcp-port-range!’, ‘bind-udp-port-range!’.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[guile] Promote "convenience" Scheme to "built-in".
+
+	* serveez.texi (Bind servers to ports):
+	Rework intro to "convenience" procs; say "built-in".
+
+2011-03-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_uptime’ out to unique caller.
+
+	* serveez-api.texi.in (Utility functions): Delete ‘svz_uptime’.
+
+2011-03-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_child_died’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_sock_child_died’.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move svz_{malloc,realloc,free}_func behind ‘svz_set_mm_funcs’.
+
+	* serveez-api.texi.in (Memory management): Delete
+	‘svz_malloc_func’, ‘svz_realloc_func’, ‘svz_free_func’;
+	add ‘svz_set_mm_funcs’.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Embed mutex functionality; expose only feature ‘log-mutex’.
+
+	* Makefile.am (libserveez_impl): Remove mutex.c, mutex.h.
+	* serveez-api.texi.in (Embedding API):
+	Delete "Thread safety" from menu.
+	(Library features) <table>: Drop ‘threads’; add ‘log-mutex’.
+	(Thread safety): Delete node/subsection.
+	* serveez.texi (Build and install)
+	<table>: Drop ‘--enable-thread-safety’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Don't document ‘svz_heap’; remove from header on "make install".
+
+	* serveez-api.texi.in (Memory management): Delete ‘svz_heap’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_coservertypes’.
+
+	* serveez-api.texi.in (Coserver functions):
+	Delete ‘svz_coservertypes’; add ‘svz_coserver_type_name’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_environ’.
+
+	* serveez-api.texi.in (Passthrough connections):
+	Convert ‘svz_envblock_setup’ from ‘|M|’ to ‘|F|’;
+	delete ‘svz_envrion’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move "shutting down?" behind functional interface.
+
+	* serveez-api.texi.in (Server core):
+	Delete ‘svz_nuke_happened’; add ‘svz_shutting_down_p’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_notify’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_notify’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_library
+
+	* serveez-api.texi.in (Booting): Delete ‘svz_library’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_version
+
+	* serveez-api.texi.in (Booting): Delete ‘svz_version’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_foreach_socket
+
+	* serveez-api.texi.in (Server core):
+	Delete ‘svz_sock_root’, ‘svz_sock_foreach’,
+	‘svz_sock_foreach_listener’; add ‘svz_foreach_socket’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_last’.
+
+	* serveez-api.texi.in (Server core): Delete ‘svz_sock_last’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_servertypes’.
+
+	* serveez-api.texi.in
+	(General server type functionality): Delete ‘svz_servertypes’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_foreach_interface
+
+	* serveez-api.texi.in (Interface): Delete ‘svz_interfaces’,
+	‘svz_interface_foreach’; add ‘svz_foreach_interface’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_foreach_coserver
+
+	* serveez-api.texi.in (Coserver functions):
+	Delete ‘svz_coservers’; add ‘svz_foreach_coserver’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move "all instantiated servers" behind functional interface.
+
+	* serveez-api.texi.in (Server functionality):
+	Delete ‘svz_servers’; add ‘svz_all_servers’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move "number of connected sockets" behind functional interface.
+
+	* serveez-api.texi.in (Socket management):
+	Delete ‘svz_sock_connections’; add ‘svz_sock_nconnections’.
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Don't ‘toupper’ for keys in sed scripts.
+
+	Here, U (X, Y) means "Use ‘|X| NAME’ instead of ‘NAME_Y’".
+	* serveez-doc-snarf.awk (handle_variable): U (V, DEFVAR).
+	(handle_macro): U (M, DEFMAC); U (P, DEFUN); U (F, DEFUN).
+	* guile-api.texi.in: Update all call sites.
+	* serveez-api.texi.in: Likewise.
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_{boot,halt} subroutines.
+
+	* serveez-api.texi.in (Pipe connections): Delete
+	‘SVZ_PIPE_STARTUP_DEFUN’, ‘SVZ_PIPE_CLEANUP_DEFUN’.
+	(Codec functions): Delete ‘SVZ_CODEC_INIT_DEFUN’,
+	‘SVZ_CODEC_FINALIZE_DEFUN’.
+	(Dynamic server loading): Delete ‘SVZ_DYNLOAD_INIT_DEFUN’,
+	‘SVZ_DYNLOAD_FINALIZE_DEFUN’.
+	(Server configuration): Delete ‘SVZ_CONFIG_TYPE_INIT_DEFUN’,
+	‘SVZ_CONFIG_TYPE_FINALIZE_DEFUN’.
+	(Server core): Delete ‘SVZ_SOCK_TABLE_CREATE_DEFUN’,
+	‘SVZ_SOCK_TABLE_DESTROY_DEFUN’, ‘SVZ_SIGNAL_UP_DEFUN’,
+	‘SVZ_SIGNAL_DN_DEFUN’, ‘SVZ_STRSIGNAL_INIT_DEFUN’,
+	‘SVZ_STRSIGNAL_DESTROY_DEFUN’.
+	(Port config funcs): Delete ‘SVZ_PORTCFG_FINALIZE_DEFUN’.
+	(Booting): Delete ‘SVZ_NET_STARTUP_DEFUN’,
+	‘SVZ_NET_CLEANUP_DEFUN’, ‘SVZ_INIT_CONFIG_DEFUN’.
+	(Interface): Delete ‘SVZ_INTERFACE_COLLECT_DEFUN’,
+	‘SVZ_INTERFACE_FREE_DEFUN’.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_asprintf
+
+	* Makefile.am (libserveez_impl): Remove asprintf.c.
+	* serveez-api.texi.in (SVZ_ASPRINTF_DEFUN): Delete.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_strcasecmp
+
+	* serveez-api.texi.in (Utility functions):
+	Delete ‘SVZ_STRCASECMP_DEFUN’.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_strncasecmp
+
+	* serveez-api.texi.in (Utility functions):
+	Delete ‘SVZ_STRNCASECMP_DEFUN’.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Say "procedure" instead of "function".
+
+	* guile-api.texi.in: Say "procedure" instead of "function".
+	* serveez.texi: Likewise, for Scheme bits.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Say "Scheme Procedure" instead of "Function".
+
+	* serveez-doc-snarf.awk: Output ‘@deffn @PROC{}’ for procs.
+	* serveez.texi (PROC): Say "Scheme Procedure".
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Make sure all scheme procedures are indexed.
+
+	* serveez.texi (PROC): New macro.
+	(Bind servers to ports): Use series of @deffn instead of @table.
+	* guile-api.texi.in: Likewise.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc style] Refer to procedures as ‘PROC’ instead of ‘(PROC)’.
+
+	* guile-api.texi.in: Do ‘s/@code{(foo)}/@code{foo}/g’.
+	* serveez.texi: Likewise.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop vars: svz_have_{debug,floodprotect}
+
+	* serveez-api.texi.in (Booting): Delete
+	‘SVZ_HAVE_DEBUG_DEFVAR’, ‘SVZ_HAVE_FLOODPROTECT_DEFVAR’.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[guile] Add proc: libserveez-features
+
+	* guile-api.texi.in (Underlying libserveez):
+	New subsubsection; add ‘LIBSERVEEZ-FEATURES_DEFUN’ there.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_have_Win32
+
+	* serveez-api.texi.in (Booting):
+	Don't mention "underlying operating system" in
+	intro blurb; delete ‘SVZ_HAVE_WIN32_DEFVAR’.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_build
+
+	* serveez-api.texi.in (Booting): Delete ‘SVZ_BUILD_DEFVAR’.
+
+2011-02-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] New func: svz_library_features
+
+	* serveez-api.texi.in (Embedding API):
+	Add "Library features" to menu.
+	(Library features): New node/subsection.
+
+2011-02-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Make ‘svz_hash_xfree’ a function; document it.
+
+	* serveez-api.texi.in (SVZ_HASH_XFREE_DEFUN): New ref.
+
+2011-02-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Merge API documentation into primary; use GFDL 1.3.
+
+	* fdl.texi: New file, a copy of gnulib doc/fdl-1.3.texi.
+	* serveez-api.texi: Drop "next, prev, up" @node links;
+	drop head portions; add missing @node lines; push every node
+	down one level; rename some nodes to avoid conflict with
+	those in serveez.texi; drop ‘Index’ and tail portions.
+	* serveez.texi: Drop "next, prev, up" @node links.
+	(settitle): Say "GNU Serveez".
+	(copying, insertcopying): Move text into former; use latter.
+	(cp): Arrange to pour indices ‘vr’ and ‘fn’ into this.
+	(title): Say "GNU Serveez".
+	(author): Append self.
+	(contents): Move after title page, from end.
+	(Introduction): Elide into ‘Top’.
+	(Using Serveez): Add menu.
+	(Build and install, Environment variables, Starting Serveez)
+	(Command line options, The config file): New @node lines.
+	(Embedding): New @node/@chpater; include serveez-api.texi here.
+	(License): Delete.
+	(GNU Free Documentation License): New; include fdl.texi here.
+	(Index): Drop separate ‘vr’ and ‘fn’ indices; use instead ‘cp’.
+	* index.html: Update links to merged manual.
+	* Makefile.am (AM_MAKEINFOFLAGS): New var.
+	(info_TEXINFOS): Remove serveez-api.texi.
+	(serveez_TEXINFOS): Add serveez-api.texi, fdl.texi.
+	(genhtml): Remove serveez-api.html.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move current allocation info behind functional interface.
+
+	* serveez-api.texi.in (Memory management): Remove
+	‘SVZ_ALLOCATED_BYTES_DEFVAR’, ‘SVZ_ALLOCATED_BLOCKS_DEFVAR’;
+	add ‘SVZ_GET_CURALLOC_DEFUN’.
+
+2011-02-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Factor standard blurb into its own file.
+
+	* blurb.texi: New file.
+	* Makefile.am (EXTRA_DIST): Add blurb.texi.
+	(MANUAL_FILES): Remove $(top_srcdir)/README.
+	(serveez.info): Add blurb.texi to prereq list.
+	(stage): Update to interpolate $$mm/README correctly.
+	* serveez.texi (Introduction): Eviscerate; @include blurb.texi.
+
+2011-02-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Drop support for building RPM and Debian packages.
+
+	Here, all changes are under node "Using Serveez".
+	* serveez.texi (Getting the source): Don't mention RPM package.
+	(Installing the RPM package): Delete subsection.
+	(Installing the Debian package): Likewise.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop SVZ_U?INT{16,32,64} macros.
+
+	* serveez-api.texi.in (Utility functions): Remove
+	‘SVZ_INT16_DEFMAC’, ‘SVZ_INT32_DEFMAC’, ‘SVZ_INT64_DEFMAC’,
+	‘SVZ_UINT16_DEFMAC’, ‘SVZ_UINT32_DEFMAC’, ‘SVZ_UINT64_DEFMAC’.
+
+2011-02-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Drop configure --enable-{warn,opt,ppro,486}, ‘--with-opt’.
+
+	* serveez.texi (Using Serveez <Configure the source...>): Remove
+	from table items ‘--enable-warn’, ‘--enable-opt’, ‘--with-opt=FLAGS’,
+	‘--enable-ppro’, ‘--enable-486’; describe how to use ‘CFLAGS’ on the
+	configure command-line; document formerly builtin set of warning and
+	compilation flags; add xref to Autoconf manual; update example.
+
+2011-02-16  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop ‘svz_snprintf’; use ‘vsnprintf’, ‘snprintf’ directly.
+
+	* Makefile.am (libserveez_impl): Remove snprintf.c.
+	* serveez-api.texi.in (Utility functions):
+	Remove ‘SVZ_SNPRINTF_DEFUN’.
+
+2011-02-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Use commas and whitespace more.
+
+	* guile-api.texi.in: Throughout, add comma after "e.g."
+	and "i.e."; use two spaces after end of sentence punctuation.
+	* serveez-api.texi.in: Likewise.
+	* serveez.texi: Likewise.
+
+2011-02-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Make thread-safety configurable with "enable", not "with".
+
+	* serveez.texi (Using Serveez): Say ‘--enable-thread-safety’
+	instead of ‘--with-thread-safety’; fix polarity of default.
+
+2011-02-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Overhaul methods; replace "make site" with "make stage".
+
+	* Makefile.am (AUTOMAKE_OPTIONS): Delete var.
+	(EXTRA_DIST): Move guile-api.texi.in, serveez-api.texi.in
+	to separate ‘EXTRA_DIST +=’.
+	(CLEANFILES): Remove *.info, *.tgz, *.info-[0-9], serveez-api.texi,
+	$(SED_FILE), guile-api.texi $(GUILE_SED_FILE), $(HTML_DIR)/*.html,
+	$(GUILE_TXT_FILE).
+	(DISTCLEANFILES): Remove version*.texi.
+	(DOC_DIRS, DOC_FILES, SED_FILE, GUILE_DOC_DIRS, GUILE_DOC_FILES)
+	(GUILE_SED_FILE): Delete vars.
+	(libserveez_scanroot, libserveez_root, libserveez_impl)
+	(guile_scanroot, guile_root, guile_impl): New vars.
+	(HTML_DIR, SITE_DIR, MKDIR, CP, RM)
+	(SITE_FILES, LOCAL_TARGETS, builddir): Delete vars.
+	(distclean-local, all-local, dist-hook): Delete targets.
+	(genstems, gen): New vars.
+	(MAINTAINERCLEANFILES): Add via ‘+=’ $(gen), $(GUILE_TXT_FILE).
+	(EXTRA_DIST): Add $(gen), which now includes sed scripts.
+	(maintainer-clean-local, clean-local): New targets.
+	(serveez-api.texi): Rewrite target.
+	(libserveez_from): New var.
+	(serveez-api.sed): New target.
+	(guile-api.texi): Rewrite target.
+	(guile_from): New var.
+	(guile-api.sed): New target.
+	($(GUILE_TXT_FILE)): Rewrite target.
+	(site, $(HTML_DIR)/serveez.html)
+	($(HTML_DIR)/serveez-api.html): Delete targets.
+	(.texi.info, .texi.dvi): Delete old-style suffix rules.
+	(SUFFIXES): Delete var.
+	(genhtml, sednow): New vars.
+	(stage): New target.
+	* index.html: Update hrefs of User and Embedding manuals;
+	replace hard-coded "last modified" time with "LAST-MODIFIED".
+	* serveez.en.html: Replace hard-coded
+	"last modified" time with "LAST-MODIFIED".
+
+2011-02-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Don't link to TODO file.
+
+	Omission from 2011-01-30, "Delete obsoleted files RELEASE, TODO".
+
+	* Makefile.am (MANUAL_FILES): Remove $(top_srcdir)/TODO.
+	* index.html: Remove link to TODO file.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Let configure define ‘SED’ in makefiles.
+
+	* Makefile.am (SED): Delete var.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove configure option ‘--with-guile-source’.
+
+	* serveez.texi (Using Serveez): Remove documentation on
+	‘--with-guile-source’; add suggested configure script option
+	set for a Guile build under ‘--with-guile’ docuementation;
+	don't mention ‘--with-guile-source’ further down.
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘MAINTAINERCLEANFILES’.
+
+	* Makefile.am (MAINTAINERCLEANFILES): Delete var.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘CLEANFILES’.
+
+	* Makefile.am: Include common.mk.
+	(CLEANFILES): Use ‘+=’; update.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Fix bug: Don't clobber automake var ‘DIST_COMMON’.
+
+	* Makefile.am (DIST_COMMON): Delete var.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use build-aux/ as the "config aux dir".
+
+	See (info "(autoconf) Input").
+
+	* Makefile.am (DIST_COMMON): Remove mdate-sh.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Don't mention CVS repo; update snapshot command.
+
+	* serveez.en.html (Getting the latest source): Rename from
+	"Getting the latest CVS snapshot"; update blurb and command.
+
+2011-02-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Rename configure.in to configure.ac.
+
+	* serveez.texi (Builtin servers): Update.
+
+2003-06-14  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.en.html, index.html: Updated copyright notice.
+
+2003-05-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi: Fixed some typos and updated it.
+
+2003-05-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in:  Modified to conform with automake 1.7.5.
+
+	* Makefile.am: Fixed rules for info and html files.
+
+2003-02-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Porting issues): Added some more platforms
+	where Serveez has been tested.
+
+2003-01-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-doc-snarf.awk: Widened patterns for documentation
+	of `#define' macros.
+
+	* serveez-api.texi.in (Thread safety): New section.
+
+	* Makefile.am (DOC_FILES): Added `mutex.h' to the list
+	of documentations files.
+
+2002-12-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (man_MANS): Added `serveez-config' man page.
+
+2002-12-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in: Added new library functions.
+
+	* Makefile.am (DOC_FILES): Added the new library files
+	to the list of documentation files.
+
+	* serveez-doc-snarf.awk: Fixed an endless loop condition.
+
+2002-10-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Concept): Applied John's changes after
+	proof-reading.  Thanks!
+
+2002-10-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-doc-snarf.awk: Replaced `> "/dev/stderr"' by
+	`| "cat 1>&2"'.  This is useful for platforms where the
+	device file "/dev/stderr" does not exist.
+
+2002-09-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Concept): Finally completed this section.
+	Needs yet a proof-reader.
+
+	* guile-api.texi.in: Added John Fitzgerald's patch.  Thanks
+	alot for proof-reading, corrections and additions.
+
+2002-07-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* guile-api.texi.in: Added documentation for `serveez-load',
+	`serveez-interfaces' and `serveez-loadpath'.
+
+2002-07-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Overall concept): New section.  To be
+	continued...
+
+	* serveez-doc-snarf.awk: Ability to produce Guile
+	documentation files.
+
+	* Makefile.am (serveez-procedures.txt): Added Makefile target
+	for generating and installing this Guile documentation file.
+
+2002-07-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.en.html: Updated anonymous CVS instructions.
+
+	* serveez.texi (Porting issues): Added some more supported
+	platforms.
+
+	* serveez-doc-snarf.awk: Deleted any reference to gensub()
+	which is a GNU extension of `gawk'.
+	Quoted any occurrence of `{' and `}' in regular expressions.
+
+2002-05-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* guile-api.texi.in: Applied John Fitzgerald's modifications
+	of the Guile server documentation.  Thanks a lot!
+
+2002-02-16  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Using Serveez): Small section about installing
+	the Debian package added.
+
+	* serveez-api.texi.in (Compiling and linking): Documented the
+	use of the `serveez-config' script.
+
+2002-02-03  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Gnutella Spider): Documented the hostname
+	feature	of the `hosts' configuration item and added the
+	documentation about the new `disable' configuration item.
+
+2002-01-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Define ports): Added a separate section about
+	each possible port configuration item.
+
+2002-01-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Define ports): Some explaining text for device
+	bindings added.
+	(Bind servers to ports): Documented (bind-udp-port-range!).
+
+2002-01-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* index.html: Additional reference to `README-cross'.
+
+2001-12-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Passthrough connections): Added an
+	important note about passing socket handles to child processes
+	on Win32 platforms.
+
+2001-11-22  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (EXTRA_DIST): Added `mandel.jpg'.
+
+	* serveez.texi (Mandel Server, Passthrough Server): Two new
+	sections describing these servers.
+
+2001-11-21  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Passthrough connections): Added a new
+	section describing the passthrough functionality.
+
+2001-11-20  Stefan Jahn  <stefan@lkcc.org>
+
+	* guile-api.texi.in: Documented all implemented callbacks so
+	far.  Removed all FIXME's.
+
+2001-11-16  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-doc-snarf.awk: Place a doc-snarfer comment in front
+	of each replaced item which informs about the file and line the
+	item was found.
+
+	* guile-api.texi.in: New `Callback prototypes' section.
+
+2001-11-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-doc-snarf.awk: Correcting documentation string for
+	Guile procedures without arguments.
+
+2001-11-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-doc-snarf.awk: Added yet another special case about
+	callback setter and getter.
+
+	* Makefile.am (EXTRA_DIST): Renamed `serveez-api.awk' into
+	`serveez-doc-snarf.awk' which describes the purpose of the file
+	better.
+
+	* serveez.texi (Using Serveez): Sync'ed the `configure'
+	description with the file `INSTALL'.
+
+2001-10-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Codec): New section about codec
+	interface added.
+
+2001-10-02  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am: Reorganized rules to get `make distcheck'
+	working again.
+
+2001-09-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Define ports): Added a note about the
+	possibility to bind servers to ports whose ip address is given
+	as an interface description string.
+
+2001-09-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in: Include `version.texi'. Possible since
+	update to `GNU automake 1.4-p5'.
+
+2001-09-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.en.html: Dropped a note about Windows XP support.
+
+2001-09-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Using Serveez): Added a section about building
+	and installing the package.
+
+2001-08-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Chat Server): Adjusted documentation about
+	the master server protocol.
+
+2001-07-30  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (HTTP Server): Added a note about the performance
+	of Linux's VFS vs. HTTP file cache.
+
+2001-07-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Embedded servers): Started to document how to
+	write server modules with serveez.
+
+2001-07-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Writing servers): Split this section into
+	three subsection (Builtin servers, Embedded servers,
+	Guile servers).
+
+	* serveez-api.awk: Detection of guile procedures implemented.
+	The script produces now different function definitions for
+	C and Guile functions.
+
+	* guile-api.texi.in: Included all binary smob procedures
+	and the procedures for the guile server interface. The section
+	about guile servers occurs under `Writing servers' in the main
+	documentation. The file `guile-api.texi' is included by
+	`serveez.texi'.
+
+	* Makefile.am (guile-api.texi): Added Makefile rules for
+	automatic rebuild of guile interface procedure documentation.
+
+2001-07-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.awk: Do not strip white spaces within @example
+	tags.
+
+2001-07-03  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am: Verified the build process of the web site at
+	www.gnu.org. The `site' target creates part of the directory
+	you need to check into the
+	subversions.gnu.org:/webcvs/software/serveez CVS.
+
+2001-06-30  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* serveez.texi (Define ports, Bind servers to ports),
+	(Introduction to servers, Writing servers, IRC Server): Minor topy
+	fixes.
+
+2001-06-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Define ports): Added some nodes for the
+	configuration section, examples for basic functionality and a
+	section about additional possibilities.
+
+2001-05-18  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Memory management): Added some
+	introductory words on this chapter.
+
+2001-05-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in: Restructured the API documentation and
+	added some introductory materials.
+
+2001-05-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Utility functions): Added the INI*()
+	macros.
+
+	* Makefile.am: New target `site' which copies the GNU website
+	to the directory SITE_DIR. Dropped the `pack' target.
+
+	* serveez.en.html: Changed manual link.
+
+	* serveez-api.texi.in: Updated whole API description.
+	(PortConfig): Added some words about port configurations.
+
+	* serveez.en.html: Added link to Guile home page (replaced with
+	Sizzle's link).
+
+	* serveez.texi (Porting issues): Removed most references to
+	Sizzle and added some comments about Guile.
+
+2001-04-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (distclean-local): Deleting the HTML-directory.
+
+2001-04-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Embedding API): Added new section about
+	port configurations.
+
+2001-04-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Coserver): New section about the coserver
+	API of the core library.
+
+2001-03-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi.in (Data structures): Put the data structure
+	sections for sparse vectors, vectors, arrays and hashes here.
+
+	* serveez-api.awk: Added macro snarf function.
+
+2001-02-17  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.awk: Dropping C comments within argument lists.
+
+	* serveez-api.texi.in (Embedding API): Added documentation for
+	all function in the core library.
+
+	* Makefile.am (serveez-api.texi): Added a rule for creating
+	this file via the below scripts.
+
+	* serveez-api.awk: This awk script produces a sed script
+	which replaces simple placeholders for C function within a
+	texinfo file with its full documentation. The awk script
+	gets C source files as input.
+
+2001-02-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Tunnel Server): Documented the extended ICMP
+	protocol used in Serveez which has been introduced in order
+	to help implementing the tunnel server.
+
+2001-01-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez-api.texi: Added this file for documentation of
+	the embedding manual. It should describe the whole API
+	of the Serveez core library.
+
+2001-01-13  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* serveez.texi: Some minor typos corrected.
+
+2000-12-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Introduction to servers): Added some kind
+	of terminology clarification.
+
+2000-12-30  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Writing Servers): Documented data types of
+	the socket_t structure.
+	Added types and default values for each configuration item
+	for all servers. Added configuration sub section for the
+	foo server.
+
+2000-12-16  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (SNTP Server): Added a section for the new UDP
+	server. We dropped the Quake III license key server.
+
+	* index.html: Added the SourceForge logo and slightly changed
+	the appearance of the main page.
+
+2000-11-23  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi: Including `version.texi' which gets
+	automatically generated when enabling maintainer mode. The
+	support for this file requires the `mdate-sh' script.
+
+2000-10-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi: All occurrences of serveez, sizzle and
+	versions replaced by meta variables.
+
+2000-10-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.1: Simple man page added.
+
+2000-08-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Gnutella Spider): Documented the included
+	Gnutella server sparely.
+
+2000-08-20  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Existing Co-Servers): "Redocumented" the
+	Co-Server section.
+	(Writing Servers): Documented the `version' and `id' items
+	in the socket structure.
+
+2000-08-17  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi (Quake III Key Server): Documented the
+	integrated Quake3 key server. Including reference to possibly
+	illegal topic.
+
+	* serveez.cfg (q3key-server1): Added Quake3 key server
+	configuration.
+
+2000-07-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.texi: Added GPL to license section.
+
+	* Makefile.am: Using `texi2html' we can now produce a HTML
+ 	documentation on the fly (added to all-local).
+
+2000-07-09  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am: Added info_TEXINFOS for creating info and dvi
+	files.
+
+	* serveez.texi: Started documentation written in texinfo, the
+	GNU documentation format.
+
+2000-07-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* coserver.txt: Documentation on how to write coservers for
+	blocking tasks within serveez.
+
+	* server.txt: Started to write some documentation on how to write
+	your own internet protocol server.
+
+2000-01-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* Identification:      RFC 1413
+	* Internet Relay Chat: RFC 1459
+	* HTTP/1.0:            RFC 1945
+	* HTTP/1.1:            RFC 2616
+
+1999-10-19  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* awcs-proto.txt: Copied from older source and adapted to latest
+	protocol changes.
+
+	* README: Created.
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2000, 2001, 2002, 2003 Stefan Jahn
+Copyright (C) 1999, 2001 Martin Grabmueller
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

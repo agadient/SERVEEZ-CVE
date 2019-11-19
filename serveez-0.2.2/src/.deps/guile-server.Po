@@ -1,0 +1,3 @@
+guile-server.o: guile-server.c config.h
+
+config.h:

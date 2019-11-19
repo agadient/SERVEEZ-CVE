@@ -1,0 +1,692 @@
+#!/bin/sh
+exec ${GUILE-guile} -e '(guile-baux tsar)' -s $0 "$@" # -*- scheme -*-
+!#
+;;; tsar --- Extract/aggregate texinfo snippets from Scheme files
+
+;; Copyright (C) 2010, 2011, 2012 Thien-Thi Nguyen
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;; Usage: tsar [options] command file...
+;;
+;; Create or update a texinfo snippet archive, scanning
+;; Scheme source files in the process.  Commands:
+;;
+;;  create -- scan FILE...; write a new archive
+;;  update -- scan FILE...; update entries in an existing
+;;            archive, creating one if necessary
+;;  rescan -- scan files named in an existing archive which
+;;            are newer than the archive; update entries
+;;  concat -- create a new archive from archive FILE...
+;;
+;; Options (defaults in square braces):
+;;
+;;  -f, --file ARCHIVE   -- Operate on ARCHIVE.
+;;  -c, --coding CODING  -- Use encoding CODING [binary].
+;;  -z, --zstdin         -- Read NUL-terminated filenames from stdin.
+;;  -l, --language NAME  -- Prefix category with NAME.
+;;  -m, --default MOD    -- Use MOD for non-moduled items [(guile-user)].
+;;  -v, --verbose        -- Display information to stderr.
+;;
+;; Commands `update' and `rescan' require `--file ARCHIVE'.  If both
+;; `-z' and FILE... are specified, `-z' filenames are processed first.
+
+;;; Code:
+
+(define-module (guile-baux tsar)
+  #:export (main)
+  #:use-module ((guile-baux common) #:select (fs fse die check-hv qop<-args))
+  #:use-module ((guile-baux filenamez) #:select (read-filenamez))
+  #:use-module ((guile-baux file-newer-than) #:select (file-newer-than))
+  #:use-module ((guile-baux read-string) #:select (read-string))
+  #:use-module ((guile-baux scheme-scanner) #:select (scheme-scanner))
+  #:use-module ((guile-baux ts-base) #:select (make-ts
+                                               ts:name ts:module ts:filename
+                                               ts:category
+                                               unsplit
+                                               make-ar
+                                               read-ar-file))
+  #:use-module ((guile-baux ts-output) #:select (extract-options-deleting!
+                                                 write-ar))
+  #:use-module ((ice-9 and-let-star) #:select (and-let*))
+  #:use-module ((ice-9 regex) #:select (match:substring))
+  #:use-module ((srfi srfi-1) #:select (lset-union
+                                        member
+                                        take
+                                        drop
+                                        split-at
+                                        remove!
+                                        filter!))
+  #:use-module ((srfi srfi-11) #:select (let-values))
+  #:use-module ((srfi srfi-13) #:select (string-join
+                                         string-trim-both)))
+
+;; Filter @var{forms}, combining contiguous comment forms that have the
+;; same number of leading semicolons, without disturbing other form
+;; types.
+;;
+;; @var{clean} is a procedure called with @var{level}, a count of the
+;; leading semicolons, and the list of clumped comments, and whose
+;; return value is consed onto the return value of @code{clump-comments}.
+;; Typically you would use @var{clean} to remove from each comment the
+;; number of leading semicolons specified by @var{level}.
+;;
+(define (clumper style)
+
+  (define (semi x) (assq-ref x 'leading-semicolons))
+  (define (guts x) (assq-ref x 'text))
+
+  (define (comment? form)
+    (and (eq? 'comment (car form))
+         (cdr form)))
+
+  (define (strip-semicolons-and-maybe-space level)
+    (let ((maybe (1+ level)))
+      (lambda (s)
+        (let ((len (string-length s)))
+          (if (< len level)
+              s
+              (substring s (if (and (< maybe len)
+                                    (char=? #\space (string-ref s level)))
+                               maybe
+                               level)))))))
+
+  (define (strip-semicolons level)
+    (lambda (s)
+      (substring s level)))
+
+  (let ((clean (case style
+                 ((semis) strip-semicolons)
+                 ((semis+space) strip-semicolons-and-maybe-space)
+                 (else (error "bad clumper style:" style)))))
+
+    ;; rv
+    (lambda (forms)
+      (let ((acc (list)))
+        (define (acc! x)
+          (set! acc (cons x acc)))
+        (let loop ((forms forms))
+          (or (null? forms)
+              (let ((form (car forms)))
+                (cond ((comment? form)
+                       => (lambda (alist)
+                            (let ((start-at (assq-ref alist 'at))
+                                  (text (list)))
+                              (define (guts! al)
+                                (set! text (cons (guts al) text)))
+                              (guts! alist)
+                              (let cloop ((inner-forms (cdr forms))
+                                          (level (semi alist)))
+                                (define (up)
+                                  (acc! `(comment
+                                          (at ,@start-at)
+                                          (leading-semicolons . ,level)
+                                          (text-list . ,(map (clean level)
+                                                             (reverse! text)))))
+                                  (loop inner-forms))
+                                (if (null? inner-forms)
+                                    (up)
+                                    (let ((inner-form (car inner-forms)))
+                                      (cond ((comment? inner-form)
+                                             => (lambda (inner-alist)
+                                                  (cond ((= (semi inner-alist)
+                                                            level)
+                                                         (guts! inner-alist)
+                                                         (cloop (cdr inner-forms)
+                                                                level))
+                                                        (else (up)))))
+                                            (else (up)))))))))
+                      (else
+                       (acc! form)
+                       (loop (cdr forms)))))))
+        (reverse! acc)))))
+
+;; Return a procedure @var{p} that takes one arg @var{filename}.
+;; @var{p} scans @var{filename} clumping top-level elements
+;; according to @var{clump-scheme}.
+;;
+(define (file-forms clump-scheme)
+  (let ((scan (scheme-scanner))
+        (clump (cond (clump-scheme => clumper)
+                     (else identity))))
+    ;; rv
+    (lambda (filename)
+      (clump (let ((p (open-input-file filename)))
+               (let loop ((acc '()))
+                 (let ((form (scan p)))
+                   (cond ((pair? form)
+                          (loop (cons form acc)))
+                         (else
+                          (close-port p)
+                          (reverse! acc))))))))))
+
+;; Return information on anonymous procedure @var{form} as a pair:
+;; @code{(@var{sig-tail} . @var{doc-string})}, where @var{sig-tail}
+;; is the signature (without the name since it is anonymous, duh!) and
+;; @var{doc-string} is the standard internal docstring if available, or
+;; @code{#f} if not.  If @var{form} begins with @code{let} or @code{let*},
+;; recurse into the last form of the scope.  If @var{form} is not an anonymous
+;; procedure definition, return @code{#f}.  For example, both:
+;;
+;; @lisp
+;; (let ((state-0 0))
+;;   (let ((state-1 1))
+;;     (lambda (a b c) "doc" 42))))
+;;
+;; and:
+;;
+;; (lambda (a b c) "doc" 42)
+;; @end lisp
+;;
+;; return the same value, namely: ((a b c) . "doc").
+;;
+(define (anon-proc-info form)
+  (and (pair? form)
+       (< 2 (length form))
+       (cond ((memq (car form) '(lambda lambda*))
+              (cons (cadr form)
+                    (and (< 3 (length form))
+                         (string? (caddr form))
+                         (caddr form))))
+             ((memq (car form) '(let let*))
+              (anon-proc-info (car (last-pair form))))
+             (else #f))))
+
+;; {categories}
+;;
+;; With the exception of @code{expression}, categories are all
+;; definitions of some type or other.
+;;
+;; @table @code
+;; @item syntax
+;; A macro definition, recognized by @code{defmacro},
+;; @code{defmacro-public}, @code{defmacro*}, @code{defmacro*-public},
+;; or @code{define-syntax}.
+;;
+;; @item procedure
+;; A procedure definition, recognized by either:@*
+;; @code{(define (@var{name} @dots{}) @dots{})} or
+;; @code{(define @dots{} (lambda @dots{}))}, i.e., a definition
+;; with the last (recursively extracted) element of the sequence a
+;; @code{lambda} form.
+;;
+;; In the place of @code{define}, there may be instead
+;; @code{define-public}, @code{define*} or @code{define*-public}.
+;; In the place of @code{lambda}, there may be instead @code{lambda*}.
+;;
+;; @item type
+;; A @code{define-record-type} form.
+;;
+;; @item define-module
+;; A @code{define-module} form.
+;;
+;; @item define
+;; @itemx define-public
+;; A definition that doesn't fit elsewhere.
+;;
+;; @item expression
+;; A non-definition form or literal.
+;; @end table
+
+;; Return details of @var{form} as an alist, with symbolic keys:
+;;
+;; @table @code
+;; @item category
+;; The category, a symbol.
+;;
+;; @item name
+;; The value is a symbol for definitions, and @code{#f}
+;; for non-definitions (i.e., expressions).
+;;
+;; @item args
+;; The @dfn{arglist} if @var{form} is a @code{procedure}
+;; or @code{syntax}, as either a single symbol or a
+;; (possibly improper) list of symbols and keywords.
+;;
+;; @item std-int-doc
+;; A string, the @dfn{standard internal docstring}, typically
+;; found as a procedure's first element, immediately following
+;; the arglist.
+;; @end table
+;;
+(define (form-details form)
+  (let ((alist (list)))
+
+    (define (note! k v)
+      (set! alist (acons k v alist)))
+
+    (define (name! x)
+      (note! 'name x))
+
+    (define (category! x)
+      (note! 'category x))
+
+    (define (signature! name args)
+      (name! name)
+      (note! 'args args))
+
+    (define (signature!/1 x)
+      (signature! (car x) (cdr x)))
+
+    (define (std-int-doc! x)
+      (note! 'std-int-doc x))
+
+    (cond
+
+     ;; (define         (NAME ...))
+     ;; (define-public  (NAME ...))
+     ;; (define*        (NAME ...))
+     ;; (define*-public (NAME ...))
+     ((and (list? form)
+           (< 2 (length form))
+           (memq (car form) '(define define-public
+                               define* define*-public))
+           (pair? (cadr form)))
+      (category! 'procedure)
+      ;; Handle nested syntax, where NAME is actualy (SUB-NAME ...).
+      (let loop ((sig (cadr form)))
+        (cond ((symbol? (car sig))
+               (signature!/1 sig))
+              (else
+               (loop (car sig)))))
+      (and (< 3 (length form))
+           (string? (caddr form))
+           (std-int-doc! (caddr form))))
+
+     ;; (define        NAME (lambda  (...)))
+     ;; (define-public NAME (lambda  (...)))
+     ;; (define        NAME (lambda* (...)))
+     ;; (define-public NAME (lambda* (...)))
+     ((and (list? form)
+           (< 2 (length form))
+           (memq (car form) '(define define-public))
+           (symbol? (cadr form))
+           (anon-proc-info (caddr form)))
+      => (lambda (anon)
+           (category! 'procedure)
+           (signature! (cadr form) (car anon))
+           (and (cdr anon) (std-int-doc! (cdr anon)))))
+
+     ;; (defmacro         NAME (...) ...)         ;; aka "syntax"
+     ;; (defmacro-public  NAME (...) ...)
+     ;; (defmacro*        NAME (...) ...)
+     ;; (defmacro*-public NAME (...) ...)
+     ((and (list? form)
+           (memq (car form) '(defmacro defmacro-public
+                               defmacro* defmacro*-public)))
+      (signature! (cadr form) (caddr form))
+      (category! 'syntax))
+
+     ;; (define-macro (NAME ...) ...)             ;; aka "syntax"
+     ((and (list? form)
+           (eq? 'define-macro (car form)))
+      (signature!/1 (cadr form))
+      (category! 'syntax))
+
+     ;; (define-syntax NAME (syntax-rules ...))   ;; aka "syntax"
+     ((and (list? form)
+           (eq? 'define-syntax (car form))
+           (pair? (cdr form))
+           (pair? (cddr form))
+           (pair? (caddr form))
+           (let ((sr (caddr form)))
+             (and (eq? 'syntax-rules (car sr))
+                  (pair? (cdr sr))
+                  (eq? '() (cadr sr)))))
+      (signature! (cadr form) '(...))
+      (category! 'syntax))
+
+     ;; (define-record-type NAME ...)
+     ((and (list? form)
+           (eq? 'define-record-type (car form))
+           (pair? (cdr form))
+           (symbol? (cadr form)))
+      (category! 'type)
+      (name! (cadr form)))
+
+     ;; (define-module ...)                       ;; misc definition
+     ((and (list? form)
+           (memq (car form) '(define define-public define-module))
+           (not (null? (cdr form))))
+      (category! (car form))
+      (name! (cadr form)))
+
+     ;; Add other categories here.
+     (else (category! 'expression)))
+
+    ;; rv
+    alist))
+
+;; ☡: Like Common Lisp @code{push} (☡!).
+;;
+(define-macro (pile! object place)
+  `(set! ,place (cons ,object ,place)))
+
+;; ☡: Like Common Lisp @code{pushnew} (☡!).
+;;
+(define-macro (pile?! object place)
+  `(let ((object ,object))
+     (or (member object ,place)
+         (set! ,place (cons object ,place)))))
+
+(define TITLE-RX (make-regexp "^[ \t]*\\{(.+)\\}[ \t]*$" regexp/extended))
+
+(define (canonicalize-args override x)
+  ;; Canonical form is #(R O V [ARG1 ... ARGN]), where N is (+ R O V).
+
+  (define (bad-override!)
+    ;; FIXME: Use ‘bummer’ somehow.
+    (die "invalid `args' option: ~A~%\toriginal: ~S~%" override x))
+
+  (define (uncomplicate req rest)
+
+    (define (just-the-name x)
+      (if (pair? x)
+          (car x)
+          x))
+
+    (define (more? kind)
+      (and (pair? rest) (eq? kind (car rest))))
+
+    (define (collect kind)
+      (cond ((more? kind)
+             (let loop ((acc '()) (ls (cdr rest)))
+               (cond ((or (symbol? ls) (null? ls) (keyword? (car ls)))
+                      (set! rest ls)
+                      (reverse! acc))
+                     (else
+                      (loop (cons (just-the-name (car ls)) acc)
+                            (cdr ls))))))
+            (else
+             '())))
+
+    (let* ((opt (collect #:optional))
+           (key (collect #:key))
+           (var (if (null? key)
+                    '()
+                    (list key))))
+      (and (more? #:allow-other-keys)
+           (set! rest (cdr rest)))
+      (and (more? #:rest)
+           (let ((more (cadr rest)))
+             (set! var (append! var (list more)))
+             (set! rest (cddr rest))))
+      (and (symbol? rest)
+           (set! var (append! var (list rest))))
+      (apply vector (length req) (length opt) (length var)
+             (append! req opt var))))
+
+  (define (canon-x x)
+    (and x (let loop ((k 0) (acc '()) (ls x))
+             (define (req-names . tail)
+               (reverse! acc tail))
+             (cond ((symbol? ls)
+                    (apply vector k 0 1 (req-names ls)))
+                   ((null? ls)
+                    (apply vector k 0 0 (req-names)))
+                   (else
+                    (let ((head (car ls))
+                          (tail (cdr ls)))
+                      (if (keyword? head)
+                          (uncomplicate (req-names) ls)
+                          (loop (1+ k) (cons head acc) tail))))))))
+
+  (if (not override)
+      (canon-x x)
+      (let-values (((rov names) (split-at (read-string override) 3)))
+        ;; Handle ‘(- O V [name...])’.
+        (and-let* (((eq? '- (car rov)))
+                   (was (or (canon-x x)
+                            (bad-override!))))
+          (or (vector? was)
+              (bad-override!))
+          (apply (lambda (r o v . was-names)
+                   ;; TODO: Sanity check ‘o’, ‘v’.
+                   (set-car! rov r)
+                   (set! names (append (take was-names r)
+                                       (if (null? names)
+                                           (drop was-names r)
+                                           names))))
+                 (vector->list was)))
+        ;; Add more names if necessary.
+        (and-let* ((tot (apply + rov))
+                   (got (length names))
+                   (diff (- tot got))
+                   ((positive? diff)))
+          (set! names (append! names (map (lambda (i)
+                                            (string->symbol
+                                             (fs "arg~A" (+ got 1 i))))
+                                          (iota diff)))))
+        ;; rv
+        (list->vector (append! rov names)))))
+
+(define (process-file explain language default-module filename split)
+  (let* ((current-module default-module)
+         (all-modules '())
+         (items '()))
+
+    (define (extract type field x)
+      (and (eq? type (car x))
+           (assq-ref (cdr x) field)))
+
+    (define (acc-maybe stash form)
+
+      (define (new-item! name blurb-ls category args options)
+        (pile! (make-ts
+                name current-module split
+                (string-trim-both (string-join blurb-ls "\n") #\newline)
+                (if language
+                    (fs "~A ~A" language category)
+                    category)
+                args
+                (list->vector (assq-ref (cdr form) 'at))
+                options)
+               items))
+
+      ;; Recognize: TITLED-TEXT-BLOCK-COMMENT.
+      (and-let* ((comment (extract 'comment 'text-list form))
+                 ((not (null? comment)))
+                 (m (regexp-exec TITLE-RX (car comment))))
+        (new-item! (match:substring m 1)
+                   (cdr comment)
+                   ;; No category, args, or options.
+                   #f #f '()))
+
+      ;; Recognize sequence: COLUMN-0-COMMENT, FORM.
+      (and-let* ((sexp (extract 'form 'sexp form))
+                 (detail (let ((alist (form-details sexp)))
+                           (and alist (lambda (sel)
+                                        (assq-ref alist sel))))))
+        (if (and (pair? sexp)
+                 (eq? 'define-module (car sexp)))
+            (set! current-module (cadr sexp))
+            (and-let* ((comment (extract 'comment 'text-list stash))
+                       ((zero? (cadr (extract 'comment 'at stash))))
+                       (options (extract-options-deleting! comment))
+                       ;; Don't bother with non-definitions, for now.
+                       (name (detail 'name)))
+              (pile?! current-module all-modules)
+              (new-item! name comment
+                         (detail 'category)
+                         (canonicalize-args (assq-ref options 'args)
+                                            (detail 'args))
+                         (assq-remove! options 'args))))))
+
+    ;; do it!
+    (let loop ((forms ((file-forms 'semis+space) filename))
+               (stash '(#f)))
+      (or (null? forms)
+          (let ((form (car forms)))
+            (acc-maybe stash form)
+            (loop (cdr forms) form))))
+    (set! all-modules (reverse! all-modules))
+    (set! items (reverse! items))
+    (explain (lambda ()
+               (fse "~A: ~A~%" (length items) filename)
+               (for-each (lambda (ts)
+                           (fse "\t~S ~S (~A)~%"
+                                (ts:module ts)
+                                (ts:name ts)
+                                (ts:category ts)))
+                         items)))
+    (values all-modules items)))
+
+(define (run cmd bummer explain on-disk coding language default-module input)
+  (or (memq cmd '(create update rescan concat))
+      (bummer "unknown command: ~A" cmd))
+  (let ((update? (memq cmd '(update rescan)))
+        (dirs (list))
+        (files (list))
+        (mods (list))
+        (all (list)))
+
+    (define (ts=? a b)
+
+      (define (same aspect)
+        (equal? (aspect a)
+                (aspect b)))
+
+      (and (same ts:module)
+           (same ts:name)))
+
+    (define (merge-ts ts)
+      (define (flat-filename ts)
+        (unsplit (ts:filename ts)))
+      (cond ((member ts all ts=?)
+             => (lambda (ls)
+                  (let ((was (car ls)))
+                    (or (equal? (ts:filename was)
+                                (ts:filename ts))
+                        (explain
+                         (lambda ()
+                           (fse "moved: ~S ~S  ~S <- ~S~%"
+                                (ts:module     ts)
+                                (ts:name       ts)
+                                (flat-filename ts)
+                                (flat-filename was)))))
+                    (set-car! ls ts))))
+            (else
+             (pile! ts all))))
+
+    ;; ;; This may come back at some point.
+    ;; (define absolute-dirname
+    ;;   (let ((cwd (getcwd)))
+    ;;     (lambda (filename)
+    ;;       (elide-dot-dotdot
+    ;;        (let* ((dir (dirname filename))
+    ;;               (full (if (string=? "." dir)
+    ;;                         cwd
+    ;;                         dir)))
+    ;;          (if (char=? #\/ (string-ref full 0))
+    ;;              full
+    ;;              (in-vicinity cwd full)))
+    ;;        #t))))
+
+    (define (simple-dirname filename)
+      (string-append (dirname filename) "/"))
+
+    (define (fresh filename)
+      (let* ((dir (simple-dirname filename))
+             (base (basename filename))
+             (split (cons dir base)))
+        ;; Remember filenames unconditionally for ‘rescan’ support.
+        (pile?! dir dirs)
+        (pile?! split files)
+        (and update?
+             ;; Remove each ts that has this filename.  This does
+             ;; not change ‘dirs’, ‘files’ or ‘modules’, however.
+             (set! all (remove! (lambda (ts)
+                                  (equal? split (ts:filename ts)))
+                                all)))
+        (let-values (((modules items) (process-file explain language
+                                                    default-module
+                                                    filename split)))
+          (cond ((pair? items)
+                 (set! mods (lset-union equal? mods modules))
+                 (for-each merge-ts items))))))
+
+    (define (prev filename)
+      (let-values (((d f m i) (read-ar-file bummer coding #t filename)))
+        (set! dirs  (lset-union string=? dirs  d))
+        (set! files (lset-union   equal? files f))
+        (set! mods  (lset-union   equal? mods  m))
+        (set! all   (lset-union   equal? all   i))))
+
+    (and update?
+         (or on-disk (bummer "missing tsar filename"))
+         (file-exists? on-disk)
+         (prev on-disk))
+
+    (for-each (if (eq? 'concat cmd)
+                  prev
+                  fresh)
+              (if (eq? 'rescan cmd)
+                  (filter! (let ((latest (stat on-disk)))
+                             (lambda (filename)
+                               (file-newer-than filename latest)))
+                           (map unsplit files))
+                  input))
+
+    (write-ar (make-ar coding dirs files mods all)
+              (or (and=> on-disk open-output-file)
+                  (current-output-port)))))
+
+(define (main/qop me qop)
+  (define (bummer s . rest)
+    (apply die #f (string-append "~A: " s "~%") me rest))
+  (let ((in (qop '())))
+    (or (pair? in)
+        (bummer "missing command (try --help)"))
+    (run (string->symbol (car in))
+         bummer
+         ;; explain
+         (if (qop 'verbose)
+             (lambda (thunk)
+               (thunk))
+             identity)
+         ;; on-disk
+         (qop 'file)
+         ;; coding
+         (or (qop 'coding string->symbol) 'binary)
+         ;; language
+         (qop 'language)
+         ;; default-module
+         (or (qop 'default read-string)
+             '(guile-user))
+         ;; input
+         (append (if (qop 'zstdin)
+                     (read-filenamez (current-input-port))
+                     (list))
+                 (cdr (qop '()))))))
+
+(define (main args)
+  (check-hv args '((package . "Guile-BAUX")
+                   (version . "0.0")
+                   (help . commentary)))
+  (main/qop
+   ;; me
+   (basename (car args))
+   ;; qop
+   (qop<-args args '((coding (single-char #\c) (value #t))
+                     (file (single-char #\f) (value #t))
+                     (zstdin (single-char #\z))
+                     (language (single-char #\l) (value #t))
+                     (default (single-char #\m) (value #t))
+                     (verbose (single-char #\v))))))
+
+;;; tsar ends here

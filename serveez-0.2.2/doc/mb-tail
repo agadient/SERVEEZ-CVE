@@ -1,0 +1,34 @@
+.\" mb-tail                                           -*- nroff -*-
+.\"
+.\" Copyright (C) 2013 Thien-Thi Nguyen
+.\"
+.\" Copying and distribution of this file, with or without modification,
+.\" are permitted in any medium without royalty provided the copyright
+.\" notice and this notice are preserved.  This file is offered as-is,
+.\" without any warranty.
+.\"
+.SH "REPORTING BUGS"
+Please send bug reports to <bug-serveez@gnu.org>.
+.SH "COPYRIGHT"
+Copyright \(co 2013 Thien-Thi Nguyen
+.PP
+Copying and distribution of this manpage, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This manpage is offered as-is,
+without any warranty.
+.SH "SEE ALSO"
+The full documentation for \*(pb is maintained as a Texinfo manual.
+If the
+.BR info (1)
+and \*(pb programs are properly installed at your site, the command
+.IP
+.B info serveez
+.PP
+should give you access to the complete manual.
+Additionally, the \*(SZ homepage:
+.IP
+.B http://www.gnu.org/software/serveez/
+.PP
+has news and links to the latest release, development site, etc.
+.\"
+.\" mb-tail ends here

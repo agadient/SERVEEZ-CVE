@@ -1,0 +1,824 @@
+@c -*-texinfo-*-
+@c
+@c This file includes the documentation about the Guile servers.  It is
+@c included by `serveez.texi'.
+@c
+
+This section describes the Guile interface to Serveez which provides
+the ability to write servers with Guile.  Of course, you could do this
+without any help from Serveez, but it makes the task a lot easier.
+This interface reduces the Guile implementation of an Internet server
+to a simple data processor.
+
+@subsubsection Underlying libserveez
+
+@set TSINCURMOD (guile)
+@deffn {Scheme Procedure} libserveez-features
+Return a list of symbols representing the features of the underlying
+libserveez.  For details, @xref{Library features}.
+@end deffn
+
+@subsubsection Special Data Types
+
+Serveez extends Guile by various new data types which represent internal
+data structures of Serveez's core API.
+
+@itemize @bullet
+@item @code{#<svz-servertype>}
+represents a server type.
+
+@item @code{#<svz-server>}
+represents a server (an instance of a server type).
+
+@item @code{#<svz-socket>}
+represents a socket structure.
+@end itemize
+
+@subsubsection Passing Binary Data
+
+The new binary data type (@code{#<svz-binary>}) provides access to any
+kind of unstructured data.  It manages the data exchange between Guile
+and Serveez.  There are some conversion procedures for strings and lists
+which help to process this binary data in a more complex (guile'ish) way.
+
+@deffn {Scheme Procedure} binary->string binary
+Convert the given binary smob @var{binary} into a string.
+Return the string itself.
+@end deffn
+
+@deffn {Scheme Procedure} string->binary string
+Convert the given @var{string} into a binary smob.  The data pointer of
+the binary smob is marked as garbage which must be @code{free}'d in the
+sweep phase of the garbage collector.
+@end deffn
+
+@deffn {Scheme Procedure} binary? obj
+Return @code{#t} if @var{obj} is an instance of the binary smob type.
+@end deffn
+
+@deffn {Scheme Procedure} list->binary list
+Convert the scheme list @var{list} into a binary smob.  Each of the
+elements of @var{list} is checked for validity.  The elements can be
+either exact numbers in a byte's range or characters.
+@end deffn
+
+@deffn {Scheme Procedure} binary->list binary
+Convert the given binary smob @var{binary} into a scheme list.  The list
+is empty if the size of @var{binary} is zero.
+@end deffn
+
+@deffn {Scheme Procedure} binary-search binary needle
+Search through the binary smob @var{binary} for @var{needle},
+which can be an exact number, character,
+string or another binary smob.  Return @code{#f} if the needle could
+not be found, or a positive number indicating the position of the first
+occurrence of @var{needle} in the binary smob @var{binary}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-set! binary index value
+Set the byte at position @var{index} of the binary smob @var{binary} to
+the value given in @var{value} which can be either a character or an
+exact number.
+@end deffn
+
+@deffn {Scheme Procedure} binary-ref binary index
+Obtain the byte at position @var{index} of the binary smob
+@var{binary}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-length binary
+Return the size in bytes of the binary smob @var{binary}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-concat! binary append
+Append either the binary smob or string @var{append} onto the binary
+smob @var{binary}.  If @var{binary} has been a simple data pointer
+reference it is then a standalone binary smob as returned by
+@code{string->binary}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-subset binary start [end]
+Create a subset binary smob from the given binary smob @var{binary}.  The
+range of this subset is specified by @var{start} and @var{end} both
+inclusive (thus the resulting size is @code{@var{end} - @var{start} + 1}).
+With a single exception: If @var{end} is not given or specified with -1,
+return all data until the end of @var{binary}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-reverse binary
+Return a new binary smob with the reverse byte order of the given
+binary smob @var{binary}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-reverse! binary
+Perform an in-place reversal of the given binary smob @var{binary}
+and return it.
+@end deffn
+
+@deffn {Scheme Procedure} binary-long-ref binary index
+Return the @code{long} value of the binary
+smob @var{binary} at the array index @var{index}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-long-set! binary index value
+Set the @code{long} value of the binary smob @var{binary}
+at the array index @var{index} to the given value @var{value}.
+Return the previous (overridden) value.
+@end deffn
+
+@deffn {Scheme Procedure} binary-int-ref binary index
+Return the @code{int} value of the binary
+smob @var{binary} at the array index @var{index}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-int-set! binary index value
+Set the @code{int} value of the binary smob @var{binary}
+at the array index @var{index} to the given value @var{value}.
+Return the previous (overridden) value.
+@end deffn
+
+@deffn {Scheme Procedure} binary-short-ref binary index
+Return the @code{short} value of the binary
+smob @var{binary} at the array index @var{index}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-short-set! binary index value
+Set the @code{short} value of the binary smob @var{binary}
+at the array index @var{index} to the given value @var{value}.
+Return the previous (overridden) value.
+@end deffn
+
+@deffn {Scheme Procedure} binary-char-ref binary index
+Return the @code{char} value of the binary
+smob @var{binary} at the array index @var{index}.
+@end deffn
+
+@deffn {Scheme Procedure} binary-char-set! binary index value
+Set the @code{char} value of the binary smob @var{binary}
+at the array index @var{index} to the given value @var{value}.
+Return the previous (overridden) value.
+@end deffn
+
+@subsubsection Server Definition
+
+In order to set up a new server type, you use the procedure
+@code{define-servertype!}.  This procedure takes one argument which
+must be an associative list specifying the server type in detail.
+There are optional and mandatory elements you can set up in this alist.
+
+The following example shows the overall syntax of this procedure:
+
+@lisp
+(define-servertype! '(
+
+  ;; Mandatory: server type prefix for later use in (define-server!)
+  (prefix          . "foo")
+
+  ;; Mandatory: server type description
+  (description     . "guile foo server")
+
+  ;; Mandatory for TCP and PIPE servers: protocol detection
+  (detect-proto    . foo-detect-proto)
+
+  ;; Optional: global server type initialisation
+  (global-init     . foo-global-init)
+
+  ;; Optional: server instance initialisation
+  (init            . foo-init)
+
+  ;; Optional: server instance finalisation
+  (finalize        . foo-finalize)
+
+  ;; Optional: global server type finalisation
+  (global-finalize . foo-global-finalize)
+
+  ;; Mandatory for TCP and PIPE servers: socket connection
+  (connect-socket  . foo-connect-socket)
+
+  ;; Optional: server instance info
+  (info-server     . foo-info-server)
+
+  ;; Optional: client info
+  (info-client     . foo-info-client)
+
+  ;; Optional: server instance reset callback
+  (reset           . foo-reset)
+
+  ;; Optional: server instance notifier
+  (notify          . foo-notify)
+
+  ;; Mandatory for UDP and ICMP servers: packet handler
+  (handle-request  . foo-handle-request)
+
+  ;; Mandatory: server type configuration (may be an empty list)
+  (configuration   . (
+
+    ;; The server configuration is an alist (associative list) again.
+    ;; Each item consists of an item name and a list describing the
+    ;; item itself.
+    ;; Syntax: (key . (type defaultable default))
+    (foo-integer       . (integer  #t 0))
+    (foo-integer-array . (intarray #t (1 2 3 4 5)))
+    (foo-string        . (string   #t "default-foo-string"))
+    (foo-string-array  . (strarray #t ("guile" "foo" "server")))
+    (foo-hash          . (hash     #t (("foo" . "bar"))))
+    (foo-port          . (portcfg  #t foo-port))
+    (foo-boolean       . (boolean  #t #t))
+  ))))
+@end lisp
+
+@deffn {Scheme Procedure} define-servertype! args
+Define a new server type based on @var{args}.  (If everything
+works fine you have a freshly registered server type afterwards.)
+Return @code{#t} on success.
+@end deffn
+
+@subsubsection Predefined Procedures
+
+The following subset of procedures may be used to implement a Guile
+server.  They should be used within the callbacks defined in the
+@code{define-servertype!} procedure.  Each of these callbacks gets
+passed the appropriate arguments needed to stuff into the following
+procedures.  Please have a look at the example Guile servers for the
+details.
+
+@deffn {Scheme Procedure} svz:sock? sock
+Return @code{#t} if the given cell @var{sock} is an instance of a valid
+@code{#<svz-socket>}, otherwise @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:check-request sock [proc]
+Set the @code{check-request} member of the socket structure @var{sock}
+to @var{proc}.  Return the previously handler if there is any.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:check-oob-request sock [proc]
+Set the @code{check-oob-request} callback of the given socket
+structure @var{sock} to @var{proc}, returning
+the previous callback (if there was any set before).
+The callback is run whenever urgent data (out-of-band)
+has been detected on the socket.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:send-oob sock oob
+Send byte @var{oob} as urgent (out-of-band) data through the
+underlying TCP stream of TCP @var{sock}.
+Return @code{#t} on successful completion and otherwise
+(either it failed to send the byte or the passed socket is not a TCP
+socket) @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:handle-request sock [proc]
+Set the @code{handle-request} member of the socket structure @var{sock}
+to @var{proc}.  Return the previously set handler if there is any.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:boundary sock boundary
+Setup the packet boundary of the socket @var{sock}.  The given string
+value @var{boundary} can contain any kind of data.  If @var{boundary}
+is an exact number, set up the socket to parse fixed sized packets.
+More precisely, set the @code{check-request} callback of the given
+socket structure @var{sock} to an internal routine which runs the
+socket's @code{handle-request} callback when it detects a
+complete packet specified by @var{boundary}.
+
+For instance, you can arrange for Serveez to pass the
+@code{handle-request} procedure lines of text by calling
+@code{(svz:sock:boundary sock "\n")}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:floodprotect sock [flag]
+Set or unset the flood protection bit of the given socket @var{sock}.
+Return the previous value of this bit (@code{#t} or @code{#f}).  The
+@var{flag} argument must be either boolean or an exact number and is
+optional.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:print sock buffer
+Write @var{buffer} (string or binary smob) to the socket @var{sock}.
+Return @code{#t} on success and @code{#f} on failure.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:final-print sock
+Schedule the socket @var{sock} for shutdown after all data
+within the send buffer queue has been sent.  You should call this
+right @strong{before} the last call to @code{svz:sock:print}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:no-delay sock [enable]
+Turn the Nagle algorithm for the TCP socket @var{sock} on or off depending
+on the optional @var{enable} argument.  Return the previous state of this
+flag (@code{#f} if Nagle is active, @code{#t} otherwise).  By default this
+flag is switched off.  This socket option is useful when dealing with small
+packet transfer in order to disable unnecessary delays.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:send-buffer sock
+Return the send buffer of the
+socket @var{sock} as a binary smob.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:send-buffer-size sock [size]
+Return the current send buffer size and fill status in
+bytes of the socket @var{sock} as a pair of exact numbers.  If the
+optional argument @var{size} is given, set the send buffer to
+the specified size in bytes.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:receive-buffer sock
+Return the receive buffer of the
+socket @var{sock} as a binary smob.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:receive-buffer-size sock [size]
+Return the current receive buffers size and fill status in bytes of
+the socket @var{sock} as a pair of exact numbers.  If the optional
+argument @var{size} is given, set the receive buffer to the
+specified size in bytes.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:receive-buffer-reduce sock [length]
+Dequeue @var{length} bytes from the receive buffer of the
+socket @var{sock}, or all bytes if @var{length} is omitted.
+Return the number of bytes actually shuffled away.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:connect host proto [port]
+Establish a network connection to the given @var{host} [ :@var{port} ].
+If @var{proto} equals @code{PROTO_ICMP} the @var{port} argument is
+ignored.  Valid identifiers for @var{proto} are @code{PROTO_TCP},
+@code{PROTO_UDP} and @code{PROTO_ICMP}.  The @var{host} argument must be
+either a string in dotted decimal form, a valid hostname or an exact number
+in host byte order.  When giving a hostname this operation might block.
+The @var{port} argument must be an exact number in the range from
+0 to 65535, also in host byte order.  Return a valid @code{#<svz-socket>}
+or @code{#f} on failure.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:disconnected sock [proc]
+Set the @code{disconnected-socket} member of the socket structure
+@var{sock} to @var{proc}.  The given callback
+runs whenever the socket is lost for some external reason.
+Return the previously set handler if there is one.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:kicked sock [proc]
+Set the @code{kicked-socket} callback of the given socket structure
+@var{sock} to @var{proc} and return any previously
+set procedure.  This callback gets called whenever the socket gets
+closed by Serveez intentionally.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:trigger sock [proc]
+Set the @code{trigger} callback of the socket structure @var{sock} to
+@var{proc} and return any previously set procedure.
+The callback is run when the @code{trigger-condition} callback returns
+@code{#t}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:trigger-condition sock [proc]
+Set the @code{trigger-condition} callback for the socket
+structure @var{sock} to @var{proc}.  Return the
+previously set procedure if available.  The callback is run once every
+server loop indicating whether the @code{trigger} callback should be
+run or not.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:idle sock [proc]
+Set the @code{idle} callback of the socket structure
+@var{sock} to @var{proc}.  Return any previously
+set procedure.  The callback is run by the periodic task scheduler when the
+@code{idle-counter} of the socket structure drops to zero.  If this counter
+is not zero it gets decremented once a second.  The @code{idle}
+callback can reset @code{idle-counter} to some value and thus can
+re-schedule itself for a later task.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:idle-counter sock [counter]
+Return the socket structure @var{sock}'s current
+@code{idle-counter} value.  If the optional argument @var{counter} is
+given, the set the @code{idle-counter}.  Please have a look at the
+@code{svz:sock:idle} procedure for the exact meaning of this value.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:parent sock [parent]
+Return the given socket's @var{sock} parent and optionally set it to the
+socket @var{parent}.  Return either a valid
+@code{#<svz-socket>} object or an empty list.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:referrer sock [referrer]
+Return the given socket's @var{sock} referrer and optionally set it to the
+socket @var{referrer}.  Return either a valid
+@code{#<svz-socket>} or an empty list.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:server sock [server]
+Return the @code{#<svz-server>} object associated with the
+given argument @var{sock}.  The optional argument @var{server} can be used
+to redefine this association and must be a valid @code{#<svz-server>}
+object.  For a usual socket callback like @code{connect-socket} or
+@code{handle-request}, the association is already in place.  But for sockets
+created by @code{svz:sock:connect}, you can use it in order to make the
+returned socket object part of a server.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:local-address sock [address]
+Return the current local address as a pair like
+@code{(host . port)} with both entries in network byte order.  If you pass
+the optional argument @var{address}, you can set the local address of
+the socket @var{sock}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:remote-address sock [address]
+Return the current remote address as a pair like
+@code{(host . port)} with both entries in network byte order.  If you pass
+the optional argument @var{address}, you can set the remote address of
+the socket @var{sock}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:find ident
+Return the @code{#<svz-socket>} specified by @var{ident},
+a pair of integers in the form @code{(identification . version)}.
+If that socket no longer exists, return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:ident sock
+Return a pair of numbers identifying the given
+@code{#<svz-socket>} @var{sock}, which can be passed to
+@code{svz:sock:find}.  This may be necessary when you are passing
+a @code{#<svz-socket>} through coserver callback arguments in order to
+verify that the passed @code{#<svz-socket>} is still valid when the
+coserver callback runs.
+@end deffn
+
+@deffn {Scheme Procedure} svz:sock:protocol sock
+Return one of the @code{PROTO_TCP}, @code{PROTO_UDP}, @code{PROTO_ICMP},
+@code{PROTO_RAW} or @code{PROTO_PIPE} constants indicating the type of
+the socket structure @var{sock}.  If there is no protocol information
+available, return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:read-file port size
+Return either a binary smob containing a data block read
+from the open input port @var{port} with a maximum number of @var{size}
+bytes, or the end-of-file object if the underlying ports end has been
+reached.  The size of the returned binary smob may be less than the
+requested size @var{size} if it exceed the current size of the given port
+@var{port}.  Throw an exception if an error occurred while
+reading from the port.
+@end deffn
+
+@deffn {Scheme Procedure} svz:server? server
+Return @code{#t} if the given cell @var{server} is an instance of a valid
+@code{#<svz-server>}, otherwise @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:server:listeners server
+Return a list of listening @code{#<svz-socket>} smobs to which the
+given server instance @var{server} is currently bound, or an empty list
+if there is no such binding yet.
+@end deffn
+
+@deffn {Scheme Procedure} svz:server:clients server
+Return a list of @code{#<svz-socket>} client smobs associated with
+the given server instance @var{server} in arbitrary order, or an
+empty list if there is no such client.
+@end deffn
+
+@deffn {Scheme Procedure} svz:server:config-ref server key
+Return the configuration item specified by @var{key} of the given server
+instance @var{server}.  You can pass this procedure a socket, too, in
+which case the appropriate server instance is looked up.  If the given
+string @var{key} is invalid (not defined in the configuration alist in
+@code{define-servertype!}), then return an empty list.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-port? name
+Return @code{#t} if the given string @var{name} corresponds with a
+registered port configuration, otherwise @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-server? name
+Check whether the given string @var{name} corresponds with an
+instantiated server name and return @code{#t} if so.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-servertype? name
+Check whether the given string @var{name} is a valid
+server type prefix known in Serveez and return @code{#t} if so.
+Otherwise return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-exceptions [enable]
+Control the use of exception handlers for the Guile procedure calls of
+Guile server callbacks.  If the optional argument @var{enable} is
+@code{#t}, enable exception handling; if @code{#f}, disable it.
+Return the current (boolean) setting.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-nuke [exit-value]
+Shutdown all network connections and terminate after the next event
+loop.  You should use this instead of calling @code{quit}.
+Optional arg @var{exit-value} specifies an exit value for the
+serveez program.  It is mapped to a number via @code{scm_exit_value}.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-loadpath [args]
+Make the search path for the Serveez core library accessible to Scheme.
+Return a list a each path as previously defined.  If @var{args} is specified,
+override the current definition of this load path with it.
+The load path is used to tell Serveez where
+it can find additional server modules.
+@end deffn
+
+@deffn {Scheme Procedure} serveez-interfaces [args]
+Make the list of local interfaces accessible to Scheme.  Return the
+local interfaces as a list of ip addresses in dotted decimal form.  If
+@var{args} are specified, they are added as additional local interfaces.
+@end deffn
+
+@deffn {Scheme Procedure} getrpc [arg]
+Lookup a network rpc service @var{arg} (name or service number),
+and return a network rpc service object.
+If given no arguments, it behave like @code{getrpcent}.
+@end deffn
+
+@deffn {Scheme Procedure} setrpc [stayopen]
+Open and rewind the file @file{/etc/rpc}.
+If the @var{stayopen} flag is non-zero, the net data base will not be
+closed after each call to @code{getrpc}.  If @var{stayopen} is omitted,
+this is equivalent to calling @code{endrpcent}.  Otherwise it is
+equivalent to calling @code{setrpcent} with arg 1.
+@end deffn
+
+@deffn {Scheme Procedure} portmap prognum versnum [protocol [port]]
+Establish a (portmap service) mapping
+between the triple [@var{prognum},@var{versnum},@var{protocol}] and
+@var{port} on the machine's portmap service.  The value of @var{protocol}
+is most likely @code{IPPROTO_UDP} or @code{IPPROTO_TCP}.
+If instead @var{protocol} and @var{port} are omitted, destroy
+all mapping between the triple [@var{prognum},@var{versnum},*] and ports
+on the machine's portmap service.
+@end deffn
+
+@deffn {Scheme Procedure} portmap-list [address]
+Return a list of the current RPC program-to-port mappings
+on the host located at IP address @var{address}, which
+defaults to the local machine's IP address.
+Return an empty list if either there is no such list
+available or an error occurred while fetching the list.
+@end deffn
+
+@deffn {Scheme Procedure} svz:coserver:dns host callback
+Enqueue the @var{host} string argument into the internal
+DNS coserver queue.  When the coserver responds, the procedure
+@var{callback} is run as @code{(callback addr)}.  The @var{addr}
+argument passed to the callback is a string representing the appropriate
+IP address for the given hostname @var{host}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:coserver:reverse-dns addr callback
+Enqueue the given @var{addr} argument, which must be
+an IP address in network byte order, into the internal reverse DNS coserver
+queue.  When the coserver responds, the procedure @var{callback} is
+run as @code{(callback host)} where @var{host} is the hostname of the
+requested IP address @var{addr}.
+@end deffn
+
+@deffn {Scheme Procedure} svz:coserver:ident sock callback
+Enqueue the given @code{#<svz-socket>} @var{sock} into the
+internal ident coserver queue.  When the coserver responds, it
+runs the procedure @var{callback} as @code{(callback user)}, where
+@var{user} is the corresponding username for the client connection
+@var{sock}.
+@end deffn
+
+@subsubsection Callback Prototypes
+
+The Guile interface of Serveez is completely callback driven.
+Callbacks can be set up in the associative list passed to
+@code{define-servertype!}, or by using the predefined procedures
+described in the previous section.  Each of the callbacks is passed
+certain arguments and is meant to return specific values to indicate
+success or failure.  This section describes each of these callbacks.
+
+@deffn {@PROC{}} global-init servertype
+This callback is invoked once for every type of server right after
+the @code{define-servertype!} statement.  Here you can initialise
+resources shared between all instances of your server type.  The callback
+is optional and can be set up in @code{define-servertype!}.  It should
+return zero to indicate success and non-zero to indicate failure.  If the
+global initialiser fails, Serveez will refuse to register the server type.
+@end deffn
+
+@deffn {@PROC{}} global-finalize servertype
+If you want to free shared resources, which were possibly allocated
+within the global initialiser, you can do so here.  The callback is
+invoked when Serveez shuts down (issued by @code{serveez-nuke}) or the
+server type gets unregistered for some reason.  It should return zero to
+signal success.  The callback can be set up in @code{define-servertype!}
+and is optional.
+@end deffn
+
+@deffn {@PROC{}} init server
+Within this callback you can initialise everything you might need for
+a single instance of your server.  The callback is invoked for each
+server instance which has been created by @code{define-server!} and
+should return zero to indicate success, otherwise Serveez rejects the
+server instance.  The callback can be set up in @code{define-servertype!}
+and is optional.
+@end deffn
+
+@deffn {@PROC{}} finalize server
+The server instance finaliser gets its instance representation passed
+as argument.  You need to free all resources used by this server
+instance which might have been allocated within the server instance
+initialiser or consumed while running.  You can set this callback in
+the @code{define-servertype!} statement.  The callback is optional
+and should return zero to indicate success.
+@end deffn
+
+@deffn {@PROC{}} detect-proto server socket
+Connection oriented protocols like TCP and PIPE allow more than one
+server to be listening on the same network port.  Therefore, it is
+necessary to be able to detect the type of client connecting to a port.
+
+This callback takes two arguments; the first is the server instance
+and the second is the client socket object containing the client
+connection information.  You can set up this callback in the
+@code{define-servertype!} statement.
+
+Serveez may invoke this callback several times as data becomes
+available from the client until one of the servers recognises it.
+The servers can retrieve the data received so far using the
+@code{svz:sock:receive-buffer} call.
+
+To indicate successful client detection, you need to return a non-zero
+value.  (Note that for historical reasons, this is inconsistent with
+other procedures which return zero on successful completion.)  Once the
+server has indicated success, Serveez invokes any further callbacks for
+the connection only on that server.
+
+If no server has recognised the client after the first 16 bytes, Serveez
+will close the connection.  The connection will also be closed if the
+client has not sent enough data for a server to recognise it within 30
+seconds of connecting.
+
+If multiple servers are listening on the same network port, Serveez
+invokes this callback for each of them in an arbitrary order.  Only one
+server at most should indicate successful detection.
+
+This callback is mandatory for servers which get bound to
+connection oriented protocol (TCP and PIPE) port configurations by
+@code{bind-server!}.
+@end deffn
+
+@deffn {@PROC{}} connect-socket server socket
+If the client detection signalled success, this callback is invoked to
+assign the client connection to a server instance.  The arguments are
+the same as the detection callback.  In this callback you can assign
+all the connection specific callbacks for your server and perform some
+initial tasks.  Basically you should specify the @code{handle-request}
+and/or @code{check-request} callback.  This can be achieved by calling
+@code{svz:sock:handle-request} and @code{svz:sock:check-request}.
+The @code{connect-socket} callback is also mandatory for connection
+oriented protocols and must be defined in @code{define-servertype!}.
+On success you should return zero, otherwise the connection will be
+shutdown by Serveez.
+@end deffn
+
+@deffn {@PROC{}} info-server server
+This callback gets invoked when requested by the builtin
+@ref{Control Protocol Server}.  The callback is optional and can be
+set up in @code{define-servertype!}.  The returned character string
+can be multiple lines separated by @code{\r\n} (but without a trailing
+separator).  Usually you will return information about the server instance
+configuration and/or state.
+@end deffn
+
+@deffn {@PROC{}} info-client server socket
+This callback is optional.  You can set it up in the
+@code{define-servertype!} procedure.  It is meant to provide socket
+structure specific information.  (The socket structure is a client/child
+of the given server instance.)  You need to return a single line
+character string without trailing newlines.  The information provided
+can be requested by the builtin @ref{Control Protocol Server}.
+@end deffn
+
+@deffn {@PROC{}} notify server
+The server instance notifier callback will be invoked whenever there is idle
+time available.  In practice, it is run approximately once a second.
+A server instance can use it to perform periodic tasks.  The callback
+is optional and can be set up in @code{define-servertype!}.
+@end deffn
+
+@deffn {@PROC{}} reset server
+This callback is invoked when the Serveez process receives a @code{SIGHUP}
+signal which can be issued via @samp{killall -HUP serveez} from user
+land.  If the underlying operating system does not provide @code{SIGHUP}
+there is no use for this callback.  It provides the possibility to
+perform asynchronous tasks scheduled from outside Serveez.  You can
+optionally set it up in the @code{define-servertype!} procedure.
+@end deffn
+
+@deffn {@PROC{}} handle-request socket binary size
+This callback is invoked whenever a complete packet has been detected
+in the receive buffer.  The packet data is passed to the callback as a
+@code{#<svz-binary>}.  The @var{size} argument is passed for convenience
+and specifies the length of the packet in bytes.
+
+The detection, and therefore the invocation, can be made in one of two
+ways.  When Serveez can determine itself when a packet is complete, the
+callback will be invoked directly.  Serveez can make this determination
+for connections with packet oriented protocols such as UDP and ICMP, or
+if you tell Serveez how to parse the packet using
+@code{svz:sock:boundary sock delimiter} or
+@code{svz:sock:boundary sock size} and do not specify a
+@code{check-request} callback.
+
+Whenever you specify a @code{check-request} callback to determine when
+a packet is complete, it becomes the responsiblity of that callback to
+invoke @code{handle-request} itself.
+
+Serveez recognises two different return value meanings.  For connection
+oriented protocols (TCP and PIPE), zero indicates success and non-zero
+failure; on failure, Serveez will shutdown the connection.  For packet
+oriented protocols (UDP and ICMP), a non-zero return value indicates
+that your server was able to process the passed packet data, otherwise
+(zero return value) the packet can be passed to other servers listening
+on the same port configuration.
+
+This callback must be specified in @code{define-servertype!} for
+packet oriented protocols (UDP and ICMP) but is optional otherwise.
+You can modify the callback by calling @code{svz:sock:handle-request}.
+@end deffn
+
+@deffn {@PROC{}} check-request socket
+This callback is invoked whenever new data has arrived in the receive buffer.
+The receive buffer of the given @code{#<svz-socket>} can be obtained
+using @code{svz:sock:receive-buffer}.  The callback is initially not
+set and can be set up with @code{svz:sock:check-request}.  Its purpose
+is to check whether a complete request was received.  If so, it should
+be handled (by running the @code{handle-request} callback) and removed
+from the receive buffer (using @code{svz:sock:receive-buffer-reduce}).
+The callback is for connection oriented protocols (TCP and PIPE) only.
+You should return zero to indicate success and non-zero to indicate
+failure.  On failure Serveez shuts the connection down.
+@end deffn
+
+@deffn {@PROC{}} disconnected socket
+The @code{disconnected} callback gets invoked whenever the socket is
+lost for some external reason and is going to be shutdown by Serveez.
+It can be set up with @code{svz:sock:disconnected}.
+@end deffn
+
+@deffn {@PROC{}} kicked socket reason
+This callback gets invoked whenever the socket gets closed by Serveez
+intentionally.  It can be set up with @code{svz:sock:kicked}.  The
+@var{reason} argument can be either @code{KICK_FLOOD}, indicating the
+socket is a victim of the builtin flood protection, or @code{KICK_QUEUE}
+which indicates a send buffer overflow.
+@end deffn
+
+@deffn {@PROC{}} idle socket
+The @code{idle} callback gets invoked from the periodic task scheduler,
+which maintains a @code{idle-counter} for each socket structure.
+This counter is decremented whenever Serveez becomes idle and the
+callback is invoked when it drops to zero.  The @code{idle} callback can
+set its socket's @code{idle-counter} to some value with the procedure
+@code{svz:sock:idle-counter} and thus re-schedule itself for a later
+task.  You can set up this callback with @code{svz:sock:idle}.
+@end deffn
+
+@deffn {@PROC{}} trigger-condition socket
+This callback is invoked once every server loop for the socket structure.
+If you return @code{#f} nothing else is happening.  Otherwise the
+@code{trigger} callback will be invoked immediately.  You can set up the
+callback using the procedure @code{svz:sock:trigger-condition}.
+@end deffn
+
+@deffn {@PROC{}} trigger socket
+The @code{trigger} callback is invoked when the @code{trigger-condition}
+returns @code{#t}.  The callback can be set up with the procedure
+@code{svz:sock:trigger}.  Returning a non-zero value shuts the
+connection down.  A zero return value indicates success.  This callback
+can be used to perform connection related updates, e.g., you can ensure
+a certain send buffer fill.
+@end deffn
+
+@deffn {@PROC{}} check-oob-request socket oob-byte
+This callback is invoked whenever urgent data (out-of-band) has been detected
+on a socket.  Initially this event is ignored and the callback can be set
+up with the procedure @code{svz:sock:check-oob-request}.  The
+@var{oob-byte} argument is a number containing the received out-of-band
+data byte ranging from 0 to 255.  If the callback returns non-zero the
+connection will be shutdown.  A zero return value indicates success.  You
+can use @code{svz:sock:send-oob} to send a single out-of-band data byte.
+
+@strong{Please note}:
+The urgent data is not supported by all operating systems.  Also it does
+not work for all types of network protocols.  We verified it to be working
+for TCP streams on GNU/Linux 2.x.x and Windows 95; let us know if/how it
+works on other platforms.
+@end deffn

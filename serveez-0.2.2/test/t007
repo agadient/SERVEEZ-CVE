@@ -1,0 +1,105 @@
+;;; t007 --- segfault due to error after config file closed
+
+;; Copyright (C) 2013 Thien-Thi Nguyen
+;;
+;; This is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This software is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
+
+(use-modules
+ (ice-9 rdelim)
+ (srfi srfi-13))
+
+(primitive-load-path "but-of-course")
+(primitive-load-path "common")
+(set! TESTBASE "t007")
+
+(or (boc? 'ENABLE_GUILE_SERVER)
+    (exit #t))
+
+(write-config!
+ ;; NB: This portion written by Mike Gran.
+ ;; <http://lists.gnu.org/archive/html/bug-serveez/2013-02/msg00003.html>
+ '((define (serv1-handle-request socket binary size)
+     ;; Make sure the config file is closed
+     (gc) (gc) (gc)
+     ;; Doubly-define a port to cause a serveez guile error
+     (define-port! 'serv2-port `((proto . udp)
+                                 (port . 1070)
+                                 (ipaddr . *)))
+     (define-port! 'serv2-port `((proto . udp)
+                                 (port . 1071)
+                                 (ipaddr . *)))
+     0)
+
+   (define-servertype!
+     '((prefix . "serv1")
+       (description . "server error test")
+       (handle-request . serv1-handle-request)
+       (configuration . ())))
+
+   (define-port! 'serv1-port `((proto . udp)
+                               (port . 1069)
+                               (ipaddr . *)))
+
+   (define-server! 'serv1-server)
+
+   (bind-server! 'serv1-port 'serv1-server)))
+
+(define (zow!)
+  ;; FIXME: Replace hardcoded delay w/ loop-until-ready control construct.
+  ;; (OTOH, maybe not -- that would pull in ‘connect’ and ‘shutdown’, blech.)
+  (sleep 1)
+  (oneshot-loopback-datagram 1069 "zow!"))
+
+(define (err-filename)
+  (string-append TESTBASE ".err"))
+
+;; do it!
+(let ((pid (primitive-fork)))
+  (if (zero? pid)
+      ;; child
+      (begin
+        (dup2 (fileno (open-output-file (err-filename))) 2)
+        (exec-serveez!))
+      ;; parent
+      (let ((ts (zow!)))                ; test status: #f => FAIL, else PASS
+
+        (define (drat! s . args)
+          (fse "~A: ERROR: " TESTBASE)
+          (apply fse s args)
+          (newline (current-error-port))
+          (set! ts #f))
+
+        (kill pid SIGINT)
+        (waitpid pid)
+        (let ((fn (err-filename)))
+          (if (file-exists? fn)
+              (let ((line (call-with-input-file fn read-line)))
+                (and VERBOSE? (fse "~A: INFO: ~A line: ~S~%"
+                                   TESTBASE fn line))
+                (cond ((eof-object? line)
+                       (drat! "no error output"))
+                      ((string-prefix? "undefined:0:0:" line))
+                      (else
+                       (drat! "unexpected error output:~%-| ~A" line)))
+                (and ts (not VERBOSE?)
+                     (delete-file fn)))
+              (drat! "missing file: ~A" fn)))
+        (delete-file (config-filename))
+        (exit ts))))
+
+;;; Local variables:
+;;; mode: scheme
+;;; End:

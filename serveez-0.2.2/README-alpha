@@ -1,0 +1,28 @@
+This is the README file for alpha versions.
+
+See end for copying conditions.
+
+Note that this is a distribution of an alpha version.  That means,
+that you have to be aware that the programs in this distribution may
+still have a lot of bugs.
+
+Nevertheless, if you are interested in hacking or just reading the
+source code, keep going and give it a try.
+
+Further documentation may be found in the files README and INSTALL, and
+in the directory doc.
+
+Please note that due to changing APIs we may rely on a specific Guile
+version.  Check the README to find out which version we want.
+
+Happy hacking!
+
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2000, 2001 Stefan Jahn <stefan@lkcc.org>
+Copyright (C) 2000 Raimund Jacob <raimi@lkcc.org>
+Copyright (C) 1999 Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

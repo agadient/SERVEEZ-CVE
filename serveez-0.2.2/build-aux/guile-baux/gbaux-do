@@ -1,0 +1,21 @@
+#!/bin/sh
+exec ${GUILE-guile} -s $0 "$@" # -*- scheme -*-
+!#
+(define-module (guile-baux gbaux-do))
+
+(define CL  (command-line))
+(define IN  (dirname (car CL)))
+(define TOP (dirname IN))
+
+(let ((glp "GUILE_LOAD_PATH"))
+  (cond ((getenv glp)
+         => (lambda (dir)
+              (setenv glp (string-append TOP ":" dir))))
+        (else
+         (setenv glp TOP))))
+
+(let ((program (let ((name (cadr CL)))
+                 (if (string-index name #\/)
+                     name
+                     (in-vicinity IN name)))))
+  (apply execl program program (cddr CL)))

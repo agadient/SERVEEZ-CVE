@@ -1,0 +1,101 @@
+;;; t008 --- object property on socket disappears
+
+;; Copyright (C) 2013 Thien-Thi Nguyen
+;;
+;; This is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This software is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
+
+(use-modules
+ (ice-9 rdelim)
+ (srfi srfi-13))
+
+(primitive-load-path "but-of-course")
+(primitive-load-path "common")
+(set! TESTBASE "t008")
+
+(or (boc? 'ENABLE_GUILE_SERVER)
+    (exit #t))
+
+(write-config!
+ ;; NB: Based on code posted by Mike Gran:
+ ;; <http://lists.gnu.org/archive/html/bug-serveez/2013-03/msg00004.html>
+ '((define COUNT (make-object-property))
+
+   (define (fse s . args)
+     (apply simple-format (current-error-port) s args))
+
+   (define (bug2-handle-request sock binary size)
+
+     (define (dump blurb)
+       (fse "~A:\t~S\t~S~%"
+            blurb (COUNT sock)
+            (list (svz:sock:ident sock)
+                  sock
+                  (object-address sock))))
+
+     (dump 'BEFORE)
+     (set! (COUNT sock) (1+ (or (COUNT sock) 0)))
+     (dump 'AFTER)
+     (if (and (integer? (COUNT sock))
+              (not (zero? (COUNT sock))))
+         0
+         1))
+
+   (define-servertype!
+     '((prefix . "bug2")
+       (description . "test object properties")
+       (handle-request . bug2-handle-request)
+       (configuration . ())))
+
+   (define-server! 'bug2-server)
+   (bind-udp-port-range! 1069 1070 'bug2-server)))
+
+(define (zow!)
+  ;; FIXME: Replace hardcoded delay w/ loop-until-ready control construct.
+  ;; (OTOH, maybe not -- that would pull in ‘connect’ and ‘shutdown’, blech.)
+  (usleep 100000)
+  (oneshot-loopback-datagram 1069 "zow!"))
+
+(define (err-filename)
+  (string-append TESTBASE ".err"))
+
+;; do it!
+(let ((pid (primitive-fork)))
+  (if (zero? pid)
+      ;; child
+      (begin
+        (dup2 (fileno (open-output-file (err-filename))) 2)
+        (exec-serveez!))
+      ;; parent
+      (let ((ts (and (zow!) (zow!))))   ; test status: #f => FAIL, else PASS
+
+        (define (drat! s . args)
+          (fse "~A: ERROR: " TESTBASE)
+          (apply fse s args)
+          (newline (current-error-port))
+          (set! ts #f))
+
+        (or ts (drat! "UDP oneshot(s) failed"))
+        (kill pid SIGINT)
+        (waitpid pid)
+        (or (zero? (system "grep 'AFTER:.2' t008.err 1>/dev/null 2>&1"))
+            (drat! "object property on socket disappeared -- see ~A"
+                   (err-filename)))
+        (delete-file (config-filename))
+        (exit ts))))
+
+;;; Local variables:
+;;; mode: scheme
+;;; End:

@@ -1,0 +1,209 @@
+#!/bin/sh
+exec ${GUILE-guile} -e '(guile-baux punify)' -s $0 "$@" # -*- scheme -*-
+!#
+;;; punify --- Display Scheme code w/o unnecessary comments / whitespace
+
+;; Copyright (C) 2010, 2011, 2012 Thien-Thi Nguyen
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;; Usage: punify [-i] [-n] [FILE1 FILE2 ...]
+;;
+;; Read forms from each FILE (or stdin if no files are specified) and
+;; write them to stdout, removing comments and non-essential whitespace.
+;; This is useful when installing Scheme source to space-limited media.
+;; An exception is made for certain whitespace characters appearing in a
+;; string.  They are expanded to their two-character "escaped" form:
+;;
+;;     #\bel  \a     #\newline  \n     #\ht  \t
+;;     #\np   \f     #\cr       \r     #\vt  \v
+;;
+;; Option ‘--newline-after-top-level-form’ (or ‘-n’ for short) means to
+;; output a newline after each top-level form.
+;;
+;; Option ‘--inplace’ (or ‘-i’ for short) means to modify the file in place,
+;; and display to stdout an informational message for each file processed.
+
+;;; Code:
+
+(define-module (guile-baux punify)
+  #:export (main write-punily write-line-punily)
+  #:use-module ((guile-baux common) #:select (check-hv qop<-args fso))
+  #:use-module ((guile-baux write-string) #:select (write-string))
+  #:use-module ((ice-9 q) #:select (make-q enq!)))
+
+;; Write sexp @var{form} to the current output port, avoiding
+;; unnecessary whitespace.  However, write strings with certain
+;; whitespace characters expanded to their two-character "escaped" form:
+;;
+;; @example
+;; #\bel  \a     #\newline  \n     #\ht  \t
+;; #\np   \f     #\cr       \r     #\vt  \v
+;; @end example
+;;
+;; @var{form} should contain only objects that can be externally
+;; represented with @code{display} and @code{write}.
+;;
+(define (write-punily form)
+
+  (define (list-quotish ls)
+    (and (= 2 (length ls))
+         (case (car ls)
+           ((quote) " '")
+           ((quasiquote) " `")
+           ((unquote) " ,")
+           ((unquote-splicing) " ,@")
+           (else #f))))
+
+  (define (truly-list? x)
+    (and (list? x)
+         (or (not (list-quotish x))
+             (truly-list? (cadr x)))))
+
+  (cond ((vector? form)
+         (display #\#)
+         (write-punily (vector->list form)))
+        ((and (list? form)
+              (list-quotish form))
+         => (lambda (short)
+              (display short)
+              (write-punily (cadr form))))
+        ((and (list? form) (not (null? form)))
+         (let ((first (car form)))
+           (display "(")
+           (write-punily first)
+           (let loop ((ls (cdr form)) (last-was-list? (truly-list? first)))
+             (if (null? ls)
+                 (display ")")
+                 (let* ((new-first (car ls))
+                        (this-is-list? (truly-list? new-first)))
+                   (and (not last-was-list?)
+                        (not this-is-list?)
+                        (display #\space))
+                   (write-punily new-first)
+                   (loop (cdr ls) this-is-list?))))))
+        ((string? form)
+         (write-string form))
+        ((and (symbol? form)
+              (let ((ls (string->list (symbol->string form))))
+                (and (char=? (car ls) #\:)
+                     (not (memq #\space ls))
+                     (list->string (cdr ls)))))
+         => (lambda (symbol-name-after-colon)
+              (display #\:)
+              (display symbol-name-after-colon)))
+        (else (write form))))
+
+;; Write @var{form} punily (via @code{write-punily}),
+;; then display a @code{#\lf} character.
+;;
+(define (write-line-punily form)
+  (write-punily form)
+  (newline))
+
+(define *newline-after-top-level-form* #f)
+
+(define (punify . input)
+  (let ((one! (if *newline-after-top-level-form*
+                  write-line-punily
+                  write-punily)))
+    (define (punify! port)
+      (let loop ()
+        (let ((form (read port)))
+          (or (eof-object? form)
+              (begin
+                (one! form)
+                (loop))))))
+    (for-each (lambda (x)
+                (cond ((string? x)
+                       (let ((p (open-input-file x)))
+                         (punify! p)
+                         (close-port p)))
+                      ((port? x)
+                       (punify! x))
+                      (else
+                       (error "bad input:" x))))
+              input)))
+
+(define (punify-one-in-place filename)
+  (let ((bef-sz (stat:size (stat filename)))
+        (aft-sz #f)
+        (p (open-io-file filename))
+        (forms (make-q)))
+    (cond ((not (false-if-exception
+                 (let loop ((form (read p)))
+                   (or (eof-object? form)
+                       (begin
+                         (enq! forms form)
+                         (loop (read p)))))))
+           (close-port p)
+           (fso "punify: ignoring ~A (error during read)~%" filename))
+          (else
+           (seek p 0 SEEK_SET)
+           (with-output-to-port p
+             (lambda ()
+               (for-each (lambda (form)
+                           (write-punily form)
+                           (and *newline-after-top-level-form* (newline)))
+                         (car forms))))
+           (set! aft-sz (seek p 0 SEEK_CUR))
+           (truncate-file p)
+           (close-port p)
+           (fso "punify: wrote ~A (~A ~A ~A%)~%"
+                filename bef-sz aft-sz
+                (/ (inexact->exact (* 1000 (/ (- bef-sz aft-sz)
+                                              bef-sz)))
+                   10))))))
+
+(define (punify-in-place . input)
+  (for-each (lambda (x)
+              (define (ignoring! why)
+                (fso "punify: ignoring ~A (~A)~%" x why))
+              (cond ((not (file-exists? x))
+                     (ignoring! "no such file"))
+                    ((not (access? x W_OK))
+                     (ignoring! "no permission to write"))
+                    ((not (access? x R_OK))
+                     (ignoring! "no permission to read"))
+                    (else
+                     (punify-one-in-place x))))
+            input))
+
+(define (punify/qop qop)
+  (and (qop 'newline-after-top-level-form)
+       (set! *newline-after-top-level-form* #t))
+  (let ((in-place? (qop 'inplace))
+        (victims (qop '())))
+    (and in-place? (null? victims)
+         (error "option ‘inplace’ incompatible w/ stdin processing"))
+    (apply (if in-place?
+               punify-in-place
+               punify)
+           (if (null? victims)
+               (list (current-input-port))
+               victims))))
+
+(define (main args)
+  (check-hv args '((package . "Guile-BAUX")
+                   (version . "0.0")
+                   (help . commentary)))
+  (punify/qop (qop<-args
+               args '((newline-after-top-level-form (single-char #\n))
+                      (inplace (single-char #\i))))))
+
+;;; punify ends here

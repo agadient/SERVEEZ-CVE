@@ -1,0 +1,94 @@
+README for GNU Serveez
+
+See end for copying conditions.
+
+
+Description
+===========
+
+GNU Serveez is a server framework.  It provides routines and help
+for implementing IP-based servers (currently TCP, UDP and ICMP).
+It supports named pipes for all connection-oriented protocols.
+
+We think it is worth the effort because many people need server
+functionality within their applications.  However, many people
+experience problems with select(2) or poll(2) loops, and with
+non-blocking operations.
+
+GNU Serveez demonstrates various aspects of advanced network
+programming in a portable manner.  It is known to compile and
+run on GNU/Linux systems, as well as on other 32-bit and 64-bit
+flavours of Unix and on Microsoft Windows (9x/ME/NT/2000/XP).
+
+You can use it for implementing your own servers or for
+understanding how certain network services and operations work.
+
+The package includes a number of servers that work already: an
+HTTP server, an IRC server, a Gnutella spider and some others.
+One of the highlights is that you can run all protocols on the
+same port.  The application itself is single threaded but it uses
+helper processes for concurrent name resolution and ident lookups.
+
+
+Requirements
+============
+
+Serveez needs GNU Guile (http://www.gnu.org/software/guile/).
+This current version is known to work with Guile 1.4 and later.
+
+It also needs a reasonably conformant C99 compiler.  For more information,
+please refer to the section "Building and installing" in the manual.
+
+
+Installation
+============
+
+See INSTALL for general instructions on configuring and building Serveez.
+See the manual (doc/serveez.info) chapter "Using Serveez", for details on
+the various options you can pass to the configure script, apart from the
+usual options for customizing the installation directories (.e.g, --prefix).
+
+If you have problems building the package out of the box, this may be due
+to GNU libtool's inability to handle dynamic linking for your platform.
+In that case, try reconfiguring with `--disable-shared'.
+
+If Serveez is configured to install libserveez and its header files,
+then installation populates the following directories (creating them
+first, if necessary) with various files:
+
+ $(bindir)     -- executables: serveez, serveez-config
+ $(mandir)     -- manpages: serveez(1), serveez-config(1)
+ $(includedir) -- libserveez.h
+                  libserveez/*.h (includes subdirs and headers)
+ $(libdir)     -- libserveez shared object + libtool support file(s)
+ $(infodir)    -- serveez.info
+ $(pkgdatadir) -- scheme (*.scm) files implementing guile servers
+
+Otherwise, only a subset is installed: $(bindir)/serveez,
+$(mandir)/serveez.1, ($infodir)/serveez.info, $(pkgdatadir)/*.scm.
+
+Before installing, consider doing "make check" and reporting any errors
+or strangeness you might encounter to bug-serveez (at gnu dot org).
+
+
+Getting the latest source
+=========================
+
+You can always get the latest Serveez source from our public repository.
+Please use an official release if you want to work with Serveez.  The
+source from the repository might not even compile.
+
+    $ git clone git://git.sv.gnu.org/serveez.git
+
+Run `sh autogen.sh' (see comments for prerequisite tools) to bootstrap.
+Also, you might need to configure with `--enable-maintainer-mode'.
+
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2000, 2001, 2002, 2003 Stefan Jahn <stefan@lkcc.org>
+Copyright (C) 2000 Raimund Jacob <raimi@lkcc.org>
+Copyright (C) 1999 Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

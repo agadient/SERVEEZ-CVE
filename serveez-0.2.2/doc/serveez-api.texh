@@ -1,0 +1,965 @@
+@c -*-texinfo-*-
+@c
+@c This file includes the embedding documentation.
+@c It is included by `serveez.texi'.
+@c
+
+This chapter documents how to embed Serveez into C programs and describes
+all parts of the API it provides.
+
+The Serveez core library provides all of the functionality necessary in
+order to write Internet protocol servers (currently TCP, UDP, ICMP and
+RAW sockets), pipe servers (connection-oriented via a pair of named
+pipes) and coservers in a portable way.  All of the included servers are
+based upon this library, which encapsulates the native network and file
+system programming interface of different Unices and Windows systems.
+
+The following sections will give the reader
+an overview about how to use its core library.
+
+@menu
+* Embedding Serveez::     How to embed Serveez into C programs
+* Embedding API::         Description of functions and data in the library
+@end menu
+
+@node Embedding Serveez
+@section Embedding Serveez
+
+This chapter deals with embedding the Serveez core library into standalone
+C/C++ applications and using it in order to write additional servers.
+
+@menu
+* Compiling and linking::      How to compile and link against the library
+* A simple example::           A very small example showing the basics
+@end menu
+
+@node Compiling and linking
+@subsection Compiling and linking
+
+When you have installed a version of Serveez passing the
+@file{configure} script the @code{$prefix} argument, e.g.,
+@samp{./configure --prefix=/usr/local}, you will find the
+@file{libserveez} library in @file{/usr/local/lib} and the include
+headers in @file{/usr/local/include}.  If you want to compile a C
+program using the Serveez API and link against the Serveez core library
+@code{libserveez}, which is @file{libserveez.so} for Unices and
+@file{libserveez.dll} for Windows systems, you need to tell the compiler
+and linker where to find the headers and libraries.
+
+Most C compilers you can use will understand the following command line
+options for this purpose.  The @samp{-I} argument specifies the
+directory of additional include headers, the @samp{-L} argument the
+direcory to additional libraries and the @samp{-l} argument the library
+itself to link against.
+
+@example
+$ cc test.c -I/usr/local/include -o test -L/usr/local/lib -lserveez
+@end example
+
+In order to obtain the correct compiler and linker flag you can also run
+the @samp{serveez-config} script which gets installed with the Serveez
+package.  The @samp{serveez-config} script can be invoked with the
+following set of option.
+
+@table @code
+@item -h, --help
+Displays the usage information.
+
+@item -v, --version
+Displays installed Serveez version.
+
+@item -l, --ldflags
+Prints the linker flags (libraries to link with including
+directory information).
+
+@item -c, --cflags
+Prints the compiler flags to compile with.
+@end table
+
+@node A simple example
+@subsection A simple example
+
+The following small example shows how to use the Serveez core library to
+print the list of known network interface.  As you will notice there are
+three major steps to do: Include the library header with @code{#include
+<libserveez.h>}, initialize the library via @code{svz_boot} and finalize
+it via @code{svz_halt}.  In between these calls you can use all of the
+API functions, variables and macros described in @ref{Embedding API}.
+
+@example
+#include <stdio.h>
+#include <stdlib.h>
+#include <libserveez.h>
+
+static int
+display_ifc (const svz_interface_t *ifc,
+             void *closure)
+@{
+  char *addr = svz_inet_ntoa (ifc->ipaddr);
+
+  if (ifc->description)
+    /* interface with description */
+    printf ("%40s: %s\n",
+            ifc->description, addr);
+  else
+    /* interface with interface # only */
+    printf ("%31s%09lu: %s\n",
+            "interface # ", ifc->index, addr);
+  return 0;
+@}
+
+int
+main (int argc, char **argv)
+@{
+  /* Library initialization.  */
+  svz_boot ("example");
+
+  /* Display a list of interfaces.  */
+  printf ("local interfaces:\n");
+  svz_foreach_interface (display_ifc, NULL);
+
+  /* Library finalization.  */
+  svz_halt ();
+
+  return EXIT_SUCCESS;
+@}
+@end example
+
+@node Embedding API
+@section Embedding API
+
+In this chapter the reader will find a short description of each
+function, global variable and macro provided by the Serveez core
+library.  The API can either be used to implement a new server or
+coserver module for use with Serveez or for supporting network and
+server functionality within your own applications without caring about
+the details and system programming.
+
+Most of the Serveez core library interface functionality should be
+prefixed with @code{svz_}.  Small symbols will refer to functions and
+variables in most cases and big letter symbols refer to macros.
+
+[FIXME: The subsections are named inconsistently because
+originally, the API reference was a separate document; on merge,
+weirdness like ``Port config funcs'' was necessary to avoid
+conflict with the other ``Port configuration'' node. ---ttn]
+
+@menu
+* Library features::      A high-level list of what libserveez provides
+* Memory management::     How memory is managed in Serveez
+* Data structures::       Data structure helpers
+* svz_address_t::         A data type to hold family plus bits
+* Utility functions::     Miscellaneous helper functions
+* Core functions::        Network core implementations
+* Client connections::    Client connection functions
+* Socket management::     Socket management functions
+* Coserver functions::    Coserver interface
+* Codec functions::       Codec interface
+* Server types::          Server type implementations
+* Server functions::      Server object functions
+* Port config funcs::     Port configuration functions
+* Booting::               Configuration and boot functions
+* Interface::             Network interface function implementation
+* Windoze::               Windows port implementations
+@end menu
+
+@node Library features
+@subsection Library features
+
+The @file{configure} script used to build libserveez takes many options
+(@pxref{Build and install}).
+Some of these are encapsulated by @code{svz_library_features}.
+
+@tsin i "F svz_library_features"
+
+@noindent
+Here is a table describing the features in detail:
+
+@table @code
+@item debug
+Present when @samp{--enable-debug}.
+
+@item heap-counters
+Present when @samp{--enable-heap-count}.
+
+@item interface-list
+Present when @samp{--enable-iflist}.
+
+@item poll
+Present when @samp{--enable-poll} and you have poll(2).
+
+@item sendfile
+Present when @samp{--enable-sendfile} and you have sendfile(2)
+or some workalike (e.g., @code{TransmitFile}).
+
+@item log-mutex
+Present when @code{svz_log} uses a mutex around its internal stdio
+operations, implying that you have some kind of thread capability
+(perhaps in a separate library).  If your system has
+@code{fwrite_unlocked}, the configure script assumes that @code{fwrite}
+et al already operate in a locked fashion, and disables this.
+
+@item flood-protection
+Present when @samp{--enable-flood}.
+
+@item core
+The networking core.  This is always present.
+@end table
+
+@node Memory management
+@subsection Memory management
+
+The core library of Serveez is able to keep track of the memory an
+application or part of a program consumes, and also controls itself in
+the same manner.  When you are using this memory allocator interface you
+can determine and afterwards remove memory leaks.  This is a very
+important feature as servers are by nature long-lived programs.
+
+The three allocator function pointers for @code{malloc}, @code{realloc}
+and @code{free} make it possible to instruct Serveez to use different
+kinds of memory, which might be necessary if you want the library to work
+with shared memory arenas or any other underlying memory API.
+
+@tsin i "F svz_set_mm_funcs"
+
+@tsin i "F svz_malloc"
+
+@tsin i "F svz_calloc"
+
+@tsin i "F svz_realloc"
+
+@tsin i "F svz_free"
+
+@tsin i "F svz_strdup"
+
+@tsin i "F svz_get_curalloc"
+
+@node Data structures
+@subsection Data structures
+
+Since most servers need to store information about its clients or want
+to keep track of data during runtime, we include a pair of of useful
+data structures.  The actual aim was to provide higher level data
+structures which the C programming language does not support.  Some of
+the included servers which come with Serveez make extensive use of them.
+
+@menu
+* Array::                 A growable array implementation
+* Hashtable::             Hashtable implementation
+@end menu
+
+@node Array
+@subsubsection Array
+
+The array data structure is a simple array implementation.  Each array
+has a size and capacity.  The array indices range from zero to the
+array's size minus one.  You can put any kind of data into this array
+which fits into the size of a pointer.  The array grows automatically if
+necessary.
+
+@tsin i "F svz_array_create"
+
+@tsin i "F svz_array_destroy"
+
+@tsin i "F svz_array_get"
+
+@tsin i "F svz_array_set"
+
+@tsin i "F svz_array_add"
+
+@tsin i "F svz_array_del"
+
+@tsin i "F svz_array_size"
+
+@tsin i "M svz_array_foreach"
+
+@node Hashtable
+@subsubsection Hashtable
+
+A hashtable associates keys of arbitrary size and content with values.
+This data structure is also called associative array sometimes because
+you use keys in order to access values instead of numbers.  You cannot
+store two values associated with the same key.  The values can have any
+simple C types like integers or pointers.
+
+@tsin i "F svz_hash_create"
+
+@tsin i "F svz_hash_configure"
+
+@tsin i "F svz_hash_destroy"
+
+@tsin i "F svz_hash_delete"
+
+@tsin i "F svz_hash_put"
+
+@tsin i "F svz_hash_get"
+
+@tsin i "F svz_hash_foreach"
+
+@tsin i "F svz_hash_size"
+
+@tsin i "F svz_hash_contains"
+
+@tsin i "F svz_hash_exists"
+
+@node svz_address_t
+@subsection svz_address_t
+
+A network address comprises a @dfn{family}, such as @code{AF_INET}
+(also known as IPv4), and its @dfn{bits} in network byte order, such as
+the bytes 127, 0, 0 and 1 (also known as the @dfn{IPv4 loopback
+address}).  Many libserveez functions take @code{svz_address_t *}.
+
+@strong{Please note}: Although @code{svz_address_t}
+supports@footnote{that is, if your system supports it} IPv6, the rest
+of libserveez it does not (yet).  This means you can freely create and
+manipulate address objects with the functions described in this
+section, but any attempt to pass to the rest of libserveez an address
+with a @var{family} other than @code{AF_INET} will immediately abort
+the process.  When full IPv6 support is in place, this blurb will be
+deleted and the list returned by @code{svz_library_features} will
+include an appropriate indicator (@pxref{Library features}).
+
+@tsin i "F svz_address_make"
+
+@tsin i "F svz_address_family"
+
+@tsin i "F svz_address_to"
+
+@tsin i "F svz_address_same"
+
+@tsin i "F svz_pp_address"
+
+@tsin i "F svz_pp_addr_port"
+
+@tsin i "F svz_address_copy"
+
+@tsin i "M SVZ_SET_ADDR"
+
+@tsin i "M SVZ_PP_ADDR"
+
+@tsin i "M SVZ_PP_ADDR_PORT"
+
+@node Utility functions
+@subsection Utility functions
+
+Within this section you will find some miscellaneous functionality and
+left overs of the C API.
+
+@tsin i "F svz_log"
+
+@tsin i "F svz_log_setfile"
+
+@tsin i "F svz_hexdump"
+
+@tsin i "F svz_itoa"
+
+@tsin i "F svz_atoi"
+
+@tsin i "F svz_getcwd"
+
+@tsin i "F svz_openfiles"
+
+@tsin i "F svz_time"
+
+@tsin i "F svz_tolower"
+
+@tsin i "F svz_sys_version"
+
+@tsin i "F svz_socket_unavailable_error_p"
+
+@tsin i "F svz_sys_strerror"
+
+The next two functions log (with @code{SVZ_LOG_ERROR}) the current
+@dfn{system error} or @dfn{network error}, forming the prefix of the
+message using @var{fmt} and @var{args}.  This formatted prefix cannot
+exceed 255 bytes.  The rest of the message comprises: colon, space,
+error description, newline.
+
+@tsin i "F svz_log_sys_error"
+
+@tsin i "F svz_log_net_error"
+
+@tsin i "F svz_mingw_at_least_nt4_p"
+
+@node Core functions
+@subsection Networking and other low level functions
+
+This chapter deals with the basic networking and file systems functions.
+It encapsulates systems calls in a portable manner.  These functions
+should behave identically on Windows and Unices.
+
+@tsin i "F svz_inet_ntoa"
+
+@tsin i "F svz_inet_aton"
+
+@tsin i "F svz_closesocket"
+
+@tsin i "F svz_fd_cloexec"
+
+@tsin i "F svz_tcp_cork"
+
+@tsin i "F svz_tcp_nodelay"
+
+@tsin i "F svz_sendfile"
+
+@tsin i "F svz_open"
+
+@tsin i "F svz_close"
+
+@tsin i "F svz_fstat"
+
+@tsin i "F svz_fopen"
+
+@tsin i "F svz_fclose"
+
+@node Client connections
+@subsection Client connections
+
+Serveez tries to handle all kinds of Internet protocols like TCP
+(connection oriented), UDP, ICMP and RAW (packet oriented) and
+communication across named pipes (also connection oriented) in the same
+way.  Therefore it uses a structure called @code{svz_socket_t} which is
+the abstraction of any kind of communication endpoint (can be client or
+server or both together).
+
+@menu
+* TCP sockets::                   TCP socket functions
+* Pipe connections::              Named and anonymous pipe functions
+* UDP sockets::                   UDP socket functions
+* ICMP sockets::                  ICMP socket functions
+* Raw sockets::                   Raw socket functions
+* Passthrough connections::       Passthrough connections to child processes
+@end menu
+
+@node TCP sockets
+@subsubsection TCP sockets
+
+TCP sockets provide a reliable, stream oriented, full duplex connection
+between two sockets on top of the Internet Protocol (IP).  TCP
+guarantees that the data arrives in order and retransmits lost packets.
+It generates and checks a per packet checksum to catch transmission
+errors.  TCP does not preserve record boundaries.
+
+@tsin i "F svz_tcp_connect"
+@tsin i "F svz_tcp_read_socket"
+@tsin i "F svz_tcp_send_oob"
+
+@node Pipe connections
+@subsubsection Pipe connections
+
+The pipe implementation supports both named and anonymous pipes.  Pipe
+servers are implemented as listeners on a file system FIFO on Unices or
+``Named Pipes'' on Windows (can be shared over a Windows network).
+
+A FIFO special file is similar to a pipe, except that it is created in a
+different way.  Instead of being an anonymous communications channel, a
+FIFO special file is entered into the file system.
+
+Once you have created a FIFO special file in this way, any process can
+open it for reading or writing, in the same way as an ordinary file.
+However, it has to be open at both ends simultaneously before you can
+proceed to do any input or output operations on it.
+
+@tsin i "F svz_pipe_create"
+
+@tsin i "F svz_pipe_create_pair"
+
+@tsin i "F svz_pipe_connect"
+
+@tsin i "F svz_invalid_handle_p"
+
+@tsin i "F svz_invalidate_handle"
+
+@tsin i "F svz_closehandle"
+
+@node UDP sockets
+@subsubsection UDP sockets
+
+The UDP sockets implement a connectionless, unreliable datagram packet
+service.  Packets may be reordered or duplicated before they arrive.
+UDP generates and checks checksums to catch transmission errors.
+
+@tsin i "F svz_udp_connect"
+
+@tsin i "F svz_udp_write"
+
+@node ICMP sockets
+@subsubsection ICMP sockets
+
+The ICMP socket implementation is currently used in the tunnel server
+which comes with the Serveez package.  It implements a user protocol
+receiving and sending ICMP packets by opening a raw socket with the
+protocol @code{IPPROTO_ICMP}.
+
+The types of ICMP packets passed to the socket can be filtered using the
+@code{ICMP_FILTER} socket option (or by software as done here).  ICMP
+packets are always processed by the kernel too, even when passed to a
+user socket.
+
+@tsin i "F svz_icmp_connect"
+
+@tsin i "F svz_icmp_send_control"
+
+@tsin i "F svz_icmp_write"
+
+@node Raw sockets
+@subsubsection Raw sockets
+
+A raw socket receives or sends the raw datagram not including link-level
+headers.  It is currently used by the ICMP socket implementation of the
+core library.  The IPv4 layer generates an IP header when sending a
+packet unless the @code{IP_HDRINCL} socket option is enabled on the
+socket.  When it is enabled, the packet must contain an IP header.  For
+receiving the IP header is always included in the packet.
+
+Only processes with an effective userid of zero (Administrator or root)
+or the @code{CAP_NET_RAW} capability are allowed to open raw sockets.
+All packets or errors matching the protocol number specified for the raw
+socket are passed to this socket.  A protocol of @code{IPPROTO_RAW}
+implies enabled @code{IP_HDRINCL} and receives all IP protocols.
+Sending is not allowed.
+
+[FIXME: All funcs internalized!  Write something else here!]
+
+@node Passthrough connections
+@subsubsection Passthrough connections
+
+The functions described in this section allow you to pass through client
+connections to the standard input (stdin) and standard output (stdout)
+of external programs.  Some of the routines deal with the management of
+program environments.  Basically, there are two methods for passing
+through a duplex connection: the Unix'ish @code{fork} and @code{exec}
+method and the shuffle method where the main process keeps control over
+the communication on the original duplex connection and passes this data
+through two pairs of pipes, or yet another socket connection, to the
+child process.  All of the three method are implemented calling them
+@code{SVZ_PROCESS_FORK}, @code{SVZ_PROCESS_SHUFFLE_PIPE} and
+@code{SVZ_PROCESS_SHUFFLE_SOCK}.
+
+@tsin i "F svz_sock_process"
+
+@strong{Please note}: On M$-Windows platforms it is not possible to pass
+a socket connection to stdin/stdout of a child process.  That is why
+this function creates an inheritable version of the socket and puts the
+socket handle number into the environment variables @code{SEND_HANDLE}
+and @code{RECV_HANDLE}.  A spawned child process can use these handles
+as if they were self-created.  After calling @code{WSAStartup} the child
+process can @code{send} and @code{recv} as usual.
+
+Relatedly, Windoze does not use @code{SIGCHLD} to inform the parent when
+a child dies, so for that platform, you should use the next function
+(which is not otherwise available):
+
+@tsin i "F svz_mingw_child_dead_p"
+
+On non-Windoze, this is the function you want to use:
+
+@tsin i "F svz_most_recent_dead_child_p"
+
+@tsin i "F svz_envblock_setup"
+
+@tsin i "F svz_envblock_create"
+
+@tsin i "F svz_envblock_default"
+
+@tsin i "F svz_envblock_add"
+
+@tsin i "F svz_envblock_destroy"
+
+@tsin i "F svz_envblock_get"
+
+@node Socket management
+@subsection Socket management
+
+The functions described in this section deal with the
+operations on C structures called
+@code{svz_socket_t}.  See the description of each function for details
+on which kind of socket it can handle and what they are for.
+
+@tsin i "F svz_sock_nconnections"
+
+@tsin i "F svz_sock_write"
+
+@tsin i "F svz_sock_printf"
+
+@tsin i "F svz_sock_resize_buffers"
+
+@tsin i "F svz_sock_check_request"
+
+@tsin i "F svz_sock_reduce_recv"
+
+@tsin i "F svz_sock_reduce_send"
+
+Because libserveez manages the creation and destruction of
+@code{svz_socket_t} objects internally, the following API element
+is useful for syncronizing client-code references to those objects
+with those objects.
+
+@tsin i "F svz_sock_prefree"
+
+@node Coserver functions
+@subsection Coserver functions
+
+This section describes the internal coserver interface of Serveez.
+Coservers are helper processes meant to perform blocking tasks.  This is
+necessary because Serveez itself is single threaded.  Each coserver is
+connected via a pair of pipes to the main thread of Serveez
+communicating over a simple text line protocol.  Each request/response
+is separated by a newline character.
+
+@tsin i "F svz_foreach_coserver"
+
+@tsin i "F svz_coserver_check"
+
+@tsin i "F svz_coserver_destroy"
+
+@tsin i "F svz_coserver_create"
+
+@tsin i "F svz_coserver_type_name"
+
+@tsin i "F svz_coserver_rdns_invoke"
+
+@tsin i "F svz_coserver_dns_invoke"
+
+@tsin i "F svz_coserver_ident_invoke"
+
+To make use of coservers, you need to start the coserver interface by
+calling @code{svz_updn_all_coservers} once before, and once after,
+entering the main server loop.
+
+@tsin i "F svz_updn_all_coservers"
+
+@node Codec functions
+@subsection Codec functions
+
+The codec interface of the Serveez core API supplies routines for
+setting up socket structures to perform encoding or decoding of its
+receive or send buffers.  It is a transparent layer of buffer
+transition.  The interface itself tries to unify different types of
+codecs.  In order to add a new codec the programmer needs to write some
+wrapper functions around the actual implementation to fulfill certain
+entry and exit semantics of this interface.
+
+@tsin i "F svz_foreach_codec"
+
+@tsin i "F svz_codec_get"
+
+@tsin i "F svz_codec_ratio"
+
+@tsin i "F svz_codec_register"
+
+@tsin i "F svz_codec_unregister"
+
+@tsin i "F svz_codec_sock_receive_setup"
+
+@tsin i "F svz_codec_sock_receive"
+
+@tsin i "F svz_codec_sock_send_setup"
+
+@tsin i "F svz_codec_sock_send"
+
+@tsin i "F svz_codec_sock_disconnect"
+
+@tsin i "F svz_codec_sock_detect"
+
+@node Server types
+@subsection Server types
+
+As already noted in the main Serveez manual a server type is the main
+specification of the abilities and configuration items of a server which
+can be instantiated.  It is represented by @code{svz_servertype_t} in
+Serveez.  It contains server specific members like its name, different
+callbacks, a single default configuration and a list of configuration
+items which determine what can be configured.
+
+@menu
+* Macros for setting up a new server type::
+* General server type functionality::
+* Dynamic server loading::
+@end menu
+
+@node Macros for setting up a new server type
+@subsubsection Macros for setting up a new server type
+
+When specifying a server type you also need to define configuration
+items for it.  These items refer to addresses in the example
+configuration of the server type.  These macros can be used to define
+such items.
+
+@tsin i "M SVZ_REGISTER_INT"
+
+@tsin i "M SVZ_REGISTER_BOOL"
+
+@tsin i "M SVZ_REGISTER_INTARRAY"
+
+@tsin i "M SVZ_REGISTER_STR"
+
+@tsin i "M SVZ_REGISTER_STRARRAY"
+
+@tsin i "M SVZ_REGISTER_HASH"
+
+@tsin i "M SVZ_REGISTER_PORTCFG"
+
+@tsin i "M SVZ_REGISTER_END"
+
+@tsin i "M SVZ_CONFIG_DEFINE"
+
+@node General server type functionality
+@subsubsection General server type functionality
+
+The following set of functions are used to manage the list of known
+server types in the Serveez core library.  Serveez itself uses some of
+these functions to register its builtin server types.
+
+@tsin i "F svz_foreach_servertype"
+
+@tsin i "F svz_servertype_add"
+
+@tsin i "F svz_servertype_get"
+
+@tsin i "F svz_servertype_find"
+
+@node Dynamic server loading
+@subsubsection Dynamic server loading
+
+The core API of Serveez is able to register server types dynamically at
+runtime.  It uses the dynamic linker capabilities of the underlying
+operating system to load shared libraries (or DLLs on Win32).  This has
+been successfully tested on Windows and GNU/Linux.  Other systems are
+supported but yet untested.  Please tell us if you notice misbehaviour
+of any sort.
+
+@tsin i "F svz_dynload_path_set"
+
+@tsin i "F svz_dynload_path_get"
+
+@node Server functions
+@subsection Server functions
+
+A server in Serveez is an instantiated (configured) server type.  It is
+merely a copy of a specific server type with a unique server name, and
+is represented by @code{svz_server_t} in the core library.
+
+@menu
+* Server functionality::  General server instance implementations
+* Server configuration::  Server instance configuration
+* Server binding::        Server instance bindings
+* Server core::           Core functionality for servers
+* Server loop::           Server loop implementation
+* Server socket::         Using and creating server sockets
+@end menu
+
+@node Server functionality
+@subsubsection Server functionality
+
+This section contains functions dealing with the list of known servers
+in the core library of Serveez, also with the basics like creation and
+destruction of such servers.
+
+@tsin i "F svz_foreach_server"
+
+@tsin i "F svz_server_find"
+
+@tsin i "F svz_server_clients"
+
+@tsin i "F svz_server_get"
+
+@tsin i "F svz_updn_all_servers"
+
+@node Server configuration
+@subsubsection Configuration
+
+These functions provide an interface for configuring a server.  They are
+used to create and modify the default configuration of a server type in
+order to create a server configuration.
+
+@tsin i "F svz_config_type_instantiate"
+
+@tsin i "F svz_config_free"
+
+@tsin i "F svz_collect"
+
+@noindent
+Here are some convenience macros for @code{svz_collect}:
+
+@tsin i "M SVZ_COLLECT_INTARRAY"
+
+@tsin i "M SVZ_COLLECT_STRARRAY"
+
+@tsin i "M SVZ_COLLECT_STRHASH"
+
+@node Server binding
+@subsubsection Bindings
+
+The following functionality represents the relationship between port
+configurations as described in @ref{Port config funcs} and server
+instances.  When binding a server to a specific port configuration the
+core library creates listeners as needed by itself.
+
+@tsin i "F svz_server_bind"
+
+@tsin i "F svz_server_portcfgs"
+
+@tsin i "F svz_server_listeners"
+
+@tsin i "F svz_sock_servers"
+
+@tsin i "F svz_binding_contains_server"
+
+@tsin i "F svz_pp_server_bindings"
+
+@node Server core
+@subsubsection Server core
+
+@tsin i "V svz_child_died"
+
+@tsin i "F svz_shutting_down_p"
+
+@tsin i "F svz_foreach_socket"
+
+@tsin i "F svz_sock_find"
+
+@tsin i "F svz_sock_schedule_for_shutdown"
+
+@tsin i "F svz_sock_enqueue"
+
+@tsin i "F svz_sock_setparent"
+
+@tsin i "F svz_sock_getparent"
+
+@tsin i "F svz_sock_setreferrer"
+
+@tsin i "F svz_sock_getreferrer"
+
+@tsin i "F svz_sock_portcfg"
+
+@node Server loop
+@subsubsection Server loop
+
+This section describes the main server loop functionality.  There two
+modes of operation.  The default mode as used in Serveez is to jump into
+the loop and wait until the core library drops out of it.  In the other
+mode, the caller tells the Serveez core library to scan (and process)
+its socket chain once and return immediately.  Thus, caller is able to
+issue additional functionality in between each pass, useful if such
+functionality cannot be handled within the timers (notifiers) of servers
+and sockets.
+
+@tsin i "F svz_loop_pre"
+
+@tsin i "F svz_loop_post"
+
+@tsin i "F svz_loop"
+
+@tsin i "F svz_loop_one"
+
+@node Server socket
+@subsubsection Server sockets
+
+This section deals with creating and handling listeners.  These
+functions provide the default routines invoked when accepting a new
+connection on a listener.  This is necessary for connection oriented
+protocols (TCP and named pipes) only.
+
+[FIXME: All funcs internalized!  Write something else here!]
+
+@node Port config funcs
+@subsection Port configurations
+
+A port configuration is a structure defining a network or file system
+configuration.  Depending on the type of a server, it can be bound to
+one or more port configurations.  There are two major types of port
+configurations: connection oriented (TCP and PIPE), and packet oriented
+(ICMP, UDP and RAW).
+
+@tsin i "F svz_portcfg_addr"
+
+@tsin i "F svz_portcfg_port"
+
+@tsin i "F svz_portcfg_ipaddr"
+
+@tsin i "F svz_portcfg_device"
+
+Serveez maintains an internal list of port configurations, with each
+identified by its name.  When you bind a server to a port configuration,
+it does not get bound to a certain name but to its content.  If there
+are two or more port configuration specifying the same network or file
+system configuration just a single one gets actually used.
+
+@tsin i "F svz_portcfg_create"
+
+@tsin i "F svz_portcfg_equal"
+
+@tsin i "F svz_portcfg_add"
+
+@tsin i "F svz_portcfg_get"
+
+@tsin i "F svz_portcfg_destroy"
+
+@tsin i "F svz_portcfg_mkaddr"
+
+@tsin i "F svz_portcfg_dup"
+
+@node Booting
+@subsection Boot functions
+
+The most important functions are @code{svz_boot} and @code{svz_halt}
+which must be the first and the last call to the core API.
+
+@tsin i "F svz_boot"
+
+@tsin i "F svz_uptime"
+
+@tsin i "F svz_halt"
+
+@subsubsection Runtime parameters
+
+There are several runtime parameters indicating the abilities of the
+libserveez core API:
+
+@table @code
+@item SVZ_RUNPARM_VERBOSITY
+The log-level verbosity.
+
+@item SVZ_RUNPARM_MAX_SOCKETS
+Maxium number of clients allowed to connect.
+@end table
+
+These are manipulated by @code{svz_runparm} and two convenience macros,
+both of which accept @dfn{nick}, a C token without the prefix
+@samp{SVZ_RUNPARM_} (e.g., @code{VERBOSITY}).
+
+@tsin i "F svz_runparm"
+
+@tsin i "M SVZ_RUNPARM"
+
+@tsin i "M SVZ_RUNPARM_X"
+
+@node Interface
+@subsection Network interface functions
+
+The network interface functions of the Serveez core API allow access to
+the network devices on your system.  The system administrator can set up
+these devices to be bound to different Internet addresses and thereby
+split the network configuration into different @dfn{domains}.  Thus, the
+system is able to separate the traffic of different networks.  If set up
+correctly, Serveez can follow these rules.
+
+@tsin i "F svz_foreach_interface"
+
+@tsin i "F svz_interface_add"
+
+@node Windoze
+@subsection Useful Windows functions
+
+Serveez is meant to run on Windows systems as well (with some
+restrictions of course).  These functions are available with the Windows
+implementation of the Serveez core API only.  They allow access to the
+Windows registry database and some other useful things.
+
+@tsin i "F svz_windoze_daemon_control"
+
+@tsin i "F svz_windoze_asc2uni"
+
+@tsin i "F svz_windoze_uni2asc"

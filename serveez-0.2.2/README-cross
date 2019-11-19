@@ -1,0 +1,87 @@
+README-cross for GNU Serveez
+
+See end for copying conditions.
+
+
+Introduction
+============
+
+  Cross compiling means to compile a software package for a target
+system different from the build system; e.g. you can compile on your
+favourite linux box (i586-linux) for your old sparc-solaris.
+
+
+Configuring, Compiling and Installation
+=======================================
+
+  In the most complex case of cross-compiling, three system types are
+involved.  The options to specify them are:
+
+`--build=BUILD-TYPE'
+     The type of system on which the package is being configured and
+     compiled (detected by config.guess).
+
+`--host=HOST-TYPE'
+     The type of system on which the package will run.
+
+`--target=TARGET-TYPE'
+     The type of system for which any compiler tools in the package will
+     produce code.
+
+  If you are cross-compiling, you still have to specify the names of the
+cross-tools you use, in particular the C compiler, on the `configure'
+command line.
+
+    $ CC=sparc-linux-gcc AR=sparc-linux-ar RANLIB=sparc-linux-ranlib \
+      LD=sparc-linux-ld ./configure --host=sparc-linux
+
+  Also you need to arrange for a cross-aware `guile-config' to appear
+first in `PATH'.  (Any results gained from `guile-config' on your build
+system are most probably wrong.)  The cross-aware `guile-config' must
+support the commands `compile' and `link'.  For example:
+
+   $ cat >> $HOME/x/bin/guile-config
+   #!/bin/sh
+   case $1 in compile) echo "-I$HOME/x/include" ;;
+              link) echo "-L$HOME/x/lib -lguile" ;;
+              *) echo "bad command: $1" 1>&2 ; exit 1 ;;
+   esac
+   $ chmod +x $HOME/x/bin/guile-config
+   $ PATH=$HOME/x/bin:$PATH
+
+In this example, the cross environment is under $HOME/x.  We create
+a minimal cross-aware `guile-config' and make sure it is on `PATH'.
+
+  The `configure' script will make some run-time tests which would
+most probably fail to reflect the host system's abilities.  That is why
+you need to change them by hand either within `configure's cache file
+which is by default `config.cache' and rerun `configure' or in `config.h'
+also produced by `configure'.
+
+  The following list shows the items you definitely need to keep an eye
+on and fix these values if necessary.
+
+	`SIZEOF_LONG'		ac_cv_sizeof_long
+	`SIZEOF_VOID_P'		ac_cv_sizeof_void_p
+	`WORDS_BIGENDIAN'	svz_cv_sys_bigendian
+	`HAVE_PROC_STAT'	svz_cv_sys_proc_stat
+
+ Now you are ready for building and installation.  Type:
+
+    $ make
+    $ make install
+
+  You still need to consider the `--prefix=DIR' option of the `configure'
+script.  When installing the compiled package on your build system you
+will get a complete installation tree meant to run from this directory.
+Thus the `serveez-config' script might deliver wrong results when you
+transfer the installation tree from your build system to the host system
+to a different location.
+
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2002, 2003 Stefan Jahn <stefan@lkcc.org>
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

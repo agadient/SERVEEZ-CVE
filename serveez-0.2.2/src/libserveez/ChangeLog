@@ -1,0 +1,5291 @@
+2013-12-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.2
+
+2013-11-30  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib] Fix bug: Don't store bindings array in ‘svz_socket_t.data’.
+
+	* binding.c: #include "libserveez/soprop.h".
+	(all_ears): New static var.
+	(all_ears_x): New static func.
+	(svz_sock_bindings): Consult ‘all_ears’.
+	(add_server, svz_sock_bindings_set, svz_server_bind)
+	(zonk_sock_ears): Use ‘all_ears_x’.
+	(svz__bindings_updn): Init/destroy ‘all_ears’.
+
+2013-11-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[C int] Use ‘svz_calloc’ instead of ‘svz_alloc’ + ‘memset’.
+
+	* array.c (svz_array_create): ...here.
+	* passthrough.c (svz_envblock_create): Likewise.
+	* socket.c (svz_sock_alloc): Likewise.
+
+2013-11-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib] Make coservers avoid ‘svz_socket_t.data’ completely.
+
+	* coserver/coserver.c (friendly): New static var.
+	(check_request): Retrieve ‘coserver’ from ‘friendly’.
+	(start): Associate ‘sock’ to ‘coserver’ in ‘friendly’.
+	(forget_sock): New static func.
+	(init): Init ‘friendly’; add ‘forget_sock’ to prefree hook.
+	(finalize): Remove ‘forget_sock’ from prefree hook; destroy ‘friendly’.
+
+2013-11-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Add "socket property" funcs.
+
+	* soprop.c: New file.
+	* soprop.h: New file.
+	* Makefile.am (libserveez_la_SOURCES): Add soprop.c
+	(EXTRA_DIST): Add soprop.h.
+
+2013-11-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Minimize direct ‘sock->data’ access.
+
+	* binding.c (add_server)
+	(svz_sock_bindings_set, zonk_sock_ears):
+	Use local var, ‘svz_sock_bindings’.
+
+2013-11-26  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Use local var instead of multiple ‘svz_sock_bindings’.
+
+	* binding.c (svz_sock_bindings_zonk_server): ...here.
+
+2013-11-25  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Add abstraction: svz_sock_bindings
+
+	* binding.c (svz_sock_bindings): New func.
+	(from_server, find_binding, add_server, sock_bindings)
+	(svz_sock_bindings_zonk_server, svz_binding_contains_server)
+	(filter_pipe, filter_net): Use ‘svz_sock_bindings’.
+	* binding.h (svz_sock_bindings): New func decl.
+	* icmp-socket.c (svz_icmp_check_request): Use ‘svz_sock_bindings’.
+	* server.c (server_unbind): Likewise.
+	* socket.c (svz_sock_detect_proto): Likewise.
+	* udp-socket.c (svz_udp_check_request): Likewise.
+
+2013-11-25  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Move sock ears destruction to prefree hook.
+
+	* binding.c (zonk_sock_ears): New static func.
+	(svz__bindings_updn): New func.
+	* boot.c (bindings): New ‘UPDN’.
+	(svz_boot): Do ‘UP (bindings)’.
+	(svz_halt): Do ‘DN (bindings)’.
+	* socket.c (svz_sock_free): Don't bother to destroy the sock ears.
+
+2013-11-25  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Move ‘delete_server’ to binding.[ch]; rename.
+
+	* binding.c (svz_sock_bindings_zonk_server): New func.
+	* binding.h (svz_sock_bindings_zonk_server): New func decl, marked SBO.
+	* server.c (delete_server): Delete func.
+	(server_unbind): Use ‘svz_sock_bindings_zonk_server’.
+
+2013-11-25  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Add abstraction: svz_sock_bindings_set
+
+	* binding.c (svz_sock_bindings_set): New func.
+	* binding.h (svz_sock_bindings_set): New func decl, marked SBO.
+	* server-socket.c: #include "libserveez/binding.h".
+	(tcp_accept, pipe_accept): Use ‘svz_sock_bindings_set’.
+	* socket.c (svz_sock_detect_proto): Likewise.
+
+2013-11-20  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Don't bother caching ‘strsignal’ rv.
+
+	* boot.c (strsignal): Delete ‘UPDN’.
+	(svz_boot): Don't ‘UP (strsignal)’.
+	(svz_halt): Don't ‘DN (strsignal)’.
+	* server-core.c (signal_blurbs): Delete var.
+	(strsignal) [!defined HAVE_STRSIGNAL]: New macro.
+	(strsignal_init, strsignal_destroy, signal_blurb): Delete funcs.
+	(svz_loop_one): Call ‘strsignal’ directly;
+	construct default descriptions locally.
+	(svz__strsignal_updn): Delete func.
+
+2013-11-20  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Incorporate signals_{up,dn} into unique caller.
+
+	* server-core.c (signals_up, signals_dn): Delete funcs.
+	(svz__signal_updn): Rewrite.
+
+2013-11-20  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Incorporate table_{create,destroy} into unique caller.
+
+	* server-core.c (table_create, table_destroy):
+	Delete static funcs, moving bodies into...
+	(svz__sock_table_updn): ...this func.
+
+2013-11-19  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Use local var more.
+
+	* server-core.c (svz_sock_find):
+	Access socktab‘[id]’ exactly once; return ‘sock’ directly.
+
+2013-11-19  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib] Redesign sock pre-free hook for multiple callers.
+
+	* socket.c (svz_sock_pre_free): Delete var.
+	(prefree): New static var.
+	(svz_sock_prefree): New func.
+	(svz_sock_free): Iterate over ‘prefree’ funcs.
+	* socket.h (svz_sock_pre_free): Delete var decl.
+	(svz_sock_prefree_fn): New typedef.
+	(svz_sock_prefree): New func decl, marked ‘SERVEEZ_API’.
+
+2013-11-09  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[doc] Add blank lines to improve readability.
+
+	* address.c (svz_address_make): Add blank line before ‘@item’.
+
+2013-11-06  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib] Add API element: svz_sock_pre_free
+
+	* socket.c (svz_sock_pre_free): New var.
+	(svz_sock_free): If ‘svz_sock_pre_free’ is set, call it on ‘sock’.
+	* socket.h (svz_sock_pre_free): Add var decl.
+
+2013-09-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[C int] Consolidate two ‘if’ CONDITIONs w/ identical BODY.
+
+	* coserver/coserver.c (send_request): ...here, in
+	initial "find least busy" server; also, elide useless local var.
+
+2013-04-28  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Rename static vars/funcs.
+
+	Here, the "change" is the old name.
+	* binding.c
+	(add_server): ‘svz_sock_add_server’.
+	(adjoin): ‘svz_binding_join’.
+	(bindings_contain): ‘svz_binding_contains’.
+	(filter_net): ‘svz_binding_filter_net’.
+	(filter_pipe): ‘svz_binding_filter_pipe’.
+	(find_binding): ‘svz_binding_find’.
+	(from_server): ‘svz_binding_find_server’.
+	(local_info): ‘svz_sock_local_info’.
+	(make_binding): ‘svz_binding_create’.
+	(make_listener_socket): ‘svz_sock_bind_port’.
+	(sock_bindings): ‘svz_sock_bindings’.
+	(socket_with_portcfg): ‘svz_sock_find_portcfg’.
+	(sockets_with_portcfg): ‘svz_sock_find_portcfgs’.
+	* boot.c
+	(net_cleanup): ‘svz_net_cleanup’.
+	(net_startup): ‘svz_net_startup’.
+	* cfg.c
+	(add_type): ‘svz_config_type_add’.
+	(clobber): ‘svz_config_clobber’.
+	(config_types): ‘svz_config_types’.
+	(hash_dup): ‘svz_config_hash_dup’.
+	(intarray_dup): ‘svz_config_intarray_dup’.
+	(strarray_dup): ‘svz_config_strarray_dup’.
+	(type_finalize): ‘svz_config_type_finalize’.
+	(type_init): ‘svz_config_type_init’.
+	* core.c
+	(add_file): ‘svz_file_add’.
+	(files): ‘svz_files’.
+	(remove_file): ‘svz_file_del’.
+	* dynload.c
+	(dynload_finalize): ‘svz_dynload_finalize’.
+	(dynload_init): ‘svz_dynload_init’.
+	* hash.c
+	(display_analysis): ‘svz_hash_analyse’.
+	(hash_code): ‘svz_hash_code’.
+	(hash_equal): ‘svz_hash_key_equals’.
+	(hash_key_length): ‘svz_hash_key_length’.
+	(rehash): ‘svz_hash_rehash’.
+	* icmp-socket.c
+	(check_packet): ‘svz_icmp_check_packet’.
+	(icmp_buffer): ‘svz_icmp_buffer’.
+	(icmp_request): ‘svz_icmp_request’.
+	(pack_header): ‘svz_icmp_put_header’.
+	(read_socket): ‘svz_icmp_read_socket’.
+	(unpack_header): ‘svz_icmp_get_header’.
+	* interface.c
+	(by_address): ‘svz_interface_get’.
+	(collect): ‘svz_interface_collect’.
+	(discard): ‘svz_interface_free’.
+	(interfaces): ‘svz_interfaces’.
+	* passthrough.c
+	(check_access): ‘svz_process_check_access’.
+	(check_executable): ‘svz_process_check_executable’.
+	(check_request): ‘svz_process_check_request’.
+	(create_child): ‘svz_process_create_child’.
+	(disconnect_passthrough): ‘svz_process_disconnect_passthrough’.
+	(duplicate_handle): ‘svz_process_duplicate’.
+	(envblock_free): ‘svz_envblock_free’.
+	(envblock_sort): ‘svz_envblock_sort’.
+	(environment): ‘svz_environ’.
+	(mind_children): ‘svz_process_idle’.
+	(recv_pipe): ‘svz_process_recv_pipe’.
+	(recv_socket): ‘svz_process_recv_socket’.
+	(recv_switch_buffers): ‘svz_process_recv_update’.
+	(send_pipe): ‘svz_process_send_pipe’.
+	(send_socket): ‘svz_process_send_socket’.
+	(send_switch_buffers): ‘svz_process_send_update’.
+	(shuffle): ‘svz_process_shuffle’.
+	(shut_down_referrer): ‘svz_process_disconnect’.
+	(split_usergroup): ‘svz_process_split_usergroup’.
+	(switch_buffers): ‘svz_process_send_update’.
+	(via_fork): ‘svz_process_fork’.
+	* pipe-socket.c
+	(cleanup): ‘svz_pipe_cleanup’.
+	(display_overlap): ‘svz_pipe_overlap’.
+	(save_state): ‘svz_pipe_save_state’.
+	(set_files): ‘svz_pipe_set_files’.
+	(set_state): ‘svz_pipe_set_state’.
+	(startup): ‘svz_pipe_startup’.
+	(try_state): ‘svz_pipe_try_state’.
+	* portcfg.c
+	(convert_addr): ‘svz_portcfg_convert_addr’.
+	(portcfgs): ‘svz_portcfgs’.
+	(set_ipaddr): ‘svz_portcfg_set_ipaddr’.
+	(text_from_addr): ‘svz_portcfg_addr_text’.
+	* raw-socket.c
+	(unpack_header): ‘svz_raw_get_ip_header’.
+	* server-core.c
+	(check_child_died): ‘svz_sock_child_died’.
+	(check_children): ‘svz_sock_check_children’.
+	(dequeue): ‘svz_sock_dequeue’.
+	(do_abort): ‘svz_abort’.
+	(handle_segv): ‘svz_segfault_exception’.
+	(handle_signal): ‘svz_signal_handler’.
+	(last_socket): ‘svz_sock_last’.
+	(pipe_broke): ‘svz_pipe_broke’.
+	(rechain_list_of_socks): ‘svz_sock_rechain_list’.
+	(reset): ‘svz_reset’.
+	(reset_happened): ‘svz_reset_happened’.
+	(signal_blurb): ‘svz_strsignal’.
+	(signal_blurbs): ‘svz_signal_strings’.
+	(signals_dn): ‘svz_signal_dn’.
+	(signals_up): ‘svz_signal_up’.
+	(signo): ‘svz_signal’.
+	(sock_id): ‘svz_sock_id’.
+	(sock_limit): ‘svz_sock_limit’.
+	(sock_version): ‘svz_sock_version’.
+	(socktab): ‘svz_sock_lookup_table’.
+	(strsignal_destory): ‘svz_strsignal_destroy’.
+	(strsignal_init): ‘svz_strsignal_init’.
+	(table_create): ‘svz_sock_table_create’.
+	(table_destroy): ‘svz_sock_table_destroy’.
+	(uncaught_signal): ‘svz_uncaught_signal’.
+	(validate_list_of_socks): ‘svz_sock_validate_list’.
+	(validate_sock): ‘svz_sock_valid’.
+	* server-loop.c
+	(check_sockets_mingw): ‘svz_check_sockets_MinGW’.
+	(check_sockets_poll): ‘svz_check_sockets_poll’.
+	(check_sockets_select): ‘svz_check_sockets_select’.
+	(error_info): ‘svz_sock_error_info’.
+	* server-socket.c
+	(check_frequency): ‘svz_sock_check_frequency’.
+	(idle_protect): ‘svz_sock_idle_protect’.
+	(pipe_accept): ‘svz_pipe_accept’.
+	(tcp_accept): ‘svz_tcp_accept’.
+	* server.c
+	(configure_server): ‘svz_server_configure’.
+	(delete_server): ‘svz_sock_del_server’.
+	(finalize_all): ‘svz_server_finalize_all’.
+	(finalize_server): ‘svz_server_finalize’.
+	(init_all): ‘svz_server_init_all’.
+	(init_server): ‘svz_server_init’.
+	(instantiate_server): ‘svz_server_instantiate’.
+	(instantiate_servertype): ‘svz_servertype_instantiate’.
+	(server_free): ‘svz_server_free’.
+	(server_unbind): ‘svz_server_unbind’.
+	(servers): ‘svz_servers’.
+	(servertype_finalize): ‘svz_servertype_finalize’.
+	(servertypes): ‘svz_servertypes’.
+	* socket.c
+	(maybe_log_disconnect): ‘svz_sock_default_disconnect’.
+	(split_packet_and_dispatch): ‘svz_sock_check_request_array’.
+	(split_packet_fixed_and_dispatch): ‘svz_sock_check_request_size’.
+	(split_packet_unibyte_and_dispatch): ‘svz_sock_check_request_byte’.
+	(tcp_default_connect): ‘svz_tcp_default_connect’.
+	* udp-socket.c
+	(udp_read_socket): ‘svz_udp_read_socket’.
+	* util.c
+	(logfile): ‘svz_logfile’.
+	(neterror): ‘svz_neterror’.
+	(os_version): ‘svz_os_version’.
+	(syserror): ‘svz_syserror’.
+	* windoze.c
+	(start_daemon): ‘svz_windoze_start_daemon’.
+	(stop_daemon): ‘svz_windoze_stop_daemon’.
+	* codec/codec.c
+	(check_codec): ‘svz_codec_check’.
+	(codecs): ‘svz_codecs’.
+	(finalize): ‘svz_codec_finalize’.
+	(init): ‘svz_codec_init’.
+	(recv_revert): ‘svz_codec_sock_recv_revert’.
+	(send_revert): ‘svz_codec_sock_send_revert’.
+	* coserver/coserver.c
+	(big_loop): ‘svz_coserver_loop’.
+	(callback_id): ‘svz_coserver_callback_id’.
+	(callbacks): ‘svz_coserver_callbacks’.
+	(check_request): ‘svz_coserver_check_request’.
+	(close_all): ‘svz_coserver_closeall’.
+	(close_pipes): ‘svz_coserver_close_pipes’.
+	(coserver_activate): ‘svz_coserver_activate’.
+	(coserver_thread): ‘svz_coserver_thread’.
+	(coservers): ‘svz_coservers’.
+	(coservertypes): ‘svz_coservertypes’.
+	(count_type): ‘svz_coserver_count’.
+	(delete_nth): ‘svz_coserver_delete’.
+	(disconnect): ‘svz_coserver_disconnect’.
+	(finalize): ‘svz_coserver_finalize’.
+	(get_id): ‘svz_coserver_get_id’.
+	(handle_request): ‘svz_coserver_handle_request’.
+	(init): ‘svz_coserver_init’.
+	(put_id): ‘svz_coserver_put_id’.
+	(send_request): ‘svz_coserver_send_request’.
+	(setup_signals): ‘svz_coserver_signals’.
+	(start): ‘svz_coserver_start’.
+	* coserver/reverse-dns.c
+	(cache): ‘reverse_dns_cache’.
+
+2013-04-28  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Rename local var from ‘interfaces’ to ‘was’.
+
+	* interface.c (svz_interface_check): ...here.
+
+2013-04-27  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[lib int] Incorporate ‘svz_array_ensure_capacity’ into unique caller.
+
+	* array.c (svz_array_add): ...here.
+
+2013-03-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.1
+
+2013-03-12  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[int] Use ‘PACKAGE_BUGREPORT’ more.
+
+	* server-core.c (SIGSEGV_TEXT): ...here.
+
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.0
+
+2012-12-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Arrange for libserveez.h to #include system headers.
+
+	* defines.h: #include <stdio.h>, <stdlib.h>, <stdint.h>.
+	[HAVE_WINSOCK2_H]: #include <winsock2.h>.
+	[HAVE_ARPA_INET_H]: #include <arpa/inet.h>.
+	[HAVE_NETINET_IN_H]: #include <netinet/in.h>.
+
+2012-11-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Allow for coserver init w/o instances.
+
+	Suggested by Julian Graham.
+
+	* coserver/coserver.c (svz_updn_all_coservers):
+	If DIRECTION is negative, zero all ‘.instances’ in ‘svz_coservertypes’.
+
+2012-11-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[dist] Arrange to always distribute windoze.h.
+
+	Omission from 2012-11-03, "Use Automake
+	conditional to gate windoze.[hc]".
+
+	* Makefile.am (EXTRA_DIST): Add windoze.h ‘if !MINGW32’.
+
+2012-11-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Arrange to always docscan windoze.c.
+
+	Omission from 2012-11-03, "Use Automake
+	conditional to gate windoze.[hc]".
+
+	* Makefile.am (docable): Add windoze.c ‘if !MINGW32’.
+
+2012-11-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Use Automake conditional to gate windoze.[hc].
+
+	* Makefile.am (libserveez_la_SOURCES):
+	Include windoze.c only ‘if MINGW32’.
+	* windoze.c: Remove ‘#ifdef __MINGW32__’ around code.
+	(windoze_dummy) [!__MINGW32__]: Delete var.
+
+2012-11-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Generate monolithic libserveez.h; install it solely.
+
+	∀ files: "(uninstall-hook): Delete target".
+	* Makefile.am (libserveezdir, libserveez_HEADERS): Delete vars.
+	* codec/Makefile.am (libcodecdir, libcodec_HEADERS): Likewise.
+	* coserver/Makefile.am (libcoserverdir, libcoserver_HEADERS): Likewise.
+
+2012-11-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[int] Use ‘svz_hash_configure’ more.
+
+	* alloc.c (heap_add): Use ‘svz_hash_configure’.
+
+2012-11-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_hash_configure
+
+	* hash.h (svz_hash_configure): New func decl.
+	* hash.c (svz_hash_configure): New func.
+
+2012-11-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C int] Promote macro ‘UNUSED’ to its own file.
+
+	* alloc.c: #include "unused.h"; do ‘s/SVZ_UNUSED/UNUSED/g’.
+	* codec/bzip2.c: Likewise.
+	* codec/gzlib.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* server-core.c: Likewise.
+	* server.c: Likewise.
+	* util.c: Likewise.
+	* defines.h (SVZ_UNUSED): Delete macro.
+
+2011-07-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use Automake conditionals to gate codec glue.
+
+	* codec/Makefile.am (libcodec_la_SOURCES):
+	Reformulate to one basic assign, followed by two additive assign ‘+=’
+	stanzas for gzlib.c and bzip2.c, surrounded by ‘if WITH_ZLIB’..‘endif’
+	and ‘if WITH_BZLIB’..‘endif’, respectively.
+	* codec/bzip2.c: Presume ‘HAVE_LIBZ2’, ‘HAVE_BZLIB_H’.
+	* codec/gzlib.c: Presume ‘HAVE_LIBZ’, ‘HAVE_ZLIB_H’.
+
+2011-07-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_p{malloc,realloc,strdup}.
+
+	* alloc.h (svz_pmalloc): Delete func decl.
+	(svz_prealloc, svz_pstrdup): Do ‘s/SERVEEZ_API/SBO/’; mark ‘svzint’.
+	* alloc.c (svz_pmalloc): Incorporate into ‘svz_pstrdup’.
+	(svz_prealloc, svz_pstrdup): Unmark docstring for snarfing.
+
+2011-07-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Clean up for ‘ENABLE_DEBUG=1 DEBUG_MEMORY_LEAKS=1’.
+
+	* alloc.c (heap_hash_keylen): Return ‘size_t’; add ‘const’ to arg.
+	(heap_hash_equals, heap_hash_code): Add ‘const’ to args.
+	(heap_internal): Use ‘%zu’ in format string for ‘size_t’ args.
+	(svz_heap): Delete unused local vars.
+
+2011-06-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Merge ‘$(LIBSERVEEZLIBS)’ into ‘$(LIBS)’.
+
+	* Makefile.am (libserveez_la_DEPENDENCIES):
+	Delete var, incorporating its value into...
+	(libserveez_la_LIBADD): ...this one; remove $(LIBSERVEEZLIBS).
+
+2011-06-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Merge $(CODECLIBS) into $(LIBS).
+
+	* bzip2.c: Do ‘s/HAVE_BZ2LIB/HAVE_LIBZ2/g’.
+	* gzlib.c: Do ‘s/HAVE_ZLIB/HAVE_LIBZ/g’.
+	* codec.c: Do both of the above.
+	* Makefile.am (libcodec_la_LIBADD): Delete var.
+
+2011-06-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Init some local variables for GCC 4.4 peace of mind.
+
+	* passthrough.c (svz_process_shuffle):
+	Init local vars ‘process_to_serveez’, ‘serveez_to_process’.
+
+2011-06-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove "native MSVC" support.
+
+	* Makefile.am (EXTRA_DIST): Remove
+	libserveez.dsp, libserveez.ap, svzpath.h.serveez.
+	(MAINTAINERCLEANFILES): Remove libserveez.dsp.
+	(svzpath.h.serveez): Delete target.
+	* libserveez.ap: Delete file.
+
+2011-05-28  Mike Gran  <spk121@yahoo.com>  (tiny change)
+
+	[lib] Fix bug: Init auto var in ‘svz_sock_check_frequency’.
+
+	This caused a crash in some circumstances.
+
+	* server-socket.c (svz_sock_check_frequency): Init ‘accepted’.
+
+2011-05-27  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘svz_address_t *’ for func args / struct members.
+
+	U ≡ "Update arglist to take ‘svz_address_t *’ instead of
+	‘in_addr_t’"; N ≡ "Add call to ‘STILL_NO_V6_DAMMIT’"; every
+	header has implicit: "<svzint> #include "libserveez/address.h"".
+	* core.h (svz_socket_connect): U.
+	* coserver/coserver.h (svz_coserver_rdns_invoke): U.
+	* icmp-socket.h (svz_icmp_connect): U.
+	* interface.h (struct svz_interface):
+	Drop member ‘ipaddr’; add member ‘addr’.
+	(svz_interface_add): Take family and bits instead of v4addr.
+	* socket.h (struct svz_socket): Change type
+	of ‘remote_addr’ and ‘local_addr’ to ‘svz_address_t *’.
+	* tcp-socket.h (svz_tcp_connect): U.
+	* udp-socket.c (svz_udp_connect): U.
+	* core.c (svz_socket_connect): U; N; update internals.
+	* coserver/coserver.c (svz_coserver_rdns_invoke): Likewise.
+	(svz_coserver_ident_invoke): Update internals.
+	* icmp-socket.c (svz_icmp_read_socket, svz_icmp_send_control)
+	(svz_icmp_write, svz_icmp_check_request, svz_icmp_connect): Likewise.
+	* interface.c (svz_interface_collect, desetroy_ifc): Likewise.
+	(svz_interface_add): U; N; update internals.
+	(svz_interface_get): U; update internals.
+	(svz_interface_check): Update internals.
+	* portcfg.c (expand_internal)
+	(svz_portcfg_convert_addr): Likewise.
+	* server-core.c (svz_sock_check_access): Likewise.
+	* server-socket.c (svz_sock_check_frequency): Likewise.
+	* socket.c (svz_sock_free)
+	(svz_sock_intern_connection_info): Likewise.
+	* tcp-socket.c (svz_tcp_connect): U; N.
+	* udp-socket.c (svz_udp_read_socket)
+	(svz_udp_write): Update internals.
+	(svz_udp_connect): U; N.
+
+2011-05-27  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Use ‘sizeof (in_addr_t)’ more.
+
+	* icmp-socket.c (svz_icmp_write_socket)
+	(svz_icmp_send_control, svz_icmp_write): Use ‘sizeof (in_addr_t)’.
+	* udp-socket.c (svz_udp_write_socket, svz_udp_write): Likewise.
+
+2011-05-26  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_address_t’ and related functions / macros.
+
+	* address.h: New file.
+	* address.c: New file.
+	* Makefile.am (libserveez_la_SOURCES): Add address.c.
+	(libserveez_HEADERS, docable): Add address.h.
+
+2011-05-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[irc coserver] Dose coserver ‘request’ arg w/ ‘const’.
+
+	* coserver/coserver.c (svz_coserver_send_request):
+	Declare ‘char *request’ to be ‘const’.
+
+2011-05-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib hash] Declare ‘const’ all ‘char *key’ args.
+
+	U ≡ "Declare ‘const’ all ‘char *’ args".
+	* hash.h (struct svz_hash):
+	For members ‘equals’, ‘code’, ‘keylen’: U.
+	(svz_hash_delete, svz_hash_put, svz_hash_get): U.
+	* hash.c (svz_hash_code): U; likewise, local var ‘p’.
+	(svz_hash_key_equals, svz_hash_key_length)
+	(svz_hash_put, svz_hash_delete, svz_hash_get): U.
+
+2011-05-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[woe int] Make token var global.
+
+	* windoze.c [!__MINGW32__] (windoze_dummy): Make var global.
+
+2011-05-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Make libserveez + headers installation optional.
+
+	U ≡ "Conditionalize var with ‘COURAGEOUS’".
+	* Makefile.am (lib_LTLIBRARIES): U.
+	[!COURAGEOUS] (noinst_LTLIBRARIES): New var.
+	(libserveezdir, libserveez_HEADERS): U.
+	* codec/Makefile.am (libcodecdir, libcodec_HEADERS): U.
+	* coserver/Makefile.am (libcoserverdir, libcoserver_HEADERS): U.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Look in $(top_builddir) for config.status.
+
+	* Makefile.am (svzpath.h): Use $(top_builddir)/config.status.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Build .tsar files under src/, only if MAINTAINER_MODE.
+
+	* Makefile.am [MAINTAINER_MODE] (noinst_DATA): New var.
+	(docable): New var.
+	(libserveez.tsar): New target.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_free_and_zero’, SVZ_{NUM2PTR,PTR2NUM}.
+
+	* boot.c: #include "misc-macros.h".
+	* cfg.c: Likewise.
+	* core.c: Likewise.
+	* dynload.c: Likewise.
+	* passthrough.c: Likewise.
+	* portcfg.c: Likewise.
+	* server-core.c: Likewise.
+	* server-socket.c: Likewise.
+	* alloc.h (svz_free_and_zero): Delete macro.
+	* util.h (SVZ_NUM2PTR, SVZ_PTR2NUM): Delete macros.
+
+2011-05-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Use "/**" for lib API docs, s3as + tsin to wrangle them.
+
+	* alloc.c <∀ documented libserveez API>:
+	Change pre-item docstring comment to "/**" style;
+	rephrase docstring to use consistent pov; nfc.
+	* alloc.h: Likewise.
+	* array.c: Likewise.
+	* array.h: Likewise.
+	* binding.c: Likewise.
+	* boot.c: Likewise.
+	* boot.h: Likewise.
+	* cfg.c: Likewise.
+	* cfg.h: Likewise.
+	* codec/codec.c: Likewise.
+	* core.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* dynload.c: Likewise.
+	* hash.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* interface.c: Likewise.
+	* passthrough.c: Likewise.
+	* pipe-socket.c: Likewise.
+	* portcfg.c: Likewise.
+	* server-core.c: Likewise.
+	* server.c: Likewise.
+	* socket.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+	* util.c: Likewise.
+	* util.h: Likewise.
+	* windoze.c: Likewise.
+
+2011-04-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Use ‘time_t’ for ‘svz_notify’.
+
+	* server-core.c (svz_notify): Change type to ‘time_t’.
+	* server-core.h (svz_notify): Likewise.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘uint32_t’ for some IP struct members.
+
+	S(X) ≡ "Use ‘uint32_t’ for struct member(s) X".
+	* ipdata.h (IPAddrEntry):
+	S (iae_index, iae_mask, iae_reasmsize).
+	(IFEntry): S (if_index, if_type, if_mtu, if_speed, if_physaddrlen,
+	if_adminstatus, if_operstatus, if_lastchange, if_inoctets,
+	if_inucastpkts, if_innucastpkts, if_indiscards, if_inerrors,
+	if_inunknownprotos, if_outoctets, if_outucastpkts, if_outnucastpkts,
+	if_outdiscards, if_outerrors, if_outqlen, if_descrlen).
+	(TDIObjectID): S (toi_class, toi_type, toi_id).
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_udp_printf
+
+	* udp-socket.c (svz_udp_printf): Delete func.
+	* udp-socket.h (svz_udp_printf): Delete func decl.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib tcp] Fix bug: Inhibit "final write" on previous short write flush.
+
+	* socket.c (svz_sock_write): Work around TCP-specific bug:
+	Keep track of the original ‘len’; inhibit ‘SVZ_SOFLG_FINAL_WRITE’ when
+	flushing a previous write, to avoid silently dropping current one.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Use ‘uint8_t’ more.
+
+	S(X) ≡ "Use ‘uint8_t’ or ‘uint8_t *’ for struct member(s) X".
+	* icmp-socket.c
+	(IPINFO): S (Ttl, Tos, Flags, OptionsSize, OptionsData).
+	* ipdata.h
+	(IFEntry): S (if_physaddr, if_descr).
+	(tcp_request_query_information_ex): S (Context).
+	* util.c (svz_hexdump): Use ‘uint8_t’ for cast.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘uint8_t’ for ‘svz_socket_t.oob’.
+
+	* socket.h (svz_socket_t): Use ‘uint8_t’ for ‘.oob’.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘uint8_t’ for ICMP message type.
+
+	U(X) ≡ "Use ‘uint8_t’ for X".
+	* socket.h (svz_socket_t): U (.itype).
+	* icmp-socket.c (svz_icmp_connect): U (3rd arg).
+	* icmp-socket.h (svz_icmp_connect): Update func decl.
+	* portcfg.h (svz_portcfg_t): U (.u.icmp.type).
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for ‘svz_interface_t.index’.
+
+	* interface.h (svz_interface_t index):
+	Convert type to ‘size_t’.
+	(svz_interface_add): Convert 1st arg type to ‘size_t’.
+	* interface.c (svz_interface_collect):
+	Use ‘size_t’ for local var.
+	(svz_interface_add): Convert 1st arg type to ‘size_t’.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for ‘svz_sendfile’ arg ‘count’.
+
+	* core.c (svz_sendfile): Convert 3rd arg type to ‘size_t’.
+	* core.h (svz_sendfile): Update func decl.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for codec ratio calculation.
+
+	* codec/codec.h (svz_codec_t ratio):
+	Convert 2nd and 3rd arg to ‘size_t *’.
+	* codec/codec.c (svz_codec_ratio):
+	Use ‘size_t’ for local vars ‘in’, ‘out’.
+	* codec/bzip2.c (bzip2_ratio):
+	Use ‘size_t’ for 2nd and 3rd args.
+	* codec/gzlib.c (zlib_ratio): Likewise.
+	* codec/bzip2.h (bzip2_ratio): Update func decl.
+	* codec/gzlib.h (zlib_ratio): Likewise.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop typedef ‘svz_uint8_t’; use ‘uint8_t’ directly.
+
+	* util.h (svz_uint8_t): Delete typedef.
+	* icmp-socket.c: Do ‘s/svz_uint8_t/uint8_t/g’.
+	* icmp-socket.h: Likewise.
+	* raw-socket.c: Likewise.
+	* raw-socket.h: Likewise.
+	* util.c: Likewise.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Use ‘uint16_t’ instead of ‘unsigned short’.
+
+	* icmp-socket.c: Do ‘s/unsigned short/uint16_t/g’.
+	* ipdata.h: Likewise.
+	* iphlpapi.h: Likewise.
+	* raw-socket.c: Likewise.
+	* raw-socket.h: Likewise.
+	* socket.h: Likewise.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘mode_t’ for ‘svz_open’ arg ‘mode’.
+
+	* core.c (svz_open):
+	Convert type to ‘mode_t’ for third arg ‘mode’;
+	remove cast to ‘mode_t’.
+	* core.h (svz_open): Update func decl.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘mode_t’ for ‘svz_pipe_t.perm’.
+
+	* pipe-socket.h (svz_pipe_t):
+	Use ‘mode_t’ for member ‘.perm’.
+	* pipe-socket.c (svz_pipe_save_state)
+	(svz_pipe_set_state): Convert arg ‘mask’ to type ‘mode_t’.
+	(svz_pipe_try_state): Use ‘mode_t’ in cast.
+	(svz_pipe_connect, svz_pipe_listener): Use ‘mode_t’ in local var.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘gid_t’ for svz_pipe_t.{pgid,gid}.
+
+	* pipe-socket.h
+	(svz_pipe_t): Use ‘gid_t’ for members ‘.pgid’, ‘.gid’.
+	* pipe-socket.c
+	(svz_pipe_check_group): Use ‘gid_t’ in cast.
+	(svz_pipe_save_state, svz_pipe_set_state):
+	Convert arg ‘gid’ to type ‘gid_t’.
+	(svz_pipe_try_state): Use ‘gid_t’ in cast.
+	(svz_pipe_connect, svz_pipe_listener):
+	Use ‘gid_t’ for local var ‘gid’.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘uid_t’ for ‘svz_pipe_t.uid’.
+
+	* pipe-socket.h
+	(svz_pipe_t): Use ‘uid_t’ for member ‘.uid’.
+	* pipe-socket.c
+	(svz_pipe_check_user): Use ‘uid_t’ in cast.
+	(svz_pipe_save_state, svz_pipe_set_state):
+	Convert type of arg ‘uid’ to ‘uid_t’.
+	(svz_pipe_try_state): Use ‘uid_t’ in cast.
+	(svz_pipe_connect, svz_pipe_listener): Use ‘uid_t’ in local var.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for ‘svz_hash_t’ dimensions.
+
+	U ≡ "Convert type to ‘size_t’ for local var";
+	S(X) ≡ "Likewise, for struct member(s) X".
+	* hash.c (svz_hash_key_length): Return ‘size_t’; U.
+	(svz_hash_create, svz_hash_destroy): U.
+	(svz_hash_rehash): U; remove cast to ‘unsigned long’.
+	(svz_hash_foreach): U.
+	(svz_hash_size): Return ‘size_t’.
+	(svz_hash_contains): U.
+	* hash.h (svz_hash_t): S (buckets, fill, keys, keylen).
+	(svz_hash_create, svz_hash_size): Update func decls.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for ‘svz_array_t’ dimensions and indices.
+
+	U ≡ "Convert type to ‘size_t’ for local var".
+	* array.c (svz_array_t): Convert
+	type to ‘size_t’ for members ‘.size’, ‘.capacity’.
+	(svz_array_cretae): Convert type of arg ‘capacity’ to ‘size_t’.
+	(svz_array_destroy): Likewise for local var.
+	(svz_array_ensure_capacity): Likewise for arg ‘size’.
+	(svz_array_get, svz_array_set)
+	(svz_array_del): Likewise for arg ‘index’.
+	(svz_array_size): Return ‘size_t’.
+	(svz_array_strdup): U.
+	* array.h (svz_array_create)
+	(svz_array_get, svz_array_set, svz_array_del)
+	(svz_array_size): Update func decls.
+	(svz_array_foreach): Remove cast to ‘unsigned long’.
+	* binding.c (svz_binding_find_server)
+	(svz_server_portcfgs, svz_binding_find, svz_binding_contains)
+	(svz_binding_join, svz_server_bind, svz_binding_contains_server)
+	(svz_sock_servers, svz_binding_filter_pipe, svz_binding_filter_net)
+	(svz_pp_server_bindings): U.
+	* codec.c (svz_foreach_codec, svz_codec_get)
+	(svz_codec_register, svz_codec_unregister, svz_codec_sock_detect): U.
+	* coserver/coserver.c (svz_coserver_send_request): U.
+	(svz_foreach_coserver, svz_coserver_activate, svz_coserver_count)
+	(svz_coserver_delete, svz_coserver_disconnect, svz_coserver_close_pipes)
+	(svz_coserver_destroy, svz_coserver_check, svz_coserver_create): U.
+	* core.c (svz_file_del, svz_file_closeall): U.
+	* dynload.c (dyn_libraries): Change type to ‘size_t’.
+	(svz_dynload_path_set, svz_dynload_path_get, dyn_load_library)
+	(dyn_unload_library, dyn_load_symbol): U.
+	* icmp-socket.c (svz_icmp_check_request): U.
+	* interface.c (svz_foreach_interface)
+	[__MINGW32__] (svz_interface_collect)
+	(svz_interface_add, svz_interface_get)
+	(svz_interface_search, svz_interface_check): U.
+	* server-core.c (svz_sock_check_access): U.
+	* server-socket.c (svz_sock_check_frequency): U.
+	* server.c (svz_foreach_servertype, svz_servertype_add): U.
+	(svz_sock_del_server): U; return ‘size_t’.
+	(svz_servertype_get, svz_servertype_finalize): U.
+	* socket.c (svz_sock_detect_proto): U.
+	* udp-socket.c (svz_udp_check_request): U.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for memory allocation state.
+
+	* alloc.c (allocated_bytes)
+	(allocated_blocks): Convert type to ‘size_t’.
+	(svz_get_curalloc): Likewise for arg.
+	* alloc.h (svz_get_curalloc): Update func decl.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Use ‘in_port_t’ instead of ‘unsigned short’.
+
+	U ≡ "Convert type of arg or local var
+	either from ‘unsigned short *’ to ‘in_port_t *’,
+	or from ‘unsigned short’ to ‘in_port_t’";
+	S(X) ≡ "Likewise, for struct member(s) X";
+	C ≡ "Remove cast to ‘unsigned short’".
+	* binding.c (svz_binding_filter_net): U.
+	(svz_sock_local_info, svz_binding_filter): U.
+	* core.c (svz_socket_connect): U.
+	* core.h (svz_socket_connect): U.
+	* icmp-socket.c (svz_icmp_header_t): S (port).
+	(svz_icmp_connect): U; C.
+	* icmp-socket.h (svz_icmp_connect): U.
+	* portcfg.c (svz_portcfg_port): U.
+	* portcfg.h
+	(svz_portcfg_t): S (u.tcp.port, u.udp.port).
+	(svz_portcfg_port): U.
+	* socket.c (svz_sock_intern_connection_info): U.
+	* socket.h (svz_socket_t): S (remote_port, local_port).
+	* tcp-socket.c (svz_tcp_connect): U.
+	* tcp-socket.h (svz_tcp_connect): U.
+	* udp-socket.c (svz_udp_connect): U.
+	* udp-socket.h (svz_udp_connect): U.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Fix bug: Use ‘in_addr_t’ instead of ‘unsigned long’.
+
+	U ≡ "Convert type of arg or local var
+	either from ‘unsigned long *’ to ‘in_addr_t *’,
+	or from ‘unsigned long’ to ‘in_addr_t’";
+	S(X) ≡ "Likewise, for struct member(s) X".
+	* binding.c (svz_binding_filter_net): U.
+	(svz_sock_local_info, svz_binding_filter): U.
+	* core.c (svz_socket_connect, svz_inet_ntoa): U.
+	* core.h (svz_socket_connect, svz_inet_ntoa): U.
+	* coserver/coserver.c (svz_coserver_rdns_invoke): U.
+	* coserver/coserver.h (svz_coserver_rdns_invoke): U.
+	* coserver/dns.c (dns_handle_request): U.
+	* coserver/ident.c (ident_handle_request): U.
+	* coserver/reverse-dns.c
+	(reverse_dns_cache_t): S (ip).
+	(reverse_dns_handle_request): U.
+	* icmp-socket.c (ICMPECHO): S (Address).
+	(IcmpSendEchoProc, svz_icmp_connect): U.
+	* icmp-socket.h (svz_icmp_connect): U.
+	* interface.c (svz_interface_collect): U.
+	(svz_interface_add, svz_interface_get): U.
+	* interface.h (svz_interface_t): S (ipaddr).
+	(svz_interface_add, svz_interface_get): U.
+	* ipdata.h (IPAddrEntry): S (iae_addr, iae_bcastaddr).
+	* portcfg.c (expand_internal): U.
+	* raw-socket.c (svz_ip_header_t): S (src, dst).
+	* socket.c (svz_sock_intern_connection_info): U.
+	* socket.h (svz_socket_t): S (remote_addr, local_addr).
+	* tcp-socket.c (svz_tcp_connect): U.
+	* tcp-socket.h (svz_tcp_connect): U.
+	* udp-socket.c (svz_udp_connect): U.
+	* udp-socket.h (svz_udp_connect): U.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[codec int] Make ‘in_addr_t’ et al available to implementation.
+
+	* codec/bzip2.c: #include "networking-headers.h".
+	* codec/codec.c: Likewise.
+	* codec/gzlib.c: Likewise.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Add func: svz_pton
+
+	* util.c (svz_pton): New func.
+	* util.h (svz_pton): New func decl, marked ‘SBO’.
+	* core.c (svz_inet_aton): Use ‘svz_pton’.
+	* coserver/ident.c (ident_handle_request): Likewise.
+	* coserver/reverse-dns.c (reverse_dns_handle_request): Likewise.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize ‘#include <arpa/inet.h>’.
+
+	* core.c: Don't #include <arpa/inet.h>.
+	* coserver/dns.c: Likewise.
+	* coserver/ident.c: Likewise.
+	* coserver/reverse-dns.c: Likewise.
+	* interface.c: Likewise.
+	* server.c: Likewise.
+
+2011-04-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename some *_updn funcs to svz_updn_all_*.
+
+	* coserver/coserver.h
+	(svz_updn_all_coservers): Rename from ‘svz_coserver_updn’.
+	* coserver/coserver.c (svz_updn_all_coservers): Likewise.
+	* server.h
+	(svz_updn_all_servers): Rename from ‘svz_server_all_updn’.
+	* server.c (svz_updn_all_servers): Likewise.
+
+2011-04-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop funcs: svz_hash_{keys,values,xfree}
+
+	* hash.h (svz_hash_keys)
+	(svz_hash_values, svz_hash_xfree): Delete func decls.
+	* hash.c (svz_hash_keys)
+	(svz_hash_values, svz_hash_xfree): Delete funcs.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Avoid ‘svz_hash_values’.
+
+	* alloc.c [DEBUG_MEMORY_LEAKS] (heap_internal): New static func.
+	[DEBUG_MEMORY_LEAKS] (heap): Use it and ‘svz_hash_foreach’.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Drop func: svz_pcalloc
+
+	This was never included in the header alloc.h
+	and is not used anywhere.
+
+	* alloc.c (svz_pcalloc): Delete func.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Don't export ‘svz_segfault_exception’.
+
+	* server-core.c (svz_segfault_exception): Make static.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Incorporate ‘svz_sock_print_list’ into unique caller.
+
+	* server-core.c (svz_sock_print_list): Incorporate...
+	(svz_sock_validate_list): ...into this func.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_servertype_print’ to unique client.
+
+	* server.c (svz_servertype_print): Delete func.
+	* server.h (svz_servertype_print): Delete func decl.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_foreach_servertype
+
+	* server.h (svz_servertype_do_t): New typedef.
+	(svz_foreach_servertype): New func decl, marked ‘SERVEEZ_API’.
+	* server.c (svz_foreach_servertype): New func.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Incorporate ‘svz_config_prototype_print’ into unique caller.
+
+	* cfg.h (svz_config_prototype_print): Delete func decl.
+	* cfg.c (svz_config_prototype_print): Incorporate into...
+	* server.c (svz_servertype_print): ...here.
+
+2011-04-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_portcfg_print’ to unique client.
+
+	* portcfg.c (svz_portcfg_print): Delete func.
+	* portcfg.h (svz_portcfg_print): Delete func decl.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_pp_server_bindings’; drop ‘svz_server_bindings’.
+
+	* binding.c (svz_server_bindings): Delete func.
+	(svz_pp_server_bindings): New func.
+	* binding.h (svz_server_bindings): Delete func decl.
+	(svz_pp_server_bindings): New func decl.
+	* portcfg.c (svz_portcfg_text): Delete func.
+	(svz_pp_portcfg): New func.
+	* portcfg.h (svz_portcfg_text): Delete func decl.
+	(svz_pp_portcfg): New func decl.
+	* server-socket.c (svz_server_create): Use ‘svz_pp_portcfg’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Fix bug: Include interstitual space in ‘svz_server_bindings’.
+
+	Regression introduced 2011-03-21, "Avoid ‘strcat’".
+
+	* binding.c (svz_server_bindings): Include space
+	prior to all but the first ‘svz_portcfg_text’ call.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Purge defunct ‘vector’ implementation / interface.
+
+	* Makefile.am (libserveez_la_SOURCES): Remove vector.c.
+	(noinst_HEADERS): Remove vector.h.
+	* boot.c: Don't #include "libserveez/vector.h".
+	* defines.h (svz_vector_t): Delete typedef.
+	* libserveez.ap (SOURCES): Remove vector.c.
+	* portcfg.c: Don't #include "libserveez/vector.h".
+	* server-core.c: Likewise.
+	* vector.c: Delete file.
+	* vector.h: Delete file.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Use array for storing "list of interfaces".
+
+	* interface.h (svz_interfaces): Delete var decl.
+	* interface.c: Don't #include "libserveez/vector.h";
+	instead, #include "libserveez/array.h".
+	(svz_interfaces): Convert type to ‘svz_array_t *’; make static.
+	(svz_foreach_interface): Use ‘svz_array_foreach’.
+	(svz_interface_collect): Use ‘svz_array_size’, ‘svz_array_get’.
+	(destroy_ifc): New static func.
+	(svz_interface_add): Use ‘svz_array_create’,
+	‘destroy_ifc’, ‘svz_array_foreach’, ‘svz_array_add’;
+	don't ‘svz_free’ the constructed interface when done.
+	(svz_interface_get, svz_interface_search): Use ‘svz_array_foreach’.
+	(svz_interface_free): Use ‘svz_array_destroy’.
+	(svz_interface_check): Conver local var to use ‘svz_array_t *’;
+	use ‘svz_array_foreach’, ‘svz_array_destroy’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Use array for storing "accepted time".
+
+	* server-socket.c: Don't #include "libserveez/vector.h".
+	(TIME_T_TOO_FAT): New #define.
+	(svz_sock_check_frequency): Use array to store accepted time
+	values, arranging for extra malloc/free if ‘time_t’ is too fat.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Use ‘svz_foreach_interface’ more.
+
+	* portcfg.c (expand_closure): New struct.
+	(expand_internal): New static func.
+	(svz_portcfg_expand): Use it and ‘svz_foreach_interface’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename ‘svz_server_foreach’ to ‘svz_foreach_server’.
+
+	* server.h (svz_foreach_server):
+	Rename func decl from ‘svz_server_foreach’.
+	* server.c
+	(foreach_server_closure): Rename from ‘server_foreach_closure’.
+	(foreach_server_internal): Rename from ‘server_foreach_internal’.
+	(svz_foreach_server): Rename from ‘svz_server_foreach’.
+	(svz_server_find, svz_server_init_all): Update refs.
+	* server-core.c (svz_reset, svz_periodic_tasks): Likewise.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_foreach_codec’; move ‘svz_codec_list’ to client.
+
+	* codec/codec.h (svz_codec_do_t): New typedef.
+	(svz_foreach_codec): New func decl, marked ‘SERVEEZ_API’.
+	(svz_codec_list): Delete func decl.
+	* codec/codec.c (svz_foreach_codec): New func.
+	(svz_codec_list): Delete func.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_collect’ and conv. macros; zonk disparate funcs.
+
+	* cfg.h (SVZ_INTARRAY, SVZ_STRARRAY, SVZ_STRHASH): New #define:s.
+	(svz_config_intarray_create, svz_config_strarray_create)
+	(svz_config_hash_create): Delete func decls.
+	(svz_collect): New func decl, marked ‘SERVEEZ_API’.
+	(__SVZ_COLLECT, SVZ_COLLECT_INTARRAY, SVZ_COLLECT_STRARRAY)
+	(SVZ_COLLECT_STRHASH): New macros.
+	* cfg.c (svz_config_intarray_create): Delete func.
+	(svz_config_strarray_create, svz_config_hash_create): Likewise.
+	(svz_collect): New func.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_interface_list
+
+	* interface.c (svz_interface_list): Delete func.
+	* interface.h (svz_interface_list): Delete func decl.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_server_single_listener’ into client.
+
+	This also reverts 2011-03-21,
+	"Internalize ‘svz_binding_contains_server’".
+
+	* binding.h (svz_binding_contains_server):
+	Remove mark ‘SBO’; instead, mark ‘SERVEEZ_API’.
+	(svz_server_single_listener): Delete func decl.
+	* binding.c (svz_server_single_listener): Delete func.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Combine windoze daemon control funcs.
+
+	* windoze.h (svz_windoze_start_daemon)
+	(svz_windoze_stop_daemon): Delete func decls.
+	(svz_windoze_daemon_control): New func decl, marked ‘SERVEEZ_API’.
+	* windoze.c (svz_windoze_start_daemon)
+	(svz_windoze_stop_daemon): Make static.
+	(svz_windoze_daemon_control): New func.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_config_type_t’.
+
+	* cfg.h (svz_config_type_t): Move from here...
+	* server.h (svz_config_type_t): ...to here; mark ‘svzint’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_t’.
+
+	* binding.h (svz_binding_t): Mark ‘svzint’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Mark ‘heap_hash_keylen’ arg unused.
+
+	* alloc.c
+	[DEBUG_MEMORY_LEAKS] (heap_hash_keylen): Mark ‘SVZ_UNUSED’ arg ‘id’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_array_destroy_zero’.
+
+	* array.h (svz_array_destroy_zero):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_ins
+
+	* array.h (svz_array_ins): Delete func decl.
+	* array.c (svz_array_ins): Delete func.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_array_clear’.
+
+	* array.h (svz_array_clear): Delete func decl.
+	* array.c (svz_array_clear): Incorporate into unique caller.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_capacity
+
+	* array.h (svz_array_capacity): Delete func decl.
+	* array.c (svz_array_capacity): Delete func.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_idx
+
+	* array.h (svz_array_idx): Delete func decl.
+	* array.c (svz_array_idx): Delete func.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_contains
+
+	* array.h (svz_array_contains): Delete func decl.
+	* array.c (svz_array_contains): Delete func.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_array_{dup,strdup}.
+
+	* array.h (svz_array_dup, svz_array_strdup):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_hash_clear
+
+	* hash.h (svz_hash_clear): Delete func decl.
+	* hash.c (svz_hash_clear): Delete func.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_hash_capacity
+
+	* hash.h (svz_hash_capacity): Delete func decl.
+	* hash.c (svz_hash_capacity): Delete func.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_hash_rehash’.
+
+	* hash.h (SVZ_HASH_SHRINK, SVZ_HASH_EXPAND)
+	(SVZ_HASH_MIN_SIZE): Move #define:s from here...
+	(svz_hash_rehash): Delete func decl.
+	* hash.c (SVZ_HASH_SHRINK, SVZ_HASH_EXPAND)
+	(SVZ_HASH_MIN_SIZE): ...to here.
+	(svz_hash_rehash): Make static.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘vector’ data structure and funcs.
+
+	* Makefile.am
+	(libserveez_HEADERS): Move vector.h from here...
+	(noinst_HEADERS): ...to here.
+	* vector.h (svz_vector_create, svz_vector_destroy)
+	(svz_vector_add, svz_vector_get, svz_vector_del, svz_vector_length):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+	(svz_vector_clear, svz_vector_set, svz_vector_ins)
+	(svz_vector_idx, svz_vector_contains): Delete func decls.
+	(svz_vector_t): Move typedef from here...
+	* defines.h (svz_vector_t): ...to here.
+	* vector.c (svz_vector_clear, svz_vector_set)
+	(svz_vector_ins, svz_vector_idx, svz_vector_contains): Delete funcs.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_values
+
+	* array.c (svz_array_values): Delete func.
+	* array.h (svz_array_values): Delete func decl.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_vector_foreach’.
+
+	* vector.h (svz_vector_foreach): Mark ‘svzint’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_servertype_finalize’.
+
+	* server.h (svz_servertype_finalize): Delete func decl.
+	* server.c (svz_servertype_finalize): Make static.
+	(svz_server_finalize_all): Call ‘svz_servertype_finalize’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Combine svz_server_{init,finalize}_all into ‘svz_server_all_updn’.
+
+	* server.h
+	(svz_server_all_updn): New func decl, marked ‘SERVEEZ_API’.
+	(svz_server_init_all, svz_server_finalize_all): Delete func decls.
+	* server.c (svz_server_all_updn): New func.
+	(svz_server_init_all, svz_server_finalize_all): Make static.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Combine svz_coserver_{init,finalize} into ‘svz_coserver_updn’.
+
+	* coserver/coserver.h
+	(svz_coserver_updn): New func decl, marked ‘SERVEEZ_API’.
+	(svz_coserver_init, svz_coserver_finalize): Delete func decls.
+	* coserver/coserver.c (svz_coserver_updn): New func.
+	(svz_coserver_init, svz_coserver_finalize): Make static.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstractions for runtime parameter manipulation.
+
+	* defines.h (svz_private_t): Add member ‘.nclient_max’.
+	* boot.c (log_verbosity): New static var.
+	(svz_config): Delete var.
+	(svz_init_config): Delete func.
+	(svz_boot): Init runparms ‘MAX_SOCKETS’, ‘VERBOSITY’.
+	(bad_runparm): New static func.
+	(svz_runparm): New func.
+	* boot.h (SVZ_RUNPARM_VERBOSITY): New #define.
+	(SVZ_RUNPARM_MAX_SOCKETS): Likewise.
+	(svz_config_t): Delete struct / typedef.
+	(svz_config): Delete var decl.
+	(svz_runparm): New func decl, marked ‘SERVEEZ_API’.
+	(SVZ_RUNPARM, SVZ_RUNPARM_X): New macros.
+	* server-socket.c (svz_tcp_accept): Use ‘SVZ_RUNPARM’.
+	* util.c (svz_log): Likewise.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Fix typo: Use ‘int’, not ‘svz_t_socket’.
+
+	* boot.h (svz_config_t): Use ‘int’ for member ‘.max_sockets’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[int] Move control protocol password out of libserveez.
+
+	* boot.h (svz_config_t): Remove member ‘.password’.
+	* boot.c (svz_config): Update init form.
+	(svz_init_config): Don't init ‘svz_config.password’.
+	(svz_halt): Don't free and zero ‘svz_config.password’.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize "boot time".
+
+	* defines.h (svz_private_t): Add member ‘.boot’.
+	* boot.h (svz_config_t): Drop member ‘.start’.
+	(svz_uptime): New func decl, marked ‘SERVEEZ_API’.
+	* boot.c (svz_config): Update init.
+	(svz_init_config): Don't init ‘svz_config.start’.
+	(svz_Boot): Init ‘THE (boot)’.
+	(svz_uptime): New func.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_child_died’.
+
+	* server-core.h (svz_child_died):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_most_recent_dead_child_p
+
+	* passthrough.c (svz_most_recent_dead_child_p): New func.
+	* passthrough.h (svz_most_recent_dead_child_p):
+	New func decl, marked ‘SERVEEZ_API’.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib woe] Add abstraction: svz_mingw_child_dead_p
+
+	* passthrough.c
+	[__MINGW32__] (svz_mingw_child_dead_p): New func.
+	(svz_process_idle) [__MINGW32__]: Use ‘svz_mingw_child_dead_p’.
+	* passthrough.h [__MINGW32__] (svz_mingw_child_dead_p):
+	New func decl, marked ‘SERVEEZ_API’.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Convert svz_sock_reduce_{recv,send} to functions.
+
+	* socket.h (svz_sock_reduce_recv, svz_sock_reduce_send):
+	Delete macros; add func decls by the same name.
+	* socket.c (svz_sock_reduce_recv)
+	(svz_sock_reduce_send): New funcs.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix ‘SOCK_MAX_WRITE’ with "SVZ_".
+
+	* socket.h (SVZ_SOCK_MAX_WRITE): Rename from ‘SOCK_MAX_WRITE’.
+	* tcp-socket.c: Update all refs.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop #define: RELAX_FD_TIME
+
+	* socket.h (RELAX_FD_TIME): Delete #define.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_wait_if_unavailable
+
+	* socket.h (svz_wait_if_unavailable): New func decl.
+	* socket.c (svz_wait_if_unavailable): New func.
+	* pipe-socket.c (svz_pipe_write_socket): Use it.
+
+2011-04-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Take only one arg in coserver kick, callback.
+
+	* coserver/coserver.h
+	(svz_coserver_handle_result_t): Drop third arg.
+	(svz_coserver_callback_t): Drop ‘.arg’; add ‘.closure’.
+	(svz_coserver_rdns_invoke, svz_coserver_dns_invoke)
+	(svz_coserver_ident_invoke): Drop fourth arg.
+	* coserver/coserver.c (svz_coserver_send_request):
+	Don't take ARG0, ARG1; instead, take CLOSURE;
+	update init of ‘svz_coserver_callback_t’ object.
+	(svz_coserver_rdns_invoke, svz_coserver_dns_invoke)
+	(svz_coserver_ident_invoke): Likewise.
+	(svz_coserver_handle_request): Update call to callback.
+
+2011-04-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop macros svz_coserver_{dns,rdns,ident}.
+
+	* coserver/coserver.h (svz_coserver_dns)
+	(svz_coserver_rdns, svz_coserver_ident): Delete macros.
+
+2011-04-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add type ‘svz_sock_iv_t’, func ‘svz_make_sock_iv’.
+
+	* coserver/coserver.h (svz_sock_iv_t): New struct/typedef.
+	(svz_make_sock_iv): New func decl, marked ‘SERVEEZ_API’.
+	* coserver/coserver.c (svz_make_sock_iv): New func.
+
+2011-04-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_coserver_send_request’.
+
+	* coserver/coserver.h
+	(svz_coserver_send_request): Delete func decl.
+	* coserver/coserver.c
+	(svz_coservers): Move earlier in file.
+	(svz_coserver_send_request): Likewise; make static.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add macro: SVZ_CFG_TCP
+
+	* portcfg.h (SVZ_CFG_TCP): New macro.
+	(tcp_port, tcp_addr, tcp_ipaddr)
+	(tcp_device, tcp_backlog): Delete #define:s.
+	* portcfg.c (svz_portcfg_set_ipaddr)
+	(svz_portcfg_dup, svz_portcfg_free, svz_portcfg_mkaddr)
+	(svz_portcfg_prepare, svz_portcfg_print): Use ‘SVZ_CFG_TCP’.
+	* server-socket.c (svz_server_create): Likewise.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add macro: SVZ_CFG_UDP
+
+	* portcfg.h (SVZ_CFG_UDP): New macro.
+	(udp_port, udp_addr, udp_ipaddr, udp_device): Delete #define:s.
+	* portcfg.c (svz_portcfg_set_ipaddr)
+	(svz_portcfg_dup, svz_portcfg_free, svz_portcfg_mkaddr)
+	(svz_portcfg_print): Use ‘SVZ_CFG_UDP’.
+	* server-socket.c (svz_server_create): Likewise.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add macro: SVZ_CFG_ICMP
+
+	* portcfg.h (SVZ_CFG_ICMP): New macro.
+	(icmp_addr, icmp_ipaddr, icmp_device, icmp_type): Delete #define:s.
+	* portcfg.c (svz_portcfg_equal)
+	(svz_portcfg_set_ipaddr, svz_portcfg_dup, svz_portcfg_free)
+	(svz_portcfg_mkaddr, svz_portcfg_text, svz_portcfg_print):
+	Use ‘SVZ_CFG_ICMP’.
+	* server-socket.c (svz_server_create): Likewise.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add macro: SVZ_CFG_RAW
+
+	* portcfg.h (SVZ_CFG_RAW): New macro.
+	(raw_addr, raw_ipaddr, raw_device): Delete #define:s.
+	* portcfg.c (svz_portcfg_set_ipaddr)
+	(svz_portcfg_dup, svz_portcfg_free, svz_portcfg_convert_addr)
+	(svz_portcfg_mkaddr, svz_portcfg_print): Use ‘SVZ_CFG_RAW’.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add macro: SVZ_CFG_PIPE
+
+	* portcfg.h (SVZ_CFG_PIPE): New macro.
+	(pipe_recv, pipe_send): Delete #define:s.
+	* portcfg.c (svz_portcfg_equal): Use ‘SVZ_CFG_PIPE’.
+	(svz_portcfg_dup, svz_portcfg_free, svz_portcfg_mkaddr)
+	(svz_portcfg_text, svz_portcfg_print): Likewise.
+	* server-socket.c (svz_server_create): Likewise.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Fix bug: Compare correct filenames in ‘svz_portcfg_equal’.
+
+	* portcfg.c (svz_portcfg_equal):
+	For protocol ‘pipe’, compare a's ‘send’ against
+	b's ‘send’ instead of b's ‘send’ against itself.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Convert svz_portcfg_{addr,port,ipaddr,device} to functions.
+
+	* portcfg.h (svz_portcfg_addr, svz_portcfg_port)
+	(svz_portcfg_ipaddr, svz_portcfg_device):
+	Delete macros; add func decls, marked ‘SERVEEZ_API’.
+	* portcfg.c (svz_portcfg_addr, svz_portcfg_port)
+	(svz_portcfg_ipaddr, svz_portcfg_device): New funcs.
+
+2011-03-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘VSNPRINTF_BUF_SIZE’.
+
+	* socket.h (VSNPRINTF_BUF_SIZE): Mark ‘svzint’.
+
+2011-03-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix LOG_{FATAL,ERROR,WARNING,NOTICE,DEBUG} with "SVZ_".
+
+	* util.h
+	(SVZ_LOG_FATAL): Rename from ‘LOG_FATAL’.
+	(SVZ_LOG_ERROR): Rename from ‘LOG_ERROR’.
+	(SVZ_LOG_WARNING): Rename from ‘LOG_WARNING’.
+	(SVZ_LOG_NOTICE): Rename from ‘LOG_NOTICE’.
+	(SVZ_LOG_DEBUG): Rename from ‘LOG_DEBUG’.
+	* alloc.c: Update all refs.
+	* binding.c: Likewise.
+	* boot.c: Likewise.
+	* cfg.c: Likewise.
+	* codec/codec.c: Likewise.
+	* core.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* coserver/dns.c: Likewise.
+	* coserver/ident.c: Likewise.
+	* coserver/reverse-dns.c: Likewise.
+	* dynload.c: Likewise.
+	* hash.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* interface.c: Likewise.
+	* passthrough.c: Likewise.
+	* pipe-socket.c: Likewise.
+	* portcfg.c: Likewise.
+	* raw-socket.c: Likewise.
+	* server-core.c: Likewise.
+	* server-loop.c: Likewise.
+	* server-socket.c: Likewise.
+	* server.c: Likewise.
+	* socket.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+	* util.c: Likewise.
+
+2011-03-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix some coserver #define:s with "SVZ_".
+
+	* coserver/coserver.h
+	(SVZ_COSERVER_REVERSE_DNS): Rename from ‘COSERVER_REVERSE_DNS’.
+	(SVZ_COSERVER_IDENT): Rename from ‘COSERVER_IDENT’.
+	(SVZ_COSERVER_DNS): Rename from ‘COSERVER_DNS’.
+	(SVZ_MAX_COSERVER_TYPES): Rename from ‘MAX_COSERVER_TYPES’.
+	* coserver/coserver.c: Update all refs.
+
+2011-03-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘COSERVER_BUFSIZE’.
+
+	* coserver/coserver.h (COSERVER_BUFSIZE): Mark ‘svzint’.
+
+2011-03-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop "coserver arg(s)" cpp machinery.
+
+	* coserver/coserver.h
+	(svz_coserver_arg_t): Delete typedef.
+	(COSERVER_ARGS, svz_coserver_args_t): Delete #define:s.
+	(svz_coserver_handle_result_t, svz_coserver_callback_t)
+	(svz_coserver_send_request, svz_coserver_rdns_invoke)
+	(svz_coserver_rdns, svz_coserver_dns_invoke, svz_coserver_dns)
+	(svz_coserver_ident_invoke, svz_coserver_ident): Use ‘void *’ directly.
+	* coserver/coserver.c
+	(svz_coserver_rdns_invoke, svz_coserver_dns_invoke)
+	(svz_coserver_ident_invoke, svz_coserver_send_request): Likewise.
+
+2011-03-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_coservertype_t’.
+
+	* coserver/coserver.h
+	(svz_coservertype_t): Move from here...
+	* coserver/coserver.c
+	(svz_coservertype_t): ...to here.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename SOCK_FLAG_* to SVZ_SOFLG_*.
+
+	* socket.h
+	(SVZ_SOFLG_INIT): Rename from ‘SOCK_FLAG_INIT’.
+	(SVZ_SOFLG_INBUF): Rename from ‘SOCK_FLAG_INBUF’.
+	(SVZ_SOFLG_OUTBUF): Rename from ‘SOCK_FLAG_OUTBUF’.
+	(SVZ_SOFLG_CONNECTED): Rename from ‘SOCK_FLAG_CONNECTED’.
+	(SVZ_SOFLG_LISTENING): Rename from ‘SOCK_FLAG_LISTENING’.
+	(SVZ_SOFLG_KILLED): Rename from ‘SOCK_FLAG_KILLED’.
+	(SVZ_SOFLG_NOFLOOD): Rename from ‘SOCK_FLAG_NOFLOOD’.
+	(SVZ_SOFLG_INITED): Rename from ‘SOCK_FLAG_INITED’.
+	(SVZ_SOFLG_ENQUEUED): Rename from ‘SOCK_FLAG_ENQUEUED’.
+	(SVZ_SOFLG_RECV_PIPE): Rename from ‘SOCK_FLAG_RECV_PIPE’.
+	(SVZ_SOFLG_SEND_PIPE): Rename from ‘SOCK_FLAG_SEND_PIPE’.
+	(SVZ_SOFLG_FILE): Rename from ‘SOCK_FLAG_FILE’.
+	(SVZ_SOFLG_COSERVER): Rename from ‘SOCK_FLAG_COSERVER’.
+	(SVZ_SOFLG_SOCK): Rename from ‘SOCK_FLAG_SOCK’.
+	(SVZ_SOFLG_PIPE): Rename from ‘SOCK_FLAG_PIPE’.
+	(SVZ_SOFLG_CONNECTING): Rename from ‘SOCK_FLAG_CONNECTING’.
+	(SVZ_SOFLG_PRIORITY): Rename from ‘SOCK_FLAG_PRIORITY’.
+	(SVZ_SOFLG_FIXED): Rename from ‘SOCK_FLAG_FIXED’.
+	(SVZ_SOFLG_FINAL_WRITE): Rename from ‘SOCK_FLAG_FINAL_WRITE’.
+	(SVZ_SOFLG_READING): Rename from ‘SOCK_FLAG_READING’.
+	(SVZ_SOFLG_WRITING): Rename from ‘SOCK_FLAG_WRITING’.
+	(SVZ_SOFLG_FLUSH): Rename from ‘SOCK_FLAG_FLUSH’.
+	(SVZ_SOFLG_NOSHUTDOWN): Rename from ‘SOCK_FLAG_NOSHUTDOWN’.
+	(SVZ_SOFLG_NOOVERFLOW): Rename from ‘SOCK_FLAG_NOOVERFLOW’.
+	* binding.c: Update all refs.
+	* codec/codec.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* passthrough.c: Likewise.
+	* pipe-socket.c: Likewise.
+	* server-core.c: Likewise.
+	* server-core.h: Likewise.
+	* server-loop.c: Likewise.
+	* server-socket.c: Likewise.
+	* server.c: Likewise.
+	* socket.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize {RECV,SEND,MAX}_BUF_SIZE.
+
+	* socket.h (RECV_BUF_SIZE): Mark ‘svzint’.
+	(SEND_BUF_SIZE, MAX_BUF_SIZE): Likewise.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize SOCK_MAX_DETECTION_{FILL,WAIT}.
+
+	* socket.h (SOCK_MAX_DETECTION_FILL)
+	(SOCK_MAX_DETECTION_WAIT): Move from here...
+	* portcfg.c (SOCK_MAX_DETECTION_FILL)
+	(SOCK_MAX_DETECTION_WAIT): ...to here.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop funcs svz_config_{intarray,strarray,hash}_destroy.
+
+	* cfg.h (svz_config_intarray_destroy): Delete func decl.
+	(svz_config_strarray_destroy, svz_config_hash_destroy): Likewise.
+	* cfg.c (svz_config_intarray_destroy): Delete func.
+	(svz_config_strarray_destroy, svz_config_hash_destroy): Likewise.
+	(svz_config_free): Use ‘svz_array_destroy’, ‘svz_hash_destroy’ directly.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix PORTCFG_{ANY,NOIP} with "SVZ_".
+
+	* portcfg.h
+	(SVZ_PORTCFG_ANY): Rename from ‘PORTCFG_ANY’.
+	(SVZ_PORTCFG_NOIP): Rename from ‘PORTCFG_NOIP’.
+	* portcfg.c (any_p, no_ip_p): New static funcs.
+	(svz_portcfg_mkaddr): Use ‘any_p’, ‘no_ip_p’.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move several PORTCFG_* #define:s into serveez proper.
+
+	* portcfg.h
+	(PORTCFG_PORT, PORTCFG_PROTO, PORTCFG_TCP, PORTCFG_UDP, PORTCFG_ICMP)
+	(PORTCFG_RAW, PORTCFG_PIPE, PORTCFG_IP, PORTCFG_DEVICE)
+	(PORTCFG_BACKLOG, PORTCFG_TYPE, PORTCFG_RECV, PORTCFG_SEND)
+	(PORTCFG_NAME, PORTCFG_PERMS, PORTCFG_USER, PORTCFG_GROUP)
+	(PORTCFG_UID, PORTCFG_GID, PORTCFG_SEND_BUFSIZE, PORTCFG_RECV_BUFSIZE)
+	(PORTCFG_FREQ, PORTCFG_ALLOW, PORTCFG_DENY): Delete #define:s.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix PORTCFG_{NOMATCH,EQUAL,MATCH,CONFLICT} with "SVZ_".
+
+	* portcfg.h
+	(SVZ_PORTCFG_NOMATCH): Rename from ‘PORTCFG_NOMATCH’.
+	(SVZ_PORTCFG_EQUAL): Rename from ‘PORTCFG_EQUAL’.
+	(SVZ_PORTCFG_MATCH): Rename from ‘PORTCFG_MATCH’.
+	(SVZ_PORTCFG_CONFLICT): Rename from ‘PORTCFG_CONFLICT’.
+	* portcfg.c: Update all refs.
+	* binding.c (portcfg_exactly_equal)
+	(portcfg_matching_or_equal): New static funcs.
+	(svz_sock_find_portcfg): Use ‘portcfg_matching_or_equal’.
+	(svz_sock_find_portcfgs): Likewise.
+	(svz_binding_find): Use ‘portcfg_exactly_equal’.
+	(svz_binding_contains): Likewise.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize PORTCFG_FLAG_{ANY,ALL,DEVICE}.
+
+	* portcfg.h (PORTCFG_FLAG_ANY)
+	(PORTCFG_FLAG_ALL, PORTCFG_FLAG_DEVICE): Mark ‘svzint’.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_icmp_header_t’.
+
+	* icmp-socket.h (svz_icmp_header_t): Move from here...
+	* icmp-socket.c (svz_icmp_header_t): ...to here.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize several ICMP_* #define:s.
+
+	* icmp-socket.h (ICMP_ECHOREPLY, ICMP_DEST_UNREACH)
+	(ICMP_SOURCE_QUENCH, ICMP_REDIRECT, ICMP_ECHO, ICMP_TIME_EXCEEDED)
+	(ICMP_PARAMETERPROB, ICMP_TIMESTAMP, ICMP_TIMESTAMPREPLY)
+	(ICMP_INFO_REQUEST, ICMP_INFO_REPLY, ICMP_ADDRESS)
+	(ICMP_ADDRESSREPLY, ICMP_MAX_TYPE): Move from here...
+	* icmp-socket.c (ICMP_ECHOREPLY, ICMP_DEST_UNREACH)
+	(ICMP_SOURCE_QUENCH, ICMP_REDIRECT, ICMP_ECHO, ICMP_TIME_EXCEEDED)
+	(ICMP_PARAMETERPROB, ICMP_TIMESTAMP, ICMP_TIMESTAMPREPLY)
+	(ICMP_INFO_REQUEST, ICMP_INFO_REPLY, ICMP_ADDRESS)
+	(ICMP_ADDRESSREPLY, ICMP_MAX_TYPE): ...to here.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix ICMP_SERVEEZ* with "SVZ_".
+
+	* icmp-socket.h
+	(SVZ_ICMP_SERVEEZ): Rename from ‘ICMP_SERVEEZ’.
+	(SVZ_ICMP_SERVEEZ_DATA): Rename from ‘ICMP_SERVEEZ_DATA’.
+	(SVZ_ICMP_SERVEEZ_REQ): Rename from ‘ICMP_SERVEEZ_REQ’.
+	(SVZ_ICMP_SERVEEZ_ACK): Rename from ‘ICMP_SERVEEZ_ACK’.
+	(SVZ_ICMP_SERVEEZ_CLOSE): Rename from ‘ICMP_SERVEEZ_CLOSE’.
+	(SVZ_ICMP_SERVEEZ_CONNECT): Rename from ‘ICMP_SERVEEZ_CONNECT’.
+	* icmp-socket.c: Update all refs.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ICMP_{HEADER,BUF,MSG}_SIZE.
+
+	* icmp-socket.h (ICMP_HEADER_SIZE)
+	(ICMP_MSG_SIZE, ICMP_BUF_SIZE): Mark ‘svzint’.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize structs svz_hash{,_entry,_bucket}.
+
+	* hash.h (svz_hash): Mark struct ‘svzint’.
+	(svz_hash_entry, svz_hash_bucket): Move struct from here...
+	* hash.c
+	(svz_hash_entry, svz_hash_bucket): ...to here.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘struct svz_array’.
+
+	* array.h (struct svz_array): Move from here...
+	* array.c (struct svz_array): ...to here.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘struct svz_vector’.
+
+	* vector.h (struct svz_vector): Move from here...
+	* vector.c (struct svz_vector): ...to here.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop unused "sparse vector" functionality.
+
+	* Makefile.am
+	(libserveez_la_SOURCES): Remove sparsevec.c.
+	(libserveez_HEADERS): Remove sparsevec.h.
+	* libserveez.ap (SOURCES): Remove sparsevec.c.
+	* sparsevec.c: Delete file.
+	* sparsevec.h: Delete file.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix PROTO_{TCP,UDP,PIPE,ICMP,RAW} with "SVZ_".
+
+	* core.h
+	(SVZ_PROTO_TCP): Rename from ‘PROTO_TCP’.
+	(SVZ_PROTO_UDP): Rename from ‘PROTO_UDP’.
+	(SVZ_PROTO_PIPE): Rename from ‘PROTO_PIPE’.
+	(SVZ_PROTO_ICMP): Rename from ‘PROTO_ICMP’.
+	(SVZ_PROTO_RAW): Rename from ‘PROTO_RAW’.
+	* core.c: Update all refs.
+	* binding.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* passthrough.c: Likewise.
+	* portcfg.c: Likewise.
+	* portcfg.h: Likewise.
+	* server-socket.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_process_t’.
+
+	* passthrough.h (svz_process_t): Move typedef from here...
+	* passthrough.c (svz_process_t): ...to here.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Prefix UDP_{MSG,BUF}_SIZE with "SVZ_".
+
+	* udp-socket.h
+	(SVZ_UDP_MSG_SIZE): Rename from ‘UDP_MSG_SIZE’.
+	(SVZ_UDP_BUF_SIZE): Rename from ‘UDP_BUF_SIZE’.
+	* udp-socket.c: Update all refs.
+	* portcfg.c: Likewise.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize SVZ_PROCESS_{RECV,SEND}_HANDLE.
+
+	* passthrough.c (svz_process_create_child):
+	Use "RECV_HANDLE", "SEND_HANDLE" directly.
+	* passthrough.h (SVZ_PROCESS_RECV_HANDLE)
+	(SVZ_PROCESS_SEND_HANDLE): Delete #define:s.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize SVZ_PROCESS_{FORK,SHUFFLE_{SOCK,PIPE}}.
+
+	* passthrough.h (SVZ_PROCESS_FORK)
+	(SVZ_PROCESS_SHUFFLE_SOCK, SVZ_PROCESS_SHUFFLE_PIPE):
+	Move #define:s from here...
+	* passthrough.c (SVZ_PROCESS_FORK)
+	(SVZ_PROCESS_SHUFFLE_SOCK, SVZ_PROCESS_SHUFFLE_PIPE):
+	...to here.
+	(svz_process_fork): Don't take FLAG; instead, take FORKP;
+	compute ‘proc.flag’ here; drop obsolete "invalid flag" error.
+
+2011-03-27  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move client name specification to ‘svz_boot’.
+
+	* defines.h
+	(svz_private_t): New struct/typedef, marked ‘svzint’.
+	(svz_private): New var decl, marked ‘SBO’, ‘svzint’.
+	(THE): New macro, marked ‘svzint’.
+	* boot.c (svz_private): New var.
+	(svz_boot): Take arg CLIENT; allocate memory for ‘svz_private’,
+	and copy CLIENT to ‘THE (client)’.
+	(svz_halt): Free ‘THE (client)’, ‘svz_private’.
+	* boot.h (svz_boot): Update func decl.
+	* server-core.c (svz_executable_file): Delete var.
+	(svz_executable): Delete func.
+	(svz_segfault_exception): Use ‘THE (client)’.
+	* server-core.h (svz_executable): Delete func decl.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_net_strerror’.
+
+	* util.h (svz_net_strerror):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_raw_ip_checksum’.
+
+	* raw-socket.h (svz_raw_ip_checksum):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+	* Makefile.am
+	(libserveez_HEADERS): Move raw-socket.h from here...
+	(noinst_HEADERS): ...to here.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_portcfg_del
+
+	* portcfg.h (svz_portcfg_del): Delete func decl.
+	* portcfg.c (svz_portcfg_del): Delete func.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_servertype_del
+
+	* server.h (svz_servertype_del): Delete func decl.
+	* server.c (type_del_closure): Delete struct.
+	(type_del_internal, svz_servertype_del): Delete funcs.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_server_{instantiate,configure}.
+
+	* server.h (svz_server_instantiate): Delete func decl.
+	(svz_server_configure): Likewise.
+	* server.c (svz_server_instantiate): Make static.
+	(svz_server_configure): Likewise.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize several svz_icmp_* funcs.
+
+	* icmp-socket.h (svz_icmp_read_socket): Delete func decl.
+	(svz_icmp_lazy_read_socket, svz_icmp_write_socket)
+	(svz_icmp_check_request): Remove mark ‘SERVEEZ_API’; mark ‘SBO’.
+	* icmp-socket.c (svz_icmp_read_socket): Make static.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_icmp_printf
+
+	* icmp-socket.c (svz_icmp_printf): Delete func.
+	* icmp-socket.h (svz_icmp_printf): Delete func decl.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_process_create_child’.
+
+	* passthrough.h (svz_process_create_child): Delete func decl.
+	* passthrough.c (svz_process_check_access):
+	Move earlier in file.
+	(svz_process_create_child): Make static; move earlier in file.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_envblock_free’.
+
+	* passthrough.h (svz_envblock_free): Delete func decl.
+	* passthrough.c (svz_envblock_free):
+	Make static; move earlier in file.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize several svz_process_* funcs.
+
+	* passthrough.h (svz_process_idle)
+	(svz_process_send_pipe, svz_process_recv_pipe)
+	(svz_process_send_socket, svz_process_recv_socket)
+	(svz_process_shuffle, svz_process_fork): Delete func decls.
+	* passthrough.c (svz_process_idle)
+	(svz_process_send_pipe, svz_process_recv_pipe)
+	(svz_process_send_socket, svz_process_recv_socket)
+	(svz_process_shuffle, svz_process_fork):
+	Make static; move earlier in file, before first caller.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_process_split_usergroup’.
+
+	* passthrough.h (svz_process_split_usergroup): Delete func decl.
+	* passthrough.c (svz_process_split_usergroup):
+	Make static; move earlier in file.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_process_check_{access,executable,request}.
+
+	* passthrough.h (svz_process_check_access)
+	(svz_process_check_executable, svz_process_check_request):
+	Delete func decls.
+	* passthrough.c (svz_process_check_access)
+	(svz_process_check_executable, svz_process_check_request):
+	Make static; move earlier in file, before first caller.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_process_disconnect{,_passthrough}.
+
+	* passthrough.h (svz_process_disconnect): Delete func decl.
+	(svz_process_disconnect_passthrough): Likewise.
+	* passthrough.c (svz_process_disconnect): Make static.
+	(svz_process_disconnect_passthrough): Likewise.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_strsignal’.
+
+	* server-core.h (svz_strsignal): Delete func decl.
+	* server-core.c (svz_strsignal): Make static.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize SIZEOF_UINT{16,32}.
+
+	* raw-socket.h
+	(SIZEOF_UINT16, SIZEOF_UINT32): Delete #define:s.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Bump some #define:s/macros/typedefs from raw-socket.h.
+
+	* raw-socket.h
+	(IP_VERSION_4, IP_CHECKSUM_OFS)
+	(ICMP_PROTOCOL, TCP_PROTOCOL, UDP_PROTOCOL)
+	(IP_HDR_VERSION, IP_HDR_LENGTH, IP_HDR_FLAGS)
+	(IP_FLAG_DF, IP_FLAG_MF, IP_HDR_FRAG)
+	(svz_ip_header_t): Move from here...
+	(IP_HEADER_SIZE): Move from here...
+	* raw-socket.c
+	(IP_VERSION_4, IP_CHECKSUM_OFS):
+	(ICMP_PROTOCOL, TCP_PROTOCOL, UDP_PROTOCOL)
+	(IP_HDR_VERSION, IP_HDR_LENGTH, IP_HDR_FLAGS)
+	(IP_FLAG_DF, IP_FLAG_MF, IP_HDR_FRAG)
+	(svz_ip_header_t): ...to here.
+	* icmp-socket.c (IP_HEADER_SIZE): ...to here.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_raw_check_ip_header’.
+
+	* raw-socket.h (svz_raw_check_ip_header):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_raw_put_ip_header
+
+	* raw-socket.h (svz_raw_put_ip_header): Delete func decl.
+	* raw-socket.c (svz_raw_put_ip_header): Delete func.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_raw_get_ip_header’.
+
+	* raw-socket.h (svz_raw_get_ip_header): Delete func decl.
+	* raw-socket.c (svz_raw_get_ip_header): Make static.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build lib] Move some woe32 macros to their own header.
+
+	* windoze.h [!S_ISDIR]
+	(S_IFBLK, S_IS_DIR, S_ISCHR, S_ISREG, S_ISBLK): Delete macros.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize some woe32 #define:s.
+
+	* windoze.h (WM_SERVEEZ_NOTIFYICON)
+	(SERVEEZ_ICON_ID, SERVEEZ_CLASS): Move from here...
+	(MaxSocketKey, MaxSocketSubKey)
+	(MaxSocketSubSubKey): Move from here...
+	* util.c (MaxSocketKey)
+	(MaxSocketSubKey, MaxSocketSubSubKey): ...to here.
+	* windoze.c (WM_SERVEEZ_NOTIFYICON)
+	(SERVEEZ_ICON_ID, SERVEEZ_CLASS): ...to here.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_windoze_[gs]et_reg_{unsigned,string}.
+
+	* windoze.h
+	(svz_windoze_get_reg_unsigned, svz_windoze_set_reg_unsigned)
+	(svz_windoze_get_reg_string, svz_windoze_set_reg_string):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop funcs: svz_pipe_{alloc,destroy}
+
+	* pipe-socket.h
+	(svz_pipe_alloc, svz_pipe_destroy): Delete func decls.
+	* pipe-socket.c
+	(svz_pipe_alloc, svz_pipe_destroy): Delete funcs.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_pipe_{listener,check_{user,group}}.
+
+	* pipe-socket.h (svz_pipe_listener)
+	(svz_pipe_check_user, svz_pipe_check_group):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_pipe_{{read,write}_socket,disconnect}.
+
+	* pipe-socket.h (svz_pip_read_socket)
+	(svz_pipe_write_socket, svz_pipe_disconnect):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_pipe_valid’.
+
+	* pipe-socket.h (svz_pipe_valid):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_socket_{create,create_pair}.
+
+	* core.h (svz_socket_create, svz_socket_create_pair):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_socket_connect’.
+
+	* core.h (svz_socket_connect):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_socket_type
+
+	* core.h (svz_socket_type): Delete func decl.
+	* core.c (svz_socket_type): Delete func.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_fd_{block,nonblock}.
+
+	* core.h (svz_fd_block, svz_fd_nonblock):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_interface_check’.
+
+	* interface.h (svz_interface_check):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_interface_get’.
+
+	* interface.h (svz_interface_get): Delete func decl.
+	* interface.c (svz_interface_get): Make static.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_interface_search’.
+
+	* interface.h (svz_interface_search):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_check_request’.
+
+	* udp-socket.h (svz_udp_check_request):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_write_socket’.
+
+	* udp-socket.h (svz_udp_write_socket):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_lazy_read_socket’.
+
+	* udp-socket.h (svz_udp_lazy_read_socket):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_udp_read_socket’.
+
+	* udp-socket.h (svz_udp_read_socket): Delete func decl.
+	* udp-socket.c (svz_udp_read_socket): Make static.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_tcp_recv_oob’.
+
+	* tcp-socket.h (svz_tcp_recv_oob):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_tcp_write_socket’.
+
+	* tcp-socket.h (svz_tcp_write_socket):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_tcp_default_connect’.
+
+	* tcp-socket.h (svz_tcp_default_connect): Delete func decl.
+	* tcp-socket.c (svz_tcp_default_connect):
+	Move earlier in file; make static.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_servertype_load’.
+
+	* dynload.h (svz_servertype_load):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_servertype_unload
+
+	* dynload.h (svz_servertype_unload): Delete func decl.
+	* dynload.c (dyn_find_library): Delete func.
+	(svz_servertype_unload): Likewise.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Define/use ‘svz_check_sockets_select’ conditionally.
+
+	* server-loop.c (USE_POLL): New #define.
+	(svz_check_sockets_select): Change surrounding preproc cond from
+	‘#ifndef __MINGW32__’ to ‘#if !defined __MINGW32__ && !USE_POLL’.
+	(FD_EXPAND, FD_POLL_IN, FD_POLL_OUT, FD_POLL_CLR)
+	(svz_check_sockets_poll): Use ‘USE_POLL’ for surr. preproc cond.
+	(svz_check_sockets): Use ‘USE_POLL’ for internal preproc cond.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Define/use ‘svz_sock_print_list’ conditionally.
+
+	* server-core.c (svz_sock_print_list):
+	Change surrounding preproc cond from ‘#if ENABLE_DEBUG’
+	to ‘#if ENABLE_SOCK_PRINT_LIST’.
+	(svz_sock_validate_list): Likewise call to ‘svz_sock_print_list’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Define/use ‘svz_hash_analyse’ conditionally.
+
+	* hash.c (svz_hash_analyse):
+	Surround w/ preproc cond ‘#if ENABLE_HASH_ANALYSE’.
+	(svz_hash_rehash): Likewise calls to ‘svz_hash_analyse’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_{tcp,pipe}_accept.
+
+	* server-socket.h
+	(svz_tcp_accept, svz_pipe_accept): Delete func decls.
+	* server-socket.c (svz_server_create): Move to eof.
+	(svz_tcp_accept, svz_pipe_accept): Make static.
+	* Makefile.am (libserveez_HEADERS):
+	Move server-socket.h from here...
+	(noinst_HEADERS): ...to here.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_server_create’.
+
+	* server-socket.h (svz_server_create):
+	Remove mark ‘SERVEEZ_API’; instead, mark ‘SBO’.
+
+2011-03-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib build] Strip SBO from headers (no ‘svzint’ needed).
+
+	* alloc.h: Remove mark ‘svzint’ from ‘SBO’ decls.
+	* binding.h: Likewise.
+	* cfg.h: Likewise.
+	* codec/bzip2.h: Likewise.
+	* codec/gzlib.h: Likewise.
+	* interface.h: Likewise.
+	* portcfg.h: Likewise.
+	* server-core.h: Likewise.
+	* server.h: Likewise.
+	* socket.h: Likewise.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_dequeue’.
+
+	* server-core.h (svz_sock_dequeue): Delete func decl.
+	* server-core.c (svz_sock_dequeue): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_signal_handler’.
+
+	* server-core.h (svz_signal_handler): Delete func decl.
+	* server-core.c (svz_signal_handler): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_periodic_tasks’.
+
+	* serveez-api.texi.in (svz_periodic_tasks):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_bogus’.
+
+	* serveez-api.texi.in (svz_sock_check_bogus):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_children’.
+
+	* server-core.h (svz_sock_check_children): Delete func decl.
+	* server-core.c (svz_sock_check_children): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_frequency’.
+
+	* server-core.h (svz_sock_check_frequency): Delete func decl.
+	* server-core.c (svz_sock_check_frequency): Move from here...
+	* server-socket.c: #include "libserveez/vector.h".
+	(svz_sock_check_frequency): ...to here; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_check_access’.
+
+	* serveez-api.texi.in (svz_sock_check_access):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_shutdown’.
+
+	* serveez-api.texi.in (svz_sock_shutdown):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_shutdown_all’.
+
+	* server-core.h (svz_sock_shutdown_all): Delete func decl.
+	* server-core.c (svz_loop_post):
+	Incorporate ‘svz_sock_shutdown_all’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_filter’.
+
+	* binding.h (svz_binding_filter):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_contains_server’.
+
+	* binding.h (svz_binding_contains_server):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_find’.
+
+	* binding.h (svz_binding_find): Delete func decl.
+	* binding.c (svz_binding_find): Move earlier in file; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_find_server’.
+
+	* binding.h (svz_binding_find_server): Delete func decl.
+	* binding.c (svz_binding_find_server):
+	Move earlier in file; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_join’.
+
+	* binding.h (svz_binding_join): Delete func decl.
+	* binding.c (svz_server_bind): Move later in file.
+	(svz_binding_join): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_contains’.
+
+	* binding.h (svz_binding_contains): Delete func decl.
+	* binding.c (svz_binding_contains): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_destroy’.
+
+	* binding.h (svz_binding_destroy):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_binding_create’.
+
+	* binding.h (svz_binding_create): Delete func decl.
+	* binding.c (svz_binding_create): Move earlier in file; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_binding_filter_{pipe,net}.
+
+	* binding.h (svz_binding_filter_pipe): Delete func decl.
+	(svz_binding_filter_net): Likewise.
+	* binding.c (svz_binding_filter_pipe): Make static.
+	(svz_binding_filter_net): Likewise.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_bind_port’.
+
+	* binding.h (svz_sock_bind_port): Delete func decl.
+	* binding.c (svz_sock_bind_port): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_bindings’.
+
+	* binding.h (svz_sock_bindings): Delete func decl.
+	* binding.c (svz_sock_bindings): Move earlier in file; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_find_portcfg’.
+
+	* binding.h (svz_sock_find_portcfg): Delete func decl.
+	* binding.c (svz_sock_find_portcfg): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_find_portcfgs’.
+
+	* binding.h (svz_sock_find_portcfgs): Delete func decl.
+	* binding.c (svz_sock_find_portcfgs): Make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_del_server’.
+
+	* binding.h (svz_sock_del_server): Delete func decl.
+	* binding.c (svz_sock_del_server): Move from here...
+	* server.c (svz_sock_del_server): ...to here; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_add_server’.
+
+	* binding.h (svz_sock_add_server): Delete func decl.
+	* binding.c (svz_sock_add_server): Move earlier in file; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_server_unbind’.
+
+	* binding.h (svz_server_unbind): Delete func decl.
+	* binding.c (svz_server_unbind): Move from here...
+	* server.c (svz_server_unbind): ...to here; make static.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Make ‘svz_portcfg_text’ also return string length.
+
+	* portcfg.c (svz_portcfg_text): Take 2nd arg LENP;
+	if not ‘NULL’, write formatted length to that addresss.
+	* portcfg.h (svz_portcfg_text): Update func decl.
+	* binding.c (svz_server_bindings): Use length
+	returned from ‘svz_portcfg_text’ instead of calling ‘strlen’.
+	* server-socket.c (svz_server_create): Coalesce
+	two calls to ‘svz_portcfg_text’ into one; update the sequence.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int C] Avoid ‘strcat’.
+
+	* binding.c (svz_server_bindings):
+	Use ‘strlen’ and ‘memcpy’ instead of ‘strcat’.
+	* dynload.c (svz_dynload_path_set): Likewise.
+	* passthrough.c
+	(svz_process_create_child) [__MINGW32__]: Likewise.
+	* portcfg.c (svz_portcfg_text): Use ‘snprintf’.
+
+2011-03-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_os_version’.
+
+	* util.h (svz_os_version): Delete var decl.
+	(svz_mingw_at_least_nt4_p): New func decl, marked ‘SERVEEZ_API’.
+	[__MINGW32__] (Win32S, Win95, Win98, WinNT3x, WinNT4x)
+	[__MINGW32__] (Win2k, WinXP, WinME): Move #define:s from here...
+	* util.c (svz_os_version): Make static.
+	[__MINGW32__] (Win32S, Win95, Win98, WinNT3x, WinNT4x)
+	[__MINGW32__] (Win2k, WinXP, WinME): ...to here.
+	(svz_mingw_at_least_nt4_p): New func.
+	* pipe-socket.c
+	(svz_pipe_disconnect, svz_pipe_connect, svz_pipe_listener):
+	Use ‘svz_mingw_at_least_nt4_p’.
+	* server-socket.c (svz_pipe_accept): Likewise.
+
+2011-03-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Revamp default value of dynloader's search path.
+
+	Omitting "." is a common security measure.  (This change
+	could also be called a bugfix, viewed in such light.)
+
+	* Makefile.am (svzpath.h):
+	Don't #define ‘SVZ_BINDIR’, ‘SVZ_LIBDIR’;
+	instead, #define ‘SVZ_PKGLIBDIR’.
+	* dynload.c (svz_dynload_path_get):
+	Don't add ".", ‘SVZ_LIBDIR’, ‘SVZ_BINDIR’;
+	instead, add ‘SVZ_PKGLIBDIR’.
+
+2011-03-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Dose svz_{p}strdup with ‘const’.
+
+	* alloc.c (svz_strdup, svz_pstrdup):
+	Declare arg ‘src’ to be ‘const char *’.
+	* alloc.h (svz_strdup, svz_pstrdup): Update func decls.
+
+2011-03-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Mark unused function parameters.
+
+	Here, "U" means "Mark unused func parms with ‘SVZ_UNUSED’".
+	* codec/bzip2.c (bzip2_alloc, bzip2_free): U.
+	* codec/gzlib.c (zlib_alloc, zlib_free): U.
+	* coserver/coserver.c (svz_coserver_handle_request): U.
+	* server-core.c (reset_internal, notify_internal): U.
+	* server.c (server_foreach_internal): U.
+	* util.c (SVZ_UNUSED_IF_HAVE_FWRITE_UNLOCKED): New #define.
+	(svz__log_updn): Use it for param ‘direction’.
+
+2011-03-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Decruft: Delete unused local variables.
+
+	Here, "D (...)" means "Delete local vars ...".
+	* cfg.c (svz_config_hash_dup): D (i, keys).
+	* server.c (svz_server_init_all): D (i, server).
+
+2011-03-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Add GCC-specific mechanism to declare "unused" bits.
+
+	* defines.h (SVZ_UNUSED): New #define.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize several svz_server_* funcs.
+
+	* server.c
+	(svz_servertype_instantiate): Incorporate ‘svz_server_add’.
+	(svz_servertype_del): Incorporate ‘svz_server_del’.
+	(svz_server_free): Move earlier in file; make static.
+	(notify_internal, svz_server_notifiers): Delete funcs.
+	(reset_internal, svz_server_reset): Likewise.
+	(svz_server_init, svz_server_finalize): Make static.
+	* server.h (svz_server_add): Delete func decl.
+	(svz_server_del, svz_server_free, svz_server_notifiers)
+	(svz_server_reset, svz_server_init, svz_server_finalize): Likewise.
+	* server-core.c
+	(reset_internal, notify_internal): New static funcs.
+	(svz_reset): Incorporate ‘svz_server_reset’.
+	(svz_periodic_tasks): Incorporate ‘svz_server_notifiers’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_portcfg_destroy_{accepted,access}.
+
+	* portcfg.c (svz_portcfg_free): Incorporate
+	‘svz_portcfg_destroy_accepted’, ‘svz_portcfg_destroy_access’.
+	(svz_portcfg_destroy_accepted): Delete func.
+	(svz_portcfg_destroy_access): Likewise.
+	* portcfg.h (svz_portcfg_destroy_accepted):
+	(svz_portcfg_destroy_access): Delete func decls.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_set_ipaddr’.
+
+	* portcfg.c (svz_portcfg_set_ipaddr): Make static.
+	* portcfg.c (svz_portcfg_set_ipaddr): Delete func decl.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_expand’.
+
+	* portcfg.h (svz_portcfg_expand):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_text’.
+
+	* portcfg.h (svz_portcfg_text):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_prepare’.
+
+	* portcfg.h (svz_portcfg_prepare):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_portcfg_free’.
+
+	* portcfg.h (svz_portcfg_free):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_config_prototype_print’.
+
+	* cfg.h (svz_config_prototype_print):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_config_type_add’.
+
+	* cfg.c (svz_config_type_add): Make static.
+	* cfg.h (svz_config_type_add): Delete func decl.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_config_instantiate’.
+
+	* cfg.h (svz_config_instantiate):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_flood_protect’.
+
+	* socket.h (svz_sock_flood_protect):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_idle_protect’.
+
+	* socket.c (svz_sock_idle_protect): Move from here...
+	* server-socket.c: #include <time.h>.
+	(svz_sock_idle_protect): ...to here; make static.
+	* socket.h (svz_sock_idle_protect): Delete func decl.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_detect_proto’.
+
+	* socket.h (svz_sock_detect_proto):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_unique_id’.
+
+	* socket.h (svz_sock_unique_id):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_error_info’.
+
+	* socket.c (svz_sock_error_info): Move from here...
+	* server-loop.c (svz_sock_error_info): ...to here; make static.
+	* socket.h (svz_sock_error_info): Delete func decl.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_intern_connection_info’.
+
+	* socket.h (svz_sock_intern_connection_info):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_local_info’.
+
+	* socket.c (svz_sock_local_info): Move from here...
+	* binding.c (svz_sock_local_info): ...to here; make static.
+	* socket.h (svz_sock_local_info): Delete func decl.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_sock_{create,disconnect}.
+
+	* socket.h (svz_sock_create, svz_sock_disconnect):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_sock_{alloc,free}.
+
+	* socket.h (svz_sock_alloc, svz_sock_free):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_valid’.
+
+	* socket.c (svz_sock_valid): Move from here...
+	* server-core.c (svz_sock_valid): ...to here; make static.
+	* socket.h (svz_sock_valid): Delete func decl.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_syserror’.
+
+	* coserver/xerror.c (xerror): Use ‘svz_net_strerror’.
+	* util.c (svz_syserror): Make static.
+	* util.h (svz_syserror): Delete func decl.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_errno’.
+
+	* util.h (svz_errno):
+	Remove mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add funcs: svz_{sys,net}_strerror
+
+	* util.h (svz_sys_strerror, svz_net_strerror):
+	New func decls, marked ‘SERVEEZ_API’.
+	(SYS_ERROR, NET_ERROR): Delete #define:s.
+	* util.c (svz_sys_strerror, svz_net_strerror):
+	New funcs.
+	(svz_log_sys_error): Use ‘svz_sys_strerror’.
+	(svz_log_net_error): Use ‘svz_net_strerror’.
+	* core.c (svz_socket_connect): Use ‘svz_net_strerror’.
+	* dynload.c (dyn_error): Use ‘svz_sys_strerror’.
+	* interface.c (print_foo_error): Use new funcs.
+	* server-socket.c (svz_tcp_accept): Use ‘svz_net_strerror’.
+	* tcp-socket.c (svz_tcp_default_connect): Likewise.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Add abstractions: print_{sys,net}_error
+
+	* interface.c [__MINGW32__]
+	(print_foo_error): New static func.
+	(print_sys_error, print_net_error): New macros.
+	(svz_interface_collect): Use new macros.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add funcs: svz_log_{sys,net}_error
+
+	* util.h (svz_log_sys_error)
+	(svz_log_net_error): New func decls, marked ‘SERVEEZ_API’.
+	* util.c (PREFIX_SIZE, ERRMSG_SIZE): New #define:s.
+	(save_errmsg, log_error): New static funcs.
+	(LOG_ERROR_FROM): New macro.
+	(svz_log_sys_error, svz_log_net_error): New funcs.
+	(svz_sys_version, svz_openfiles): Use new funcs.
+	* boot.c: Throughout, use new funcs.
+	* core.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* coserver/ident.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* mutex.c: Likewise.
+	* passthrough.c: Likewise.
+	* pipe-socket.c: Likewise.
+	* server-core.c: Likewise.
+	* server-loop.c: Likewise.
+	* server-socket.c: Likewise.
+	* socket.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+	* windoze.c: Likewise.
+
+2011-03-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_hstrerror’.
+
+	* coserver/xerror.h: New file.
+	* coserver/xerror.c: New file.
+	* coserver/Makefile.am
+	(libcoserver_la_SOURCES): Add xerror.c.
+	(noinst_HEADERS): Add xerror.h.
+	* coserver/dns.c: #include ".../xerror.h".
+	(dns_handle_request): Use ‘xerror’.
+	* coserver/reverse-dns.c: #include ".../xerror.h".
+	(reverse_dns_handle_request): Use ‘xerror’.
+	* util.c: Don't #include <netdb.h>.
+	(hstrerror): Delete func decl and surrounding preproc cond.
+	(svz_hstrerror): Delete func.
+	* util.h (svz_hstrerror): Delete func decl.
+	(H_NET_ERROR): Delete #define.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize SVZ_SPVEC_{BITS,SIZE,MASK}.
+
+	* sparsevec.h (SVZ_SPVEC_BITS)
+	(SVZ_SPVEC_SIZE, SVZ_SPVEC_MASK): Move from here...
+	* sparsevec.c (SVZ_SPVEC_BITS)
+	(SVZ_SPVEC_SIZE, SVZ_SPVEC_MASK): ...to here.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_spvec_chunk_t’.
+
+	* sparsevec.h (svz_spvec_chunk_t):
+	Move typedef and associated struct from here...
+	* sparsevec.c (svz_spvec_chunk_t): ...to here.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Make ‘struct svz_spvec_list’ opaque.
+
+	* sparsevec.h (svz_spvec_list): Move struct from here...
+	* sparsevec.c (svz_spvec_list): ...to here.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename some #define:s with "SVZ_" prefix.
+
+	* pipe-socket.h
+	(SVZ_READ): Rename from ‘READ’.
+	(SVZ_WRITE): Rename from ‘WRITE’.
+	* coserver/coserver.c (svz_coserver_close_pipes)
+	(svz_coserver_closeall, svz_coserver_start): Update.
+	* passthrough.c (svz_sock_process)
+	(svz_process_send_pipe, svz_process_recv_pipe)
+	(svz_process_create_child, svz_process_shuffle): Likewise.
+	* pipe-socket.c (svz_pipe_valid)
+	(svz_pipe_disconnect, svz_pipe_read_socket)
+	(svz_pipe_write_socket, svz_pipe_create, svz_pipe_create_pair)
+	(svz_pipe_connect, svz_pipe_listener): Likewise.
+	* server-core.c (svz_sock_check_bogus): Likewise.
+	* server-loop.c (svz_check_sockets_select)
+	(svz_check_sockets_poll): Likewise.
+	* server-socket.c (svz_pipe_accept): Likewise.
+	* socket.c (svz_sock_alloc)
+	(svz_sock_free, svz_sock_write): Likewise.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize PIPE_MAX_{WRITE,READ}.
+
+	* pipe-socket.h
+	(PIPE_MAX_WRITE, PIPE_MAX_READ): Move from here...
+	* pipe-socket.c
+	(PIPE_MAX_WRITE, PIPE_MAX_READ): ...to here.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Make ‘struct svz_process_t’ opaque.
+
+	* passthrough.c (svz_process_t): New struct.
+	* passthrough.h (svz_process_t): For this
+	typedef, omit struct definition, leaving only a reference.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename some #define:s with "SVZ_" prefix.
+
+	* hash.h
+	(SVZ_HASH_SHRINK): Rename from ‘HASH_SHRINK’.
+	(SVZ_HASH_EXPAND): Rename from ‘HASH_EXPAND’.
+	(SVZ_HASH_MIN_SIZE): Rename from ‘HASH_MIN_SIZE’.
+	* hash.c (svz_hash_create, svz_hash_clear)
+	(svz_hash_rehash, svz_hash_put, svz_hash_delete): Update.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘dyn_library_t’.
+
+	* dynload.h (dyn_library_t): Move from here...
+	* dynload.c (dyn_library_t): ...to here.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘SOCK_INPROGRESS’.
+
+	* util.h (SOCK_INPROGRESS): Mark ‘svzint’.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Add sugar for ‘WaitForSingleObject’ (woe32).
+
+	Here, all .c files have implicit "#include "woe-wait.h"";
+	and "U" means "Use new macros".
+	* core.c (svz_sendfile): U.
+	* mutex.c (svz_mutex_lock): U.
+	* passthrough.c (svz_process_idle): U.
+	* server-core.c (svz_sock_child_died): U.
+	* windoze.c (svz_windoze_stop_daemon): U.
+	* util.h (LEAST_WAIT_OBJECT): Delete #define.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_socket_unavailable_error_p
+
+	* util.h (svz_socket_unavailable_error_p):
+	New func decl, marked ‘SERVEEZ_API’.
+	(SOCK_UNAVAILABLE): Delete #define.
+	* util.c (svz_socket_unavailable_error_p): New func.
+	* core.c (svz_socket_connect): Use new func.
+	* icmp-socket.c (svz_icmp_read_socket): Likewise.
+	(svz_icmp_write_socket): Likewise.
+	* pipe-socket.c (svz_pipe_write_socket): Likewise.
+	* tcp-socket.c (svz_tcp_write_socket): Likewise.
+	(svz_tcp_read_socket, svz_tcp_default_connect): Likewise.
+	* udp-socket.c (svz_udp_read_socket): Likewise.
+	(svz_udp_write_socket): Likewise.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Move some woe32 #define:s into windoze.h.
+
+	* util.h [__MINGW32__] (S_IFBLK)
+	(S_ISDIR, S_ISCHR, S_ISREG, S_ISBLK): Move from here...
+	* windoze.h [__MINGW32__] (S_IFBLK)
+	(S_ISDIR, S_ISCHR, S_ISREG, S_ISBLK): ...to here.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Decruft: Don't #define ‘WINSOCK_VERSION’.
+
+	* util.h [__MINGW32__] (WINSOCK_VERSION): Delete #define.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add funcs: svz_{invalid_handle_p,invalidate_handle}
+
+	Here, "U" means "Use new funcs".
+	* pipe-socket.h (svz_invalidate_handle)
+	(svz_invalid_handle_p): New func decls, marked ‘SERVEEZ_API’.
+	* pipe-socket.c
+	(svz_invalidate_handle, svz_invalid_handle_p): New funcs.
+	(svz_pipe_valid, svz_pipe_disconnect)
+	(svz_pipe_connect, svz_pipe_listener): U.
+	* core.c (svz_open): U.
+	* coserver/coserver.c
+	(svz_coserver_loop, svz_coserver_start): U.
+	* icmp-socket.c
+	[__MINGW32__] (hIcmp): Use ‘INVALID_HANDLE_VALUE’.
+	[__MINGW32__] (svz_icmp_startup, svz_icmp_cleanup): U.
+	* passthrough.c (svz_process_idle)
+	(svz_process_recv_socket, svz_process_duplicate)
+	(svz_process_create_child): U.
+	* server-core.c (svz_sock_check_children): U.
+	* socket.c (svz_sock_alloc): U.
+	* util.h (INVALID_HANDLE): Delete #define.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘INVALID_SOCKET’.
+
+	* util.h (INVALID_SOCKET): Mark ‘svzint’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize ‘chdir’ procurement.
+
+	* passthrough.c: Don't #include <unistd.h>;
+	instead, #include "changedir.h".
+	* util.h [__MINGW32__] (chdir): Delete macro.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_closehandle
+
+	* pipe-socket.h (svz_closehandle):
+	New func decl, marked ‘SERVEEZ_API’.
+	* pipe-socket.c (svz_closehandle): New func.
+	(svz_pipe_disconnect): Use it.
+	* passthrough.c (svz_process_idle): Likewise.
+	(svz_process_create_child, svz_process_shuffle): Likewise.
+	* server-core.c (svz_sock_child_died): Likewise.
+	* util.h (closehandle): Delete macro.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_closesocket
+
+	* core.c (svz_closesocket): New func.
+	(svz_socket_create_pair, svz_socket_create)
+	(svz_socket_connect): Use ‘svz_closesocket’.
+	* core.h (svz_closesocket): New func decl, marked ‘SERVEEZ_API’.
+	* coserver/ident.c: #include "libserveez/core.h".
+	(ident_handle_request): Use ‘svz_closesocket’.
+	* icmp-socket.c (svz_icmp_connect): Likewise.
+	* passthrough.c (svz_process_create_child): Likewise.
+	* server-socket.c (svz_server_create, svz_tcp_accept): Likewise.
+	* socket.c (svz_sock_disconnect): Likewise.
+	* tcp-socket.c (svz_tcp_connect): Likewise.
+	* udp-socket.c (svz_udp_connect): Likewise.
+	* util.h [!__MINGW32__] (closesocket): Delete macro.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Move ‘#define getcwd’ from header into implementation.
+
+	* util.h [__MINGW32__] (getcwd): Move #define from here...
+	* util.c [__MINGW32__] (getcwd): ...to here.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Move ‘environ’ decl from header into implementation.
+
+	* passthrough.h (environ): Move var decl from here...
+	* passthrough.c (environ): ...to here.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Make ‘svz_envblock_get’ return ‘void *’.
+
+	* passthrough.c (svz_envblock_get): Return ‘void *’;
+	don't use ‘svz_envp_t’; instead, use ‘char *’ directly.
+	* passthrough.h (svz_envp_t): Delete typedef.
+	(svz_envblock_get): Update func decl.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_icmp_{start,clean}up.
+
+	* icmp-socket.h
+	(svz_icmp_startup, svz_icmp_cleanup): Delete func decls.
+	* boot.c
+	[__MINGW32__] (svz_icmp_startup): New func decl, marked ‘SBO’.
+	[__MINGW32__] (svz_icmp_cleanup): Likewise.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_file_closeall’.
+
+	* core.h (svz_file_closeall):
+	Remove mark ‘SERVEEZ_API’; add mark ‘SBO’, ‘svzint’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func/macros: svz_{all_servers,hash_foreach_{key,value}}
+
+	* hash.h (svz_hash_foreach_key): Delete macro.
+	(svz_hash_foreach_value): Likewise.
+	* server.c (svz_all_servers): Delete func.
+	* server.h (svz_all_servers): Delete func decl.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_server_foreach
+
+	* server.c (server_foreach_closure): New struct.
+	(server_foreach_internal): New static func.
+	(svz_server_foreach): New func.
+	(type_del_closure): New struct.
+	(type_del_internal): New static func.
+	(svz_servertype_del): Use it and ‘svz_server_foreach’.
+	(notify_internal): New static func.
+	(svz_server_notifiers): Use it and ‘svz_server_foreach’.
+	(reset_internal): New static func.
+	(svz_server_reset): Use it and ‘svz_server_foreach’.
+	(find_closure): New struct.
+	(find_internal): New static func.
+	(svz_server_find): Use it and ‘svz_server_foreach’.
+	(init_all_internal): New static func.
+	(svz_server_init_all): Use it and ‘svz_server_foreach’.
+	* server.h (svz_server_do_t): New typedef.
+	(svz_server_foreach): New func decl, marked ‘SERVEEZ_API’.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[int] Use ‘svz_hash_foreach’ instead of ‘svz_hash_foreach_key’.
+
+	* cfg.c (accumulate): New static func.
+	(svz_config_hash_dup): Use it and ‘svz_hash_foreach’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_hash_foreach
+
+	* hash.c (svz_hash_foreach): New func.
+	* hash.h (svz_hash_do_it): New typedef.
+	(svz_hash_foreach): New func decl, marked ‘SERVEEZ_API’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_config_{intarray,strarray,hash}_dup.
+
+	* cfg.c (svz_config_intarray_dup): Make static.
+	(svz_config_strarray_dup, svz_config_hash_dup): Likewise.
+	* cfg.h (svz_config_intarray_dup): Delete func decl.
+	(svz_config_strarray_dup, svz_config_hash_dup): Likewise.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize ‘#define O_BINARY’.
+
+	* core.c: Don't #include <fcntl.h>;
+	instead, #include "o-binary.h".
+	* util.h: Don't #include <fcntl.h>.
+	(O_BINARY): Delete #define and surrounding preproc conditional.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize <netinet/in.h>/<winsock2.h> #include.
+
+	Here, "D" means "don't #include <winsock.h>, <netinet/in.h>";
+	"U" means "#include "networking-headers.h"; D".
+	* binding.c: U.
+	* boot.c: U.
+	* cfg.c: U.
+	* core.c: U.
+	* coserver/coserver.c: U.
+	* coserver/dns.c: U.
+	* coserver/ident.c: U.
+	* coserver/reverse-dns.c: U.
+	* dynload.c: U.
+	* icmp-socket.c: U.
+	* interface.c: U.
+	* passthrough.c: U.
+	* pipe-socket.c: U.
+	* portcfg.c: U.
+	* raw-socket.c: U.
+	* server-core.c: U.
+	* server-loop.c: U.
+	* server-socket.c: U.
+	* server.c: U.
+	* socket.c: U.
+	* tcp-socket.c: U.
+	* udp-socket.c: U.
+	* util.c: U.
+	* windoze.c: U.
+	* core.h: D.
+	* defines.h: D.
+	* portcfg.h: D.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_file_path’.
+
+	* core.c (svz_file_path): Delete func.
+	* core.h (svz_file_path): Delete func decl.
+	* dynload.c (dyn_get_library):
+	Incorporate ‘svz_file_path’; use ‘snprintf’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_file_check
+
+	* core.c (svz_file_check): Delete func.
+	* core.h (svz_file_check): Delete func decl.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_check_sockets’.
+
+	* server-loop.c: Don't #include "libserveez/server-loop.h".
+	* server-core.c: Likewise.
+	(svz_check_sockets): New func decl, marked ‘SBO’.
+	* Makefile.am (libserveez_HEADERS): Remove server-loop.h.
+	* server-loop.h: Delete file.
+
+2011-03-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move ‘svz_uptime’ out to unique caller.
+
+	* util.c (svz_uptime): Delete func.
+	* util.h (svz_uptime): Delete func decl.
+
+2011-03-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_child_died’.
+
+	* server-core.c (svz_sock_child_died): Make static.
+	* server-core.h (svz_sock_child_died): Delete func decl.
+
+2011-03-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Decruft: Use svzconfig.h for some woe32 #define:s.
+
+	* defines.h [__MINGW32__ || __CYGWIN__]
+	(FD_SETSIZE, WIN32_LEAN_AND_MEAN): Delete #undef/#define.
+	[__MINGW32__] (Win32_Winsock): Delete #undef/#define;
+	change surrounding preproc cond to ‘Win32_Winsock’.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Forward-declare ‘struct stat’ at top-level.
+
+	* core.h (struct stat): New decl.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Never #include <sys/stat.h> in a header.
+
+	* core.h: Don't #include <sys/stat.h>.
+	* portcfg.h: Likewise.
+	* util.h: Likewise.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Never #include <sys/types.h> in a header.
+
+	* alloc.h: Don't #include <sys/types.h>.
+	* portcfg.h: Likewise.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move svz_{malloc,realloc,free}_func behind ‘svz_set_mm_funcs’.
+
+	* alloc.c (svz_set_mm_funcs): New func.
+	* alloc.h (svz_malloc_func, svz_realloc_func, svz_free_func):
+	Drop mark ‘SERVEEZ_API’; mark ‘SBO’, ‘svzint’.
+	(svz_set_mm_funcs): New func decl, marked ‘SERVEEZ_API’.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Embed mutex functionality; expose only feature ‘log-mutex’.
+
+	* Makefile.am (EXTRA_DIST): Add mutex.h.
+	(libserveez_HEADERS): Remove mutex.h.
+	* boot.c: Don't #include "libserveez/mutex.h".
+	(svz_library_features): Drop feature ‘threads’; add ‘log-mutex’.
+	(svz_log_mutex): Delete unused var decl.
+	* mutex.c: Conditionalize all but "config.h"
+	using ‘if ENABLE_LOG_MUTEX’; use ‘HAVE_PTHREAD_H’ directly.
+	(svz_mutex_create): Remove code in preproc
+	conditional block corresponding to ‘!SVZ_HAVE_THREADS’.
+	(svz_mutex_destroy, svz_mutex_lock, svz_mutex_unlock): Likewise.
+	* mutex.h: Don't #include "libserveez/defines.h";
+	use ‘HAVE_PTHREAD_H’ directly; remove preproc
+	conditional corresponding to ‘!SVZ_HAVE_THREADS’.
+	(svz_mutex_declare, svz_mutex_define): Delete macros.
+	(__BEGIN_DECLS, __END_DECLS): Delete macro calls.
+	(svz_mutex_create): Remove mark ‘SERVEEZ_API’; mark ‘SBO’.
+	(svz_mutex_destroy, svz_mutex_lock, svz_mutex_unlock): Likewise.
+	* util.c: Use ‘ENABLE_LOG_MUTEX’.
+	(spew_mutex): Use ‘SVZ_MUTEX_INITIALIZER’ directly.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Don't bother checking for broken ‘inet_ntoa’.
+
+	* core.c (svz_inet_ntoa) [BROKEN_INET_NTOA]: Remove code.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Don't document ‘svz_heap’; remove from header on "make install".
+
+	* alloc.h (svz_heap): Mark with ‘svzint’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Avoid using a log mutex when stdio is locking.
+
+	Here, "U" means "! defined HAVE_FWRITE_UNLOCKED".
+	* util.c: Conditionalize #include "libserveez/mutex.h" on U.
+	(spew_mutex, spew_mutex_valid): Likewise.
+	(LOCK_LOG_MUTEX, UNLOCK_LOG_MUTEX): New macros.
+	(svz__log_updn): Conditionalize body on U.
+	(svz_log): Use ‘LOCK_LOG_MUTEX’, ‘UNLOCK_LOG_MUTEX’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Never #include <stdio.h> in a header.
+
+	* binding.c: #include <stdio.h>.
+	* coserver/ident.c: Likewise.
+	* passthrough.c: Likewise.
+	* portcfg.c: Likewise.
+	* defines.h: Don't #include <stdio.h>.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Strip "internals" from $(i)/{codec,coserver}/*.h, too.
+
+	* coserver/coserver.h: Add begin/end ‘svzint’ comments.
+	* codec/codec.h: Likewise.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_coservertypes’.
+
+	* coserver/coserver.c (svz_coservertypes): Make static.
+	(svz_coserver_type_name): New func.
+	(svz_coserver_create): Return the newly created coserver.
+	* coserver/coserver.h (svz_coservertypes): Delete var decl.
+	(svz_coserver_create): Update func decl.
+	(svz_coserver_type_name): New func decl.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_environ’.
+
+	* passthrough.c (svz_environ): Make static.
+	(svz_envblock_setup): New func.
+	* passthrough.h (svz_environ): Delete var decl.
+	(svz_envblock_setup): Convert macro
+	to func decl, marked ‘SERVEEZ_API’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move "shutting down?" behind functional interface.
+
+	* server-core.c (svz_shutting_down_p): New func.
+	* server-core.h (svz_nuke_happened):
+	Remove mark ‘SERVEEZ_API’; add mark ‘SBO’, ‘svzint’.
+	(svz_shutting_down_p): New func decl, marked ‘SERVEEZ_API’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_notify’.
+
+	* server-core.h (svz_notify):
+	Remove mark ‘SERVEEZ_API’; add mark ‘SBO’, ‘svzint’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_library
+
+	* boot.c (svz_library): Delete var.
+	* boot.h (svz_library): Delete var decl.
+	* windoze.c (windoze_notify_set): Use ‘PACKAGE_STRING’.
+	(windoze_notify_add): Likewise.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_version
+
+	* boot.c (svz_version): Delete var.
+	* boot.h (svz_version): Delete var decl.
+	* windoze.c (windoze_notify_set): Use ‘PACKAGE_VERSION’.
+	(windoze_notify_add): Likewise.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_foreach_socket
+
+	* server-core.c (svz_foreach_socket): New func.
+	* server-core.h (svz_sock_root): Mark ‘SBO’, ‘svzint’.
+	(svz_sock_foreach, svz_sock_foreach_listener): Mark ‘svzint’.
+	(svz_foreach_socket): New func decl.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_sock_last’.
+
+	* server-core.c (svz_sock_last): Make static.
+	* server-core.h (svz_sock_last): Delete var decl.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_servertypes’.
+
+	* server.c (svz_servertypes): Make static.
+	* server.h (svz_servertypes): Delete var decl.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_foreach_interface
+
+	* interface.c (svz_foreach_interface): New func.
+	* interface.h (svz_interface_do_t): New typedef.
+	(svz_interfaces): Mark ‘SBO’, ‘svzint’.
+	(svz_foreach_interface): New func decl, marked ‘SERVEEZ_API’.
+	(svz_interface_foreach): Delete macro.
+	* portcfg.c (svz_portcfg_expand): Use
+	‘svz_vector_foreach’ and ‘svz_interfaces’ directly.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_servertype_definition’.
+
+	* server.h (svz_servertype_definition):
+	Don't mark as ‘SERVEEZ_API’; instead, mark as ‘SBO’, ‘svzint’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use libtool-style interface version for libserveez.
+
+	* Makefile.am (libserveez_la_LDFLAGS):
+	Use $(LIBSERVEEZ_INTERFACE).
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Create svzpath.h directly, without template.
+
+	* Makefile.am (EXTRA_DIST): Remove svzpath.h.in.
+	(BUILT_SOURCES): New var.
+	(svzpath.h): Rewrite target.
+	* svzpath.h.in: Delete file.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Fix bug: Hide various codec internal elements.
+
+	These were revealed by the command:
+	nm -g --defined-only .libs/libserveez.so
+
+	* codec/bzip2.c (bzip2_config): Make static.
+	(bzip2_alloc, bzip2_free): Likewise.
+	* codec/bzip2.h (bzip2_encoder, bzip2_decoder)
+	(bzip2_error, bzip2_encoder_init, bzip2_encoder_finalize)
+	(bzip2_encode, bzip2_decoder_init, bzip2_decoder_finalize)
+	(bzip2_decode, bzip2_ratio): Mark ‘SBO’.
+	* codec/gzlib.c (zlib_alloc, zlib_free): Make static.
+	* codec/gzlib.h (zlib_encoder, zlib_decoder)
+	(zlib_error, zlib_encoder_init, zlib_encoder_finalize)
+	(zlib_encode, zlib_decoder_init, zlib_decoder_finalize)
+	(zlib_decode, zlib_ratio): Makr ‘SBO’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstraction: svz_foreach_coserver
+
+	* coserver.c (svz_coservers): Make static.
+	(svz_foreach_coserver): New func.
+	* coserver.h (svz_coserver_do_t): New typedef.
+	(svz_coservers): Delete var decl.
+	(svz_foreach_coserver): New func decl, marked ‘SERVEEZ_API’.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move "all instantiated servers" behind functional interface.
+
+	* server.c (svz_servers): Make static.
+	(svz_all_servers): New func.
+	* server.h (svz_servers): Delete var decl.
+	(svz_all_servers): New func decl.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Dose some svz_hash_* funcs with ‘const’.
+
+	* hash.c (svz_hash_get, svz_hash_exists)
+	(svz_hash_values, svz_hash_keys, svz_hash_size)
+	(svz_hash_capacity, svz_hash_contains):
+	Qualify type of hash table arg with ‘const’.
+	* hash.h (svz_hash_get, svz_hash_exists)
+	(svz_hash_values, svz_hash_keys, svz_hash_size)
+	(svz_hash_capacity, svz_hash_contains): Update func decls.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move "number of connected sockets" behind functional interface.
+
+	* socket.c (svz_sock_nconnections): New func.
+	* socket.h (svz_sock_connections): Mark ‘SBO’; mark ‘svzint’.
+	(svz_sock_nconnections): New func decl, marked ‘SERVEEZ_API’.
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Fix bug: Hide various coserver internal elements.
+
+	These were revealed by the command:
+	nm -g --defined-only .libs/libserveez.so
+
+	* coserver/reverse-dns.c
+	(reverse_dns_cache): Make static.
+	* coserver/dns.h (dns_handle_request): Mark ‘SBO’.
+	* coserver/reverse-dns.h (reverse_dns_init): Likewise.
+	(reverse_dns_handle_request): Likewise.
+	* coserver/ident.h (ident_handle_request): Likewise.
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_{boot,halt} subroutines.
+
+	Here, "S" means "make static"; and "D" means "delete func decl".
+	* boot.c (svz_net_startup, svz_net_cleanup): S.
+	(svz__net_updn): New static func.
+	(svz_init_config): S.
+	(UPDN): New macro; use it to declare funcs ‘svz__log_updn’,
+	‘svz__strsignal_updn’, ‘svz__sock_table_updn’, ‘svz__signal_updn’,
+	‘svz__interface_updn’, ‘svz__pipe_updn’, ‘svz__dynload_updn’,
+	‘svz__codec_updn’, ‘svz__config_type_updn’.
+	(svz_portcfg_finalize): New func decl.
+	(svz_boot, svz_halt): Rewrite.
+	* boot.h (svz_net_startup): D.
+	(svz_net_cleanup, svz_init_config): Likewise.
+	* cfg.c (svz_config_type_init, svz_config_type_finalize): S.
+	(svz__config_type_updn): New func.
+	* cfg.h (svz_config_type_init, svz_config_type_finalize): D.
+	* codec/codec.c (svz_codec_init, svz_codec_finalize): S.
+	(svz__codec_updn): New func.
+	* codec/codec.h (svz_codec_init, svz_codec_finalize): D.
+	* dynload.c (svz_dynload_finalize, svz_dynload_init): S.
+	(svz__dynload_updn): New func.
+	* dynload.h (svz_dynload_finalize, svz_dynload_init): D.
+	* interface.c (svz_interface_collect): S.
+	(svz_interface_free): S; change return type to ‘void’.
+	(svz__interface_updn): New func.
+	* interface.h (svz_interface_collect, svz_interface_free): D.
+	* pipe-socket.c (svz_pipe_startup, svz_pipe_cleanup): S.
+	(svz__pipe_updn): New func.
+	* pipe-socket.h (svz_pipe_startup, svz_pipe_cleanup): D.
+	* portcfg.h (svz_portcfg_finalize): D.
+	* server-core.c (svz_strsignal_init)
+	(svz_strsignal_destroy, svz_sock_table_create)
+	(svz_sock_table_destroy, svz_signal_up, svz_signal_dn): S.
+	(svz__strsignal_updn): New func.
+	(svz__sock_table_updn, svz__signal_updn): Likewise.
+	* server-core.h (svz_sock_table_create)
+	(svz_sock_table_destroy, svz_signal_up, svz_signal_dn)
+	(svz_strsignal_init, svz_strsignal_destroy): D.
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Add decl fragments: DSOPRIVATE, SBO
+
+	* defines.h (DSOPRIVATE, SBO):
+	New #define:s, marked "svzint".
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Mark #include "libservez/foo.h" as internal.
+
+	* alloc.h: Put "begin svzint", "end svzint"
+	comments around #include "libserveez/foo.h" lines.
+	* array.h: Likewise.
+	* binding.h: Likewise.
+	* boot.h: Likewise.
+	* cfg.h: Likewise.
+	* core.h: Likewise.
+	* dynload.h: Likewise.
+	* hash.h: Likewise.
+	* icmp-socket.h: Likewise.
+	* interface.h: Likewise.
+	* mutex.h: Likewise.
+	* passthrough.h: Likewise.
+	* pipe-socket.h: Likewise.
+	* portcfg.h: Likewise.
+	* raw-socket.h: Likewise.
+	* server-core.h: Likewise.
+	* server-loop.h: Likewise.
+	* server-socket.h: Likewise.
+	* server.h: Likewise.
+	* socket.h: Likewise.
+	* sparsevec.h: Likewise.
+	* tcp-socket.h: Likewise.
+	* udp-socket.h: Likewise.
+	* util.h: Likewise.
+	* vector.h: Likewise.
+	* windoze.h: Likewise.
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Don't mention variable name in its docstring.
+
+	* server-core.c (svz_nuke_happened):
+	Reword docstring to not reference self.
+	(svz_reset_happened, svz_pipe_broke, svz_child_died)
+	(svz_uncaught_signal, svz_signal, svz_sock_root, svz_sock_last)
+	(svz_sock_lookup_table): Likewise.
+
+2011-03-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘PACKAGE_VERSION’ directly.
+
+	* boot.c: Don't #include "version.h".
+	(svz_version): Use ‘PACKAGE_VERSION’.
+
+2011-03-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[int] Use EXIT_{SUCCESS,FAILURE} from <stdlib.h>.
+
+	* alloc.c (oom): New macro.
+	(svz_malloc, svz_realloc, svz_pmalloc, svz_prealloc): Use it.
+	* coserver/coserver.c (svz_coserver_start): Use ‘EXIT_SUCCESS’.
+	* passthrough.c (svz_process_shuffle): Likewise.
+	(svz_process_fork): Likewise.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_asprintf
+
+	* cfg.c: Don't #include "libserveez/asprintf.h".
+	* server.c: Likewise.
+	* libserveez.ap (SOURCES): Remove asprintf.c.
+	* Makefile.am (libserveez_la_SOURCES): Remove asprintf.c.
+	(libserveez_HEADERS): Remove asprintf.h.
+	* asprintf.c: Delete file.
+	* asprintf.h: Delete file.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Make ‘svz_config_type_instantiate’ require error buf size.
+
+	* cfg.c (svz_config_type_instantiate):
+	Don't take ERROR; instead, take a buffer size and a buffer;
+	use ‘snprintf’ with that buffer; pass new args when delegating.
+	* cfg.h (svz_config_type_t): Update prototype of
+	member ‘instantiate’ to likewise to ‘svz_config_type_instantiate’.
+	(svz_config_type_instantiate): Update func decl.
+	* server.c (svz_servertype_instantiate):
+	Update likewise to ‘svz_config_type_instantiate’.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_strcasecmp
+
+	* util.c (svz_strcasecmp): Delete func.
+	* util.h (svz_strcasecmp): Delete func decl.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Use ‘strncasecmp’ when one string is a literal.
+
+	* passthrough.c (svz_process_check_executable) [__MINGW32__]:
+	Use ‘strncasecmp’ and ‘sizeof’.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_strncasecmp
+
+	* util.c (svz_strncasecmp): Delete func.
+	* util.h (svz_strncasecmp): Delete func decl.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] #include "config.h" unconditionally.
+
+	* alloc.c: #include "config.h" unconditionally.
+	* array.c: Likewise.
+	* asprintf.c: Likewise.
+	* binding.c: Likewise.
+	* boot.c: Likewise.
+	* cfg.c: Likewise.
+	* codec/bzip2.c: Likewise.
+	* codec/codec.c: Likewise.
+	* codec/gzlib.c: Likewise.
+	* core.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* coserver/dns.c: Likewise.
+	* coserver/ident.c: Likewise.
+	* coserver/reverse-dns.c: Likewise.
+	* dynload.c: Likewise.
+	* hash.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* interface.c: Likewise.
+	* mutex.c: Likewise.
+	* passthrough.c: Likewise.
+	* pipe-socket.c: Likewise.
+	* portcfg.c: Likewise.
+	* raw-socket.c: Likewise.
+	* server-core.c: Likewise.
+	* server-loop.c: Likewise.
+	* server-socket.c: Likewise.
+	* server.c: Likewise.
+	* socket.c: Likewise.
+	* sparsevec.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+	* util.c: Likewise.
+	* vector.c: Likewise.
+	* windoze.c: Likewise.
+
+2011-03-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Fix bug: Make ‘svz_log’ work also after its mutex is destroyed.
+
+	See <https://savannah.gnu.org/support/?107607> for details.
+
+	* util.c (spew_mutex): Rename from ‘svz_log_mutex’; make static.
+	(spew_mutex_valid): New static var.
+	(svz__log_updn): New func.
+	(svz_log): Do mutex lock/unlock only when ‘spew_mutex_valid’.
+	* boot.c (svz__log_updn): New extern func decl.
+	(svz_boot, svz_halt): Use ‘svz__log_updn’.
+
+2011-03-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Make ‘svz_log’ more efficient.
+
+	* util.c: #include <assert.h>.
+	(LOGBUFSIZE): New #define.
+	(svz_log): Use ‘strftime’; do string formatting to a
+	local buffer; ensure proper truncation; use ‘fwrite’.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop vars: svz_have_{debug,floodprotect}
+
+	* boot.c (svz_have_debug, svz_have_floodprotect): Delete vars.
+	* boot.h (svz_have_debug, svz_have_floodprotect): Delete var decls.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_have_Win32
+
+	* boot.c (svz_have_Win32): Delete var.
+	* boot.h (svz_have_Win32): Delete var decl.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_build
+
+	* boot.c (svz_build): Delete var.
+	* boot.h (svz_build): Delete var decl.
+
+2011-02-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Inline svzconfig.h into libserveez/defines.h on install.
+
+	* Makefile.am: Don't include $(srcdir)/common.mk.
+	* codec/Makefile.am: Don't include $(srcdir)/../common.mk.
+	* coserver/Makefile.am: Likewise.
+	* common.mk: Delete file.
+	* defines.h: Don't #include <config.h> or <svzconfig.h>;
+	instead, #include "svzconfig.h" unconditionally.
+	* libserveez.ap (DEFS): Remove ‘-D__BUILD_SVZ_LIBRARY__’.
+
+2011-02-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] New func: svz_library_features
+
+	* boot.c (svz_library_features): New func.
+	* boot.h (svz_library_features): New func
+	decl, marked with ‘SERVEEZ_API’.
+
+2011-02-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Do #include <stdio.h> in defines.h.
+
+	* defines.h: #include <stdio.h>.
+	* core.h: Don't #include <stdio.h>.
+	* util.h: Likewise.
+
+2011-02-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Require type info in macro ‘svz_hash_foreach_value’.
+
+	* hash.h (svz_hash_foreach_value):
+	Take arg TYPE; use it to cast the ‘svz_hash_values’ rv.
+	* server.c (svz_servertype_del)
+	(svz_server_notifiers, svz_server_reset, svz_server_find)
+	(svz_server_init_all): Update call to ‘svz_hash_foreach_value’.
+
+2011-02-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Make ‘svz_hash_xfree’ a function; document it.
+
+	* hash.c (svz_hash_xfree): New func.
+	* hash.h (svz_hash_xfree): Convert
+	macro to func decl, marked with ‘SERVEEZ_API’.
+
+2011-02-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘AC_USE_SYSTEM_EXTENSIONS’.
+
+	* alloc.c: Remove #define:s
+	‘_GNU_SOURCE’, ‘__EXTENSIONS__’, ‘_ALL_SOURCE’.
+	* array.c: Likewise.
+	* asprintf.c: Likewise.
+	* binding.c: Likewise.
+	* boot.c: Likewise.
+	* cfg.c: Likewise.
+	* codec/bzip2.c: Likewise.
+	* codec/codec.c: Likewise.
+	* codec/gzlib.c: Likewise.
+	* core.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* coserver/dns.c: Likewise.
+	* coserver/ident.c: Likewise.
+	* coserver/reverse-dns.c: Likewise.
+	* dynload.c: Likewise.
+	* hash.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* interface.c: Likewise.
+	* mutex.c: Likewise.
+	* passthrough.c: Likewise.
+	* passthrough.h: Likewise.
+	* pipe-socket.c: Likewise.
+	* portcfg.c: Likewise.
+	* portcfg.h: Likewise.
+	* raw-socket.c: Likewise.
+	* server-core.c: Likewise.
+	* server-loop.c: Likewise.
+	* server-socket.c: Likewise.
+	* server.c: Likewise.
+	* socket.c: Likewise.
+	* sparsevec.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+	* util.c: Likewise.
+	* vector.c: Likewise.
+	* windoze.c: Likewise.
+
+2011-02-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Internalize debug support.
+
+	* alloc.c: Do ‘s/SVZ_ENABLE_DEBUG/ENABLE_DEBUG/g’.
+	* boot.c: Likewise.
+	* core.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* coserver/dns.c: Likewise.
+	* coserver/ident.c: Likewise.
+	* coserver/reverse-dns.c: Likewise.
+	* hash.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* passthrough.c: Likewise.
+	* pipe-socket.c: Likewise.
+	* portcfg.c: Likewise.
+	* raw-socket.c: Likewise.
+	* server-core.c: Likewise.
+	* socket.c: Likewise.
+	* tcp-socket.c: Likewise.
+	* udp-socket.c: Likewise.
+
+2011-02-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize <assert.h> prep (i.e., NDEBUG) and #include.
+
+	* defines.h (NDEBUG): Remove #define
+	and surrounding preproc conditional.
+	* alloc.c: Do s/<assert.h>/"timidity.h"/.
+	* array.c: Likewise.
+	* binding.c: Likewise.
+	* codec.c: Likewise.
+	* coserver/coserver.c: Likewise.
+	* hash.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* passthrough.c: Likewise.
+	* portcfg.c: Likewise.
+	* socket.c: Likewise.
+	* sparsevec.c: Likewise.
+	* vector.c: Likewise.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Include ‘svz_config_prototype_print’ in API unconditionally.
+
+	* cfg.h (svz_config_prototype_print):
+	Remove surrounding preproc conditional.
+	* cfg.c (svz_config_prototype_print): Likewise.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move current allocation info behind functional interface.
+
+	* alloc.h (svz_allocated_bytes): Delete var decl.
+	(svz_allocated_blocks): Likewise.
+	(svz_get_curalloc): New func decl, marked w/ ‘SERVEEZ_API’.
+	* alloc.c (allocated_bytes, allocated_blocks):
+	Rename from ‘svz_allocated_bytes’ and ‘svz_allocated_blocks’,
+	respectively; make static.
+	(svz_malloc, svz_realloc, svz_free): Update refs.
+	(svz_get_curalloc): New func.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Include ‘svz_servertype_print’ in API unconditionally.
+
+	* server.h (svz_servertype_print):
+	Remove surrounding preproc conditional.
+	* server.c (svz_servertype_print): Likewise.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Decruft: Don't link with ‘-no-undefined’.
+
+	* codec/Makefile.am (libcodec_la_LDFLAGS): Delete var.
+	* coserver/Makefile.am (libcoserver_la_LDFLAGS): Likewise.
+	* Makefile.am (libserveez_la_LDFLAGS): Remove $(NOUNDEFINED).
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘crypt’ support.
+
+	* util.h [SVZ_ENABLE_CRYPT]: Delete preproc cond block.
+
+2011-02-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Include ‘svz_sock_flood_protect’ in API unconditionally.
+
+	Here, "U (WHERE)" means "Use ‘ENABLE_FLOOD_PROTECTION’
+	for WHERE preprocessor conditional expression".
+	* socket.h (struct svz_socket): Include members
+	‘flood_points’ and ‘flood_limit’ unconditionally.
+	(svz_sock_flood_protect): Remove surrounding preproc conditional.
+	* socket.c (svz_sock_flood_protect):
+	Move surrounding preproc conditional into the function body;
+	describe behavior in docstring when flood protection not enabled.
+	(svz_sock_alloc): U (internal).
+	* boot.c (svz_have_floodprotect): U (surrounding).
+	* pipe-socket.c (svz_pipe_read_socket): U (internal).
+	* tcp-socket.c (svz_tcp_read_socket): U (internal).
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘HAVE_VARARGS_H’ directly.
+
+	* asprintf.c: In preprocessor conditional,
+	use ‘HAVE_VARARGS_H’ instead of ‘SVZ_HAVE_VARARGS_H’.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop SVZ_U?INT{16,32,64} macros.
+
+	* util.h (SVZ_INT32, SVZ_INT64, SVZ_INT16)
+	(SVZ_UINT32, SVZ_UINT64, SVZ_UINT16): Delete macros.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[int] Move simple hash function out of libserveez.
+
+	* alloc.c [DEBUG_MEMORY_LEAKS]: #include "le-u32-hash.h".
+	[DEBUG_MEMORY_LEAKS] (heap_hash_code): Use ‘le_u32_hash’.
+
+2011-02-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Add cast for comparison.
+
+	* asprintf.c (homegrown_vasprintf):
+	Add ‘unsigned’ cast when comparing the non-negative
+	‘count’ with ‘size’ and when using same later.
+
+2011-02-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Avoid calling ‘strcmp’ with a ‘NULL’ arg.
+
+	* portcfg.c (same_devices): New static func.
+	(svz_portcfg_equal): Use ‘same_devices’.
+
+2011-02-16  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop ‘svz_snprintf’; use ‘vsnprintf’, ‘snprintf’ directly.
+
+	Here, "N" means "don't include libserveez/snprintf.h";
+	"V" means "use ‘vsnprintf’ directly"; "S" means "use
+	‘snprintf’ directly"; and "A" means "#include <stdarg.h>".
+	* snprintf.h: Delete file.
+	* snprintf.c: Delete file.
+	* Makefile.am (libserveez_la_SOURCES): Remove snprintf.c
+	(libserveez_HEADERS): Remove snprintf.h.
+	* asprintf.c: N.
+	(homegrown_vasprintf): V.
+	* coserver/coserver.c: N.
+	(svz_coserver_ident_invoke, svz_coserver_put_id): S.
+	* icmp-socket.c: A; N.
+	(svz_icmp_printf): V.
+	* passthrough.c: A; N.
+	(svz_envblock_add): V.
+	* server-core.c: N.
+	(svz_strsignal_init, svz_strsignal): S.
+	* socket.c: A; N.
+	(svz_sock_printf): V.
+	* udp-socket.c: A; N.
+	(svz_udp_printf): V.
+	* util.c: A; N.
+
+2011-02-16  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_vasprintf’.
+
+	* asprintf.c: #define _GNU_SOURCE;
+	#include <stdio.h>, <stdlib.h>, <stdarg.h>;
+	conditionally #define <varargs.h>.
+	(homegrown_vasprintf): New static func.
+	(svz_asprintf): Use ‘homegrown_vasprintf’.
+	(svz_vasprintf): Delete func.
+	* asprintf.h: Don't #define _GNU_SOURCE;
+	don't #include <stdio.h>, <stdlib.h>, <stdarg.h>;
+	don't conditionally #include <varargs.h>.
+	(svz_vasprintf): Delete func decl.
+
+2011-02-16  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Decruft: Assume the compiler can cope w/ function prototypes.
+
+	* defines.h (__PARAMS): Delete macro.
+	* alloc.h: Remove ‘__PARAMS’ from all func decls.
+	* array.h: Likewise.
+	* asprintf.h: Likewise.
+	* binding.h: Likewise.
+	* boot.h: Likewise.
+	* cfg.h: Likewise.
+	* codec/bzip2.h: Likewise.
+	* codec/codec.h: Likewise.
+	* codec/gzlib.h: Likewise.
+	* core.h: Likewise.
+	* coserver/coserver.h: Likewise.
+	* coserver/dns.h: Likewise.
+	* coserver/ident.h: Likewise.
+	* coserver/reverse-dns.h: Likewise.
+	* dynload.h: Likewise.
+	* hash.h: Likewise.
+	* icmp-socket.h: Likewise.
+	* interface.h: Likewise.
+	* mutex.h: Likewise.
+	* passthrough.h: Likewise.
+	* pipe-socket.h: Likewise.
+	* portcfg.h: Likewise.
+	* raw-socket.h: Likewise.
+	* server-core.h: Likewise.
+	* server-loop.h: Likewise.
+	* server-socket.h: Likewise.
+	* server.h: Likewise.
+	* snprintf.h: Likewise.
+	* socket.h: Likewise.
+	* sparsevec.h: Likewise.
+	* tcp-socket.h: Likewise.
+	* udp-socket.h: Likewise.
+	* util.h: Likewise.
+	* vector.h: Likewise.
+	* windoze.h: Likewise.
+
+2011-02-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘const’ directly.
+
+	* asprintf.c: Throughout, do ‘s/svz_c_const/const/g’.
+	* asprintf.h: Likewise.
+	* core.c: Likewise.
+	* core.h: Likewise.
+	* dynload.c: Likewise.
+	* icmp-socket.c: Likewise.
+	* icmp-socket.h: Likewise.
+	* passthrough.c: Likewise.
+	* server-core.c: Likewise.
+	* snprintf.c: Likewise.
+	* snprintf.h: Likewise.
+	* socket.c: Likewise.
+	* socket.h: Likewise.
+	* udp-socket.c: Likewise.
+	* udp-socket.h: Likewise.
+	* util.c: Likewise.
+	* util.h: Likewise.
+
+2011-02-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Avoid naked "%s" in ‘sscanf’ format string.
+
+	* coserver/dns.c: #include "cpp-tricks.h".
+	(dns_handle_request): Use ‘PERCENT_N_S’.
+	* coserver/reverse-dns.c: #include "cpp-tricks.h".
+	(MAX_IP_STRING_LENGTH): New #define.
+	(reverse_dns_handle_request): Use
+	‘MAX_IP_STRING_LENGTH’, ‘PERCENT_N_S’.
+
+2011-02-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Fix bug: Delete everything on "make uninstall".
+
+	* Makefile.am (uninstall-hook): New target.
+	* codec/Makefile.am (uninstall-hook): Likewise.
+	* coserver/Makefile.am (uninstall-hook): Likewise.
+
+2011-02-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ and ‘off_t’ directly.
+
+	* alloc.c: Do ‘s/svz_t_size/size_t/g’.
+	* alloc.h: Likewise.
+	* core.c: Do ‘s/svz_t_off/off_t/g’.
+	* core.h: Likewise.
+
+2011-02-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Do more precise checks instead of ‘AC_EGREP_HEADER’.
+
+	* server-core.c: Use ‘HAVE_DECL_STRSIGNAL’.
+	* util.c: Use ‘HAVE_DECL_HSTRERROR’.
+	(svz_hstrerror): Use ‘HAVE_DECL_H_ERRNO’.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Clean up Makefile.am files; segregate woe32.
+
+	* common.mk: New file.
+	* Makefile.am: Include common.mk.
+	(EXTRA_DIST): Move libserveez.dsp, libserveez.ap,
+	svzpath.h.serveez into a separate ‘EXTRA_DIST +=’.
+	(libserveez_la_LIBADD): Use $(libserveez_la_DEPENDENCIES).
+	(AM_CPPFLAGS): Delete var.
+	* codec/Makefile.am: Include common.mk.
+	(AM_CPPFLAGS): Delete var.
+	* coserver/Makefile.am: Include common.mk.
+	(AM_CPPFLAGS): Delete var.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[built int] Decruft: Remove ChangeLog from var ‘EXTRA_DIST’.
+
+	* Makefile.am (EXTRA_DIST): Remove ChangeLog.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Let configure define ‘SED’ in makefiles.
+
+	* Makefile.am (SED): Delete var.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use $(FOO) in Makefile.am files, not @FOO@.
+
+	* Makefile.am (libserveez_la_LDFLAGS): Use $(NOUNDEFINED).
+	(svzpath.h): Use $(bindir), $(datadir), $(libdir).
+	* codec/Makefile.am (libcodec_la_LDFLAGS): Use $(NOUNDEFINED).
+	* coserver/Makefile.am (libcoserver_la_LDFLAGS): Likewise.
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Generate *.serveez files on "make dist".
+
+	* svzpath.h.serveez: Delete file.
+	* Makefile.am (svzpath.h.serveez): New target.
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘MAINTAINERCLEANFILES’.
+
+	* Makefile.am (MAINTAINERCLEANFILES): Use ‘+=’; update.
+	* codec/Makefile.am (MAINTAINERCLEANFILES): Delete var.
+	* coserver/Makefile.am (MAINTAINERCLEANFILES): Likewise.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘CLEANFILES’.
+
+	* Makefile.am (CLEANFILES): Use ‘+=’; update.
+	* codec/Makefile.am (CLEANFILES): Delete var.
+	* coserver/Makefile.am (CLEANFILES): Likewise.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Assume signal handlers return ‘void’.
+
+	Here, "V" means "Return ‘void’".
+	* server-core.c (svz_segfault_exception): V.
+	(svz_signal_handler): V; remove ‘#ifdef NONVOID_SIGNAL’ block.
+	* server-core.h (svz_signal_handler): V.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Make src/libserveez/server-core.c more Emacs-friendly.
+
+	* server-core.c (svz_sock_check_bogus): Factor
+	left curly brace from two branches of ‘#ifdef __MINGW32__’.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize ‘AM_CPPFLAGS’; zonk obsolete ‘INCLUDES’.
+
+	Here, every Makefile.am has implicit "include
+	common.mk", and "(INCLUDES): Delete var".
+	* Makefile.am (AM_CPPFLAGS): New augmenting (+=) var.
+	* codec/Makefile.am (AM_CPPFLAGS): Likewise.
+	* coserver/Makefile.am (AM_CPPFLAGS): Likewise.
+
+2004-03-20  Stefan Jahn  <stefan@lkcc.org>
+
+	* mutex.c: Fixed a major typo regarding SVZ_HAVE_THREADS.
+
+2003-06-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* cfg.c: Include <string.h> for memcpy().
+
+2003-06-18  Stefan Jahn  <stefan@lkcc.org>
+
+	* mutex.c: New file implementing the mutex API.  Some of the
+	macros in 'mutex.h' are now real library functions.  Changed
+	all callers.
+
+	* defines.h: Added some MinGW and CygWin specific stuff (taken
+	from svzconfig.h.in).
+
+2003-06-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* snprintf.h: Removed the unnecessary check for HAVE__SNPRINTF
+	and HAVE__VSNPRINTF.
+
+2003-06-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* portcfg.c (svz_portcfg_mkaddr): Bug fixes due to
+	uninitialized values.
+
+2003-05-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* server.c (svz_server_clients): New function.
+
+2003-05-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am: Removed the FIXME rule for MinGW32.  Works with
+	libtool 1.5.
+
+2003-01-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* asprintf.h: Included dependent header files here.
+
+2003-01-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-loop.c (SOCK_READABLE): Using this macro (taking
+	the below flag into account) to determine whether a client
+	connection can be read or not.
+
+	* socket.h (SOCK_FLAG_NOOVERFLOW): New socket flag.
+
+	* util.c (svz_log): Function is now thread safe.
+
+	* server-core.c (svz_signal_handler): Moved calls to
+	`svz_log()' outside this function.  Thus it is reentrant now.
+
+	* boot.c (svz_boot, svz_halt): Creation and destruction of
+	the logging mutex.
+
+2002-12-19  Andreas Rottmann   <a.rottmann@gmx.at>
+
+	* coserver/coserver.c (svz_coserver_start): Initialize
+	coserver->sock (was not initialized on non-MINGW platforms).
+
+	* socket.h (svz_sock_reduce_recv, svz_sock_reduce_send): Macros
+	arguments now correctly bracketed.
+
+2002-12-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* server.h, server.c, asprintf.h, asprintf.c, cfg.h, cfg.c:
+	Added appropriate documentation.
+
+	* cfg.h (SVZ_CONFIG_DEFINE): Renamed from `SVZ_DEFINE_CONFIG'.
+	Changed all callers (in all server types).
+
+2002-11-27  Andreas Rottmann  <a.rottmann@gmx.at>
+
+	* cfg.c (svz_config_type_init): Add server configurable type.
+
+	* server.h, server.c (svz_servertype_definition): New.
+	* server.c (svz_servertype_instantiate): New static function
+	(server	configurable type instantiator).
+
+	* boot.c (svz_boot): Call svz_config_type_init().
+	(svz_halt): Call svz_config_type_finalize().
+
+	* cfg.c (svz_config_type_add, svz_config_type_init)
+	(svz_config_type_finalize): New library functions.
+	* cfg.h (svz_config_type_t): New type, containing function
+	pointer to instantiate a configurable type.
+
+	* Makefile.am (libserveez_la_SOURCES): Added cfg.c and asprintf.c.
+	(libserveez_HEADERS): Added cfg.h and asprintf.h.
+
+	* asprintf.h, asprintf.c: New; implementation of (v)asprintf.
+	(svz_asprintf, svz_vasprintf): New library functions.
+
+	* server.c (svz_server_free): Adapted for new svz_config_free().
+	(svz_server_configure): Use svz_config_instantiate().
+	(svz_servertype_print): Use svz_config_prototype_print().
+
+	* server.h (svz_servertype_t): Converted config prototype members
+	to svz_config_prototype_t config_prototype.
+	* server.h (svz_server_config_t): Typedef'd  svz_config_accessor_t.
+	* cfg.h (svz_server_config_t): Renamed to svz_config_accessor_t.
+	* server.h, cfg.h: Moved SVZ_REGISTER_ stuff and svz_server_config_t
+	to cfg.h.
+
+	* cfg.h (svz_config_prototype_t): New type.
+	* cfg.h, cfg.c (svz_config_free): Use svz_config_prototype_t
+	instead of svz_servertype_t.
+	(svz_config_instantiate): New function, extracted from
+	svz_server_configure().
+
+	* server.c, cfg.c (svz_config_intarray_create)
+	(svz_config_intarray_destroy, svz_config_intarray_dup)
+	(svz_config_strarray_create, svz_config_strarray_destroy)
+	(svz_config_strarray_dup, svz_config_hash_create)
+	(svz_config_hash_destroy, svz_config_hash_dup)
+	(svz_config_free, svz_config_clobber): Moved from `server.c'
+	to `cfg.c'.
+
+	* cfg.c (svz_config_prototype_print): New, extracted from
+	svz_servertype_print().
+
+	* cfg.h, cfg.c: New. Implementation of configuration handling.
+
+2002-10-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (EXTRA_DIST): Added `svzpath.h.serveez'.
+	Added installation rules for `libserveez.dll.a'.
+
+2002-07-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* hash.c (svz_hash_exists): New library function.
+
+2002-07-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* dynload.c (svz_dynload_path_get): Adding the paths located
+	in `svzpath.h' to the load path.
+
+	* core.c (svz_file_check, svz_file_path): New library
+	functions (used in `dynload.c' and `guile.c').
+
+	* svzpath.h.in: New file.
+
+2002-07-25  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-core.c: Initialize the 'svz_nuke_happened' variable
+	at definition only.
+
+2002-07-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* util.h (SVZ_INT64, SVZ_UINT64): Two new macros.
+
+2002-07-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* dynload.c (DYNLOAD_SUFFIX): Added '.sl' shared library
+	suffix for HP-UX.
+	(dyn_get_library): Corrected call to shl_load().
+
+	* core.c (svz_sendfile): Support for HP-UX sendfile() added.
+
+2002-06-09  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-loop.c (svz_check_sockets_poll): Fixed the POLLPRI +
+	recv(..., MSG_OOB) bug by handling the POLLPRI event immediately
+	before POLLIN/POLLOUT.
+
+	* tcp-socket.c (svz_tcp_recv_oob): Disabled ioctl(SIOCATMARK)
+	work-around.
+
+2002-06-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-loop.c (svz_check_sockets_MinGW,
+	svz_check_sockets_select, svz_check_sockets_poll): Adapted the
+	recognition of urgent data (out-of-band) to each of the server
+	loops.
+
+	* tcp-socket.c (svz_tcp_recv_oob, svz_tcp_send_oob): Two new
+	library function which handle urgent (out-of-band) data on TCP
+	sockets.
+
+2002-05-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* server.h (struct svz_servertype): Introduced reset callback.
+
+	* server-core.c (svz_reset): Running server reset callbacks
+	when SIGHUP has been detected.
+
+2002-05-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* socket.h (struct svz_socket): Added trigger function and
+	trigger condition function callback to socket structure.
+
+	* socket.c (svz_sock_detect_proto): Checks whether the
+	check_request callback has been modified in connect_socket or
+	detect_proto.
+
+	* server-loop.c (svz_check_sockets_select): Added trigger
+	functionality.
+
+2002-05-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* coserver/coserver.c (svz_coserver_closeall): Fixed a segfault
+	bug while freeing socket structures.
+
+2002-05-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* coserver/coserver.c (svz_coserver_closeall): Close file,
+	socket and pipe descriptors if these are not {0,1}.
+
+2002-03-09  Stefan Jahn  <stefan@lkcc.org>
+
+	* tcp-socket.c (svz_tcp_connect): Setting up the `check_request'
+	callback (NULL).  Fixes problem when connecting a socket without
+	assigning an appropiate `check_request' callback.
+
+2002-02-14  Raimund Jacob  <raimi@lkcc.org>
+
+	* coserver/coserver.c (svz_coserver_check): Do not start too
+	many coservers if buffer is going to be full.
+
+2002-01-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* binding.c (svz_binding_find_server,
+	svz_binding_contains_server): Two new functions which were still
+	necessary in order to allow all kinds of mixtures of 'any', 'all'
+	and 'specific' network binding.
+
+2002-01-22  Stefan Jahn  <stefan@lkcc.org>
+
+	* portcfg.c (svz_portcfg_equal): Return sane return values and
+	consider device bindings.
+	(svz_portcfg_mkaddr): Also setup device bindings.
+	(svz_portcfg_text): Returns a simple text representation of a
+	port configuration.
+
+2002-01-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* interface.c (svz_interface_check): New function which
+	detects network interface changes.
+
+2001-12-22  Stefan Jahn  <stefan@lkcc.org>
+
+	* dynload.c (RTLD_NOW): Define this constant to zero if it
+	is not available.
+
+	* interface.c (svz_interface_collect): OpenBSD behaves like
+	NetBSD here.
+
+2001-12-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.c (svz_process_create_child): Put the passed
+	receiving and sending connection end for a child process into
+	the environment on Win32.  Thus we can also pass socket
+	connections on this platforms.
+	(svz_process_create_child): Close and replace the original handles
+	which have been duplicated in order to make them inheritable on
+	Win32.
+
+2001-12-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* udp-socket.c (svz_udp_check_request): Using the binding
+	filter functionality.
+
+	* socket.c (svz_sock_detect_proto): Using the binding
+	filter functionality.
+	(svz_sock_local_info): New function. Returns the local
+	network address and port for a socket.
+
+	* server.c (svz_server_init): Initializes a server instance.
+	New function grabbed from `svz_server_init_all()' now using
+	it.
+
+	* server-core.h (svz_sock_foreach_listener): New macro.
+
+	* server-core.c (svz_sock_shutdown): Export this function.
+
+	* icmp-socket.c (svz_icmp_check_request): Using the binding
+	filter functionality.
+
+	* binding.c: Implemented the `svz_binding_*()' functionality
+	which should allow INADDR_ANY bindings and appropiate mixtures
+	of "all", "any" and explicit network interface bindings by
+	filtering servers depending on port configurations.
+
+2001-12-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* tcp-socket.h, array.h, alloc.h, hash.h, icmp-socket.h,
+	pipe-socket.h, raw-socket.h, server-core.h, server-loop.h,
+	snprintf.h, socket.h, udp-socket.h, util.h, windoze.h,
+	interface.h, defines.h, coserver/coserver.h, coserver/dns.h,
+	coserver/ident.h, coserver/reverse-dns.h, boot.h, server.h,
+	server-socket.h, dynload.h, vector.h, core.h, sparsevec.h,
+	portcfg.h, binding.h, codec/codec.h, codec/gzlib.h,
+	codec/bzip2.h, passthrough.h: Renamed __P into __PARAMS because
+	the use of __P conflicts with some g++ versions in typedefs.
+
+2001-12-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-socket.c (svz_server_create): Modify the port
+	configuration if needed.  Since we allow zero network ports it
+	can happen the system chooses one.  This choosen one is going
+	to be in the original port configuration then.
+
+	* portcfg.c (svz_portcfg_mkaddr): Also allow network port zero
+	which lets the system choose one of its own.
+
+	* passthrough.h: Moved the extern declaration of `environ'
+	here from `passthrough.c'.
+
+2001-12-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.h (svz_envblock_setup): New macro in order to
+	setup the `environ' pointer of an application in the core
+	library.  This change was necessary to allow the *very
+	pedantic* linker of MacOS 10.1 to build a shared library,
+	since `extern char **environ;' is an unresolved symbol somehow.
+
+2001-12-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* hash.c (svz_hash_create): Using an additional argument in
+	order to pass a element destruction callback run for each
+	element on hash destruction.  Changed all callers.
+
+2001-12-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* binding.c: Code cleanups.  Better structured server bindings.
+	Also exported some more functions.
+
+2001-12-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-socket.c (svz_server_create): Use of SO_BINDTODEVICE.
+	Add a FIXME here.
+
+	* portcfg.h (svz_portcfg_device): New macro returning a device
+	name for a given port configuration.
+
+2001-11-30  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.c (svz_process_create_child): Memory leak fixes.
+	Also enabled `svz_process_fork()' for M$-Windows.
+
+2001-11-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec/gzlib.c (zlib_encoder_init): Added warning
+	inhibitors (reported on Solaris native ucbcc).
+
+2001-11-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-core.c (svz_sock_check_children): New function.
+	Checks child pid's in all socket structures and runs `child_died'
+	callbacks.
+
+2001-11-23  Stefan Jahn  <stefan@lkcc.org>
+
+	* array.c (svz_array_create): Added a further argument.  User
+	can supply a `clear' function called for each element when the
+	array is cleared.  Changed all callers.
+
+2001-11-22  Stefan Jahn  <stefan@lkcc.org>
+
+	* core.c (svz_socket_create_pair): New function. Creates an
+	unnamed	pair of connected sockets.  Underlying system call is
+	`socketpair()'.
+
+2001-11-21  Stefan Jahn  <stefan@lkcc.org>
+
+	* socket.h (struct svz_socket): New `pid' member.
+
+	* passthrough.h: Defined a bigger structure in order to reduce
+	the number of arguments passed down to underlying functions.
+
+	* passthrough.c (svz_process_check_access): Added functionality
+	for setting user and group depending on a given string or a
+	executable file's owner.
+
+2001-11-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* core.c (svz_socket_type): Returns the type (SOCK_STREAM,
+	SOCK_DGRAM, etc.) of a given socket.
+	(svz_tcp_nodelay): Switching TCP Nagle algorithm on or off.
+
+2001-10-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-socket.c (svz_tcp_accept, svz_pipe_accept):
+	Inherit protocol flag to children.
+
+2001-10-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* defines.h (SERVEEZ_API): Cleaned up extern / __declspec()
+	issue. Changed all appearance.
+
+2001-10-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.c: Continued to implement the shuffle routines
+	for passthrough connections. Now we are ready to test this
+	functionality.
+
+2001-10-18  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec/codec.c (svz_codec_sock_detect): New function.
+	Detects codecs in the receive buffer of a socket structure.
+
+2001-10-17  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec/bzip2.c: New codec implementation for the bzip2
+	block-sorting compression library.
+
+2001-10-09  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec/codec.c (svz_codec_sock_disconnect): Fixed fatal bug
+	on disconnection.
+	(SVZ_CODEC_TYPE_TEXT): New macro. Returning a text
+	representation for the type of a codec.
+
+2001-10-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec/codec.c (svz_codec_list): New function. Lists all
+	currently registered encoder and decoder.
+
+2001-10-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec/gzlib.c: First codec implementation.
+
+	* codec/codec.c: Basic implementation of a codec interface. This
+	is yet experimental and meant to be a draft.
+
+	* coserver/coserver.c (svz_coserver_closeall): Do not close
+	stdin/stdout pipe descriptors.
+
+2001-09-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* dynload.c: Added Darwin (MacOS) specific code for its
+	dynamic linker interface.
+
+2001-09-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* interface.c (svz_interface_search): New library function.
+	Return the full network interface information for a given
+	interface name.
+
+	* portcfg.c (svz_portcfg_convert_addr): Convert either
+	dotted decimal form or network interface description into
+	ip address.
+
+2001-09-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* icmp-socket.c, udp-socket.c (svz_icmp_read_socket,
+	svz_udp_read_socket): Checking access lists for a listening
+	UDP and ICMP ports.
+
+	* server-core.c (svz_sock_check_access): Paranoidized
+	validity of the given arguments.
+
+2001-09-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.c: Added extern declaration of the variable
+	`environ' on Unices.
+
+2001-09-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* util.h (SVZ_NUM2PTR, SVZ_PTR2NUM): Converter macros between
+	integer and address values; platform independent. Used to hide
+	some ugly casts.
+
+2001-09-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-core.c: Declare strsignal() here if it can be resolved
+	but is nowhere declared.
+
+	* alloc.h: Use `size_t' instead of `unsigned int' for allocator
+	functions.
+
+	* util.c: Put an extern declaration of hstrerror() here if it
+	can be resolved but is nowhere declared.
+
+	* interface.c (svz_interface_add): Deleting trailing white
+	spaces from interface descriptions.
+
+2001-09-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* coserver/coserver.h: Added missing `__END_DECLS'.
+
+2001-09-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* util.c (svz_syserror): Do not let the system allocate error
+	message buffer; provide it instead.
+
+	* pipe-socket.c (svz_pipe_startup): New function. Tries
+	to load the CancelIo() symbol from `Kernel32.dll' under
+	Windows. This is necessary since it is available in Windows
+	NT 4.x and above only. Called from svz_boot().
+	(svz_pipe_disconnect): Call CancelIo() if there is any pending
+	operation in progress.
+
+2001-09-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* pipe-socket.c (svz_pipe_read_socket): Set a limit for
+	the maximum number of transfer bytes on Win32.
+	(svz_pipe_write_socket): Apply the overlapped I/O code for
+	writing, too.
+	(svz_pipe_set_files): Allow "\\ComputerName\pipe\NameOfPipe"
+	syntax in named pipe files on Win32.
+
+	* libserveez.dsp: Added "Debug Memory Leaks" target.
+
+	* alloc.c (heap_caller): Verified StackWalk() interface.
+
+	* pipe-socket.c (svz_pipe_read_socket): Tried to fix the
+	overlapped I/O scheme.
+
+	* socket.h (SOCK_FLAG_READING): Two new socket flags
+	indicating pending read and write operations.
+
+	* pipe-socket.c (svz_pipe_create): Do not try to make pipe
+	descriptors non-blocking under Win32.
+
+2001-08-17  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (libserveez_la_LDFLAGS): Added release information
+	onto the core library.
+
+	* server.c (svz_server_configure): Checking the validity of
+	the configuratiom item addresses. These must reside inside the
+	default configuration address range.
+
+2001-08-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* socket.c (svz_sock_check_request_size): New function. Checks
+	for fixed size packets if the boundary itself is NULL, but the
+	boundary size is valid.
+
+2001-08-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-core.c (svz_sock_table_create,
+	svz_sock_table_destroy): New functions called from svz_boot()
+	and svz_halt().
+	(svz_sock_unique_id): Enlarges the socket lookup table if
+	necessary. Removed SOCK_MAX_ID limit.
+
+2001-08-03  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.c (svz_process_shuffle): New function.
+
+	* util.c (svz_getcwd): New function. Wrapper for getcwd()
+	allocating successively memory to get the current directory.
+
+2001-08-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* util.h: Replaced definition of "byte" by "svz_uint8_t".
+	Previous definition collided with Win32 headers. Changed all
+	callers.
+
+2001-07-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* coserver/coserver.c (svz_coserver_check): Do not restart
+	coservers to fast. Timeout of 3 seconds should be enough.
+
+2001-07-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.c: Added a new subset of functions called
+	svz_envblock_*() which can be used to setup environment blocks
+	system independent.
+
+	* coserver/coserver.c (svz_coserver_check): Coservers get
+	automagically restarted if the number of instances decreases or
+	buffer overrun is in sight.
+
+2001-07-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* core.c (svz_sendfile): Added quite a lot comments for weird
+	TransmitFile() on Win32.
+
+2001-07-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* core.c (svz_sendfile): Using overlapped I/O when calling
+	TransmitFile().
+
+2001-07-09  Stefan Jahn  <s.jahn@bit-side.com>
+
+	* core.c (svz_sendfile): Fixed return value on Win32 systems.
+
+2001-07-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* passthrough.c: Renamed process.* into passthrough.* because
+	collisions with Windoze's headers.
+
+2001-07-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* dynload.c (svz_dynload_path_get): Added documentation about
+	the environment variable `SERVEEZ_LOAD_PATH'.
+
+	* Eliminated some unused variables.
+
+	* core.c (svz_sendfile): Partly figured out how sendfile()
+	works on OSF4.0g (True64).
+
+2001-07-03  Stefan Jahn  <s.jahn@bit-side.com>
+
+	* server-core.c (svz_sock_setparent): Set the parent only if
+	both parent and child are valid.
+
+2001-06-21  Stefan Jahn  <stefan@lkcc.org>
+
+	* coserver/coserver.c (svz_coserver_start): Fixed memory leak
+	and segmentation fault due to the failure of that function
+	(Too many open files).
+
+	* portcfg.c (svz_portcfg_create): This is a real function now.
+
+	* pipe-socket.c (svz_pipe_listener): Create fifo files with the
+	permissions and user/group as requested by the port configuration.
+	(svz_pipe_alloc, svz_pipe_destroy): New functions.
+
+	* pipe-socket.c (svz_pipe_connect): Using the given permissions
+	in order to connect to named pipes.
+
+2001-06-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* pipe-socket.c (svz_pipe_check_group): Consistency check
+	for the given group name of a pipe.
+
+	* dynload.c (svz_dynload_path_get): Do not use duplicate path
+	information.
+
+2001-06-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* array.c: Modified all functions that they can handle NULL
+	arguments.
+
+	* array.h: Removed all inline functions and macros. The macros
+	would have never been working...
+
+2001-06-12  Raimund Jacob  <raimi@lkcc.org>
+
+	* util.c (svz_log): svz_logfile is checked for feof() or ferror()
+	before any output is done. You can now kill a process we pipe
+	log messages to without serveez going 'netscape' (using 100% cpu
+	while being inresponsive/unusable).
+
+	* server-core.c (svz_signal_handler): In case you didn't know:
+	signal handlers have to be reentrant, at least on my machine.
+	We received SIGCHLD while a SIGCHLD was running. Now, that
+	wouldn't have been a problem when strsignal(3) whouldn't
+	have caused a deadlock in the libc (read that again).
+
+	We added a mechanism to strsignal() all signals before the
+	server loop starts so that we can have a reentrant
+	svz_strsignal() function. on a related note: linux defines
+	64 signals in <bits/signum.h>. kill(1) however allows
+	0 to 64 to be command line arguments... which makes 65 total
+	signals :-).
+
+2001-06-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* array.h (svz_array_foreach): Fixed a bug in the iteration
+	macro.
+
+	* array.c (svz_array_dup, svz_array_strdup): New functions.
+
+2001-06-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* icmp-socket.c (svz_icmp_check_packet): Using configured
+	ICMP type field of the related port configuration.
+
+2001-06-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* portcfg.c (svz_portcfg_destroy): Buf fix: Do not check
+	port configuration hash if not yet existing.
+
+	* dynload.c (dyn_load_library): Try to load a shared library
+	containing a server definition. Use the environment variable
+	SERVEEZ_LOAD_PATH with additional search paths.
+
+2001-06-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* interface.h (svz_interface_foreach): New macro.
+	(struct svz_interface): Renamed this structure.
+
+	* interface.c (svz_interface_get): New function.
+
+	* server-core.c (svz_sock_setreferrer, svz_sock_setreferrer):
+	Two new functions replacing the `referrer' pointer in the
+	socket structure. Used by pipe server to identify child and
+	parent.
+
+	* server.h (struct svz_servertype): Renamed `varname' to
+	`prefix' and `name' into `description' which describes the
+	usage a bit better.
+
+	* socket.h (struct svz_socket): New field: `port' specifies
+	the port configuration of a listener socket. This change was
+	necessary because non-connection oriented protocols were using
+	the `sock->cfg' field for both server configuration and port
+	configuration.
+
+	* server.h: Renamed all `ITEM_' macros into `SVZ_ITEM_'.
+	Changed all callers.
+
+2001-05-21  Stefan Jahn  <stefan@lkcc.org>
+
+	* pipe-socket.h, core.h, util.h, snprintf.h, alloc.h:
+	Replaced all occurences of size_t, mode_t, gid_t, uid_t,
+	off_t etc. by its normal C types.
+
+2001-05-20  Stefan Jahn  <stefan@lkcc.org>
+
+	* server.c (svz_server_configure): Added code for
+	configuring a boolean value.
+
+	* boot.c: Moved runtime checkable flags from `util.c' here
+	and prefixed them with `svz_'.
+
+	* server.h (SVZ_REGISTER_BOOL): New macro for registering a
+	boolean value within a server type configuration.
+
+2001-05-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* Renamed a very lot functions in order to get the core library
+	into a defined namespace. Therefore also changed all the callers.
+
+	* raw-socket.c: Prefixed the functions. Changed callers.
+
+	* icmp-socket.c: Prefixed symbols.
+
+	* udp-socket.c: Prefixed all symbols. Changed callers.
+
+	* pipe-socket.c: Prefixed functions with `svz_'. Changed
+	callers.
+
+	* tcp-socket.c: Added `svz_' prefix to each function. Changed
+	callers.
+
+	* util.h: Changed ?INT?? macros into SVZ_?INT?? macros.
+	Changed all callers, too.
+
+	* defines.h: Depending on the cpp flag __BUILD_SVZ_LIBRARY__
+	either `config.h' or `svzconfig.h' gets included here.
+
+	* Makefile.am (AM_CFLAGS): Added a flag indicating if the
+	library gets actually built or is used.
+
+2001-05-09  Stefan Jahn  <stefan@lkcc.org>
+
+	* portcfg.c (svz_portcfg_destroy_access,
+	svz_portcfg_destroy_accepted): New functions.
+
+	* server-socket.c (server_accept_socket): Checking access list
+	and connect frequency.
+
+	* server-core.c (sock_check_frequency, sock_check_access):
+	New functions.
+
+2001-05-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* server.c (svz_servertype_del): Unbind, remove and finalize
+	each server instance of the server type.
+
+	* binding.c (svz_server_unbind): New function.
+
+	* portcfg.c (svz_portcfg_finalize): Fixed memory leak due to
+	changes at `svz_portcfg_destroy'.
+
+	* binding.c (svz_server_bindings): Text representaion depending
+	on the types of port configurations.
+
+	* portcfg.c (svz_portcfg_destroy): Also `svz_free()' the given
+	port configuration itself. Changed all callers.
+
+2001-05-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* portcfg.c (svz_portcfg_prepare): New function.
+	(svz_portcfg_dup): Renamed from `svz_portcfg_copy'.
+
+	* socket.c (sock_detect_proto): Using `detection_fill' value
+	of the parents port configuration.
+	(sock_idle_protect): Using `detection_wait' value of the parents
+	port configuration.
+
+	* util.h: Documented the INT*() macros.
+
+	* alloc.h (svz_free_and_zero): Documented this macro.
+
+	* server.h (DEFINE_CONFIG): New macro. Addionally documented
+	the REGISTER_*() macros.
+
+2001-05-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* server.c (svz_server_configure): Stating what kind of
+	default value is missing using the ITEM_TEXT macro.
+	(svz_config_clobber): New function. Used by
+	`svz_server_configure()' in order to reverse changes on
+	errors.
+
+	* server.h (ITEM_TEXT): New macro returning text representation
+	of a given ITEM_* constant.
+
+	* server.c (svz_server_configure): Fully implemented the
+	handling of default values for a server configuration using
+	the `svz_config_*' functions.
+	(svz_config_free): New function. Exported from `svz_server_free()'
+	and now used by it.
+
+	* portcfg.c (svz_portcfg_copy): Return NULL is the given
+	port configuration is NULL either.
+
+	* server.c (svz_config_intarray_create,
+	svz_config_intarray_destroy, svz_config_intarray_dup,
+	svz_config_strarray_create, svz_config_strarray_destroy,
+	svz_config_strarray_dup, svz_config_hash_create,
+	svz_config_hash_destroy, svz_config_hash_dup):
+	New functions for server instance configuration.
+
+2001-05-02  Stefan Jahn  <stefan@lkcc.org>
+
+	* binding.c (svz_server_portcfg): Return an array of port
+	configurations a given server is bound to.
+	(svz_server_bindings): Return text representaion of the bindings
+	of a server.
+
+	* server-core.c (sock_portcfg): New function returning the
+	parents port configuration of a given child socket.
+
+	* server-socket.c (server_accept_socket, server_accept_pipe):
+	Set a new childs parent	structure.
+
+	* ChangeLog: Created this file.
+
+	* server-core.c (sock_setparent): New function.
+	(sock_getparent): New function.
+
+2001-04-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* udp-socket.c (udp_check_request): Go through
+	a svz_array_t of servers now.
+
+	* socket.c (sock_free): Freeing port configuration
+	and server array if necessary.
+
+	* server.h: Old `portcfg_t' completely
+	eliminated.
+
+	* server.c: Dropped `server_portcfg_equal()'.
+
+	* server-socket.c: Replaced `server_ceate()' by
+	`svz_server_create()'.
+
+	* portcfg.h (svz_portcfg_ipaddr): New macro.
+	Gets the ip address string of a given port configuration.
+
+	* portcfg.c (svz_portcfg_set_ipaddr): New function.
+	Sets a given ip address string in a port configuration.
+
+	* icmp-socket.c (icmp_check_request): Array of
+	servers is now a svz_array_t.
+
+	* boot.c (svz_halt): Added call to
+	`svz_portcfg_finalize()'.
+
+	* binding.c: Finally deleted both the functions
+	`server_bind()' and `server_start()'.
+	These have been replaced by `svz_server_bind()'.
+
+2001-04-21  Stefan Jahn  <stefan@lkcc.org>
+
+	* server.c (svz_server_configure): Function for
+	generic server configuration. Read <server.[ch]> for more
+	information.
+
+2001-04-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* hash.c (svz_hash_put): Return the old value if any.
+
+	* server.c (svz_server_instantiate): New function.
+
+	* vector.h (svz_vector_foreach): New iteration
+	macro for svz_vector_t's.
+
+	* binding.c (svz_server_find_portcfg): New function.
+	(svz_server_bind): Fully implemented, using above function.
+
+	* portcfg.c (svz_portcfg_mkaddr): Also put network
+	family and port if necessary.
+	(svz_portcfg_copy): New function.
+	(svz_portcfg_expand): New function.
+
+	* server.c (svz_server_get): New function. Hides
+	svz_hash_t structure from library user.
+
+2001-04-18  Stefan Jahn  <stefan@lkcc.org>
+
+	* portcfg.h (PORTCFG_TYPE): Added some more string
+	constants for port configurations.
+
+2001-04-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* coserver/coserver.c: Cleaned up namespace for the
+	coserver API.
+
+2001-04-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* binding.c (svz_server_bind): Added this file
+	into the CVS and moved some functions from serve.c here.
+
+	* array.h (svz_array_foreach): Iteration macro
+	for arrays defined.
+
+	* portcfg.c: Added this file for port configuration
+	maintainance.
+
+2001-04-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* core.c (svz_sendfile): Using TransmitFile() in the
+	Win32 port.
+
+	* vector.c (svz_vector_contains): New function.
+
+2001-03-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* array.c: Added new data structure. Implemented
+	two version. One which is for debugging and another for
+	distribution which is a fully inlined thingie.
+
+2001-03-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* hash.h: Put the hash functions into the namespace
+	`svz_hash_'.
+
+	* core.c (svz_tcp_cork): Moved from `http-proto.c'.
+	(svz_sendfile): Also moved from `http-proto.c'.
+
+2001-03-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* core.c (svz_socket_connect): This function has
+	been introduced in order to have the `connect()' call just
+	once in the whole library.
+	(svz_socket_create): Creates a socket via `socket()'. It is
+	a wrapper for the Internet protocols UPD, TCP, ICMP and RAW.
+	(svz_inet_ntoa): Moved both the `inet_ntoa()' `and inet_aton()'
+	from `util.c' to `core.c' and renamed them.
+
+2001-03-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-core.c (server_signal_handler): Fixed
+	the problem with detaching and attaching the server on the
+	console via ^Z and job control.
+
+	* coserver/coserver.c (coserver_close_pipes): Close
+	all pipes of existing coservers within a new coserver process.
+
+	* core.c: Created this file.
+
+2001-02-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-core.c (svz_fd_cloexec): This and
+	the svz_fd_nonblock() function can be used to work on
+	file descriptors.
+
+2001-02-18  Stefan Jahn  <stefan@lkcc.org>
+
+	* util.c (util_inet_aton): This function is a
+	platform wrapper for internet address conversion.
+
+2001-02-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (libserveez_la_SOURCES): Added
+	`vector.c' and `vector.h'.
+
+	* interface.c: The list of available network
+	interfaces `svz_interface' is now a `svz_vector'.
+
+	* vector.c: New file implementing vector lists.
+
+	* alist.h: Changed the name space from `alist' to
+	`svz_alist'.
+
+2001-02-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* dynload.c (dyn_load_library): Added support for
+	GNU dld library and Beos's load_add_on() interface.
+
+2001-02-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* dynload.c: Stuffed the dynamic loading interface
+	into the serveez core library.
+	(dyn_load_library): The dynamic loading interface for shared
+	libraries saves all handles for better management. Thus it might
+	be possible to load and unload server modules without restarting
+	the main module.
+
+2001-02-02  Stefan Jahn  <stefan@lkcc.org>
+
+	* interface.c: Pulled the network interface detection
+	into the core library.
+
+2001-02-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* alloc.c (heap_caller): Defined this macro for
+	calling it at the beginning of each function using
+	__builtin_return_address() for debugging purposes. Using
+	StackWalk() in MS Visual C++.
+
+2001-01-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-core.c (server_loop_one): Took this piece
+	of code out of `server_loop'. Thus you should be able to run
+	the server loop yourself using the library only.
+
+	* interface.c (list_local_interfaces): Fixed list of local
+	network interfaces on FreeBSD version 3.2.
+
+2001-01-30  Stefan Jahn  <stefan@lkcc.org>
+
+	* icmp-socket.c: Cleaned up the name space and made
+	many of the functions static.
+
+2001-01-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* alist.c: Added a alot of necessary documentation
+	and changed the array list indexes's data type from `unsigned'
+	to `unsigned long'. Thus you can handle a bigger index range
+	on 64 bit architectures.
+
+2001-01-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* util.h: Renamed `last_errno' to `svz_errno', `verbosity' to
+	`svz_verbosity' and `os_version' to `svz_os_version'.
+
+	* Makefile.am (libserveez_la_SOURCES): Wrote some Makefile
+	rules for creating a shared library called `libserveez.la'.
+	We are using libtool here.
+
+	* alloc.c: Created a namespace for the allocator functions
+	malloc, free, etc. Gave a lot of functions and variables
+	the `svz_' prefix. Moreover you can now overwrite the default
+	allocator routine from libc (malloc, free, realloc). This is
+	especially useful if you want to use memory from a shared
+	memory arena. The function pointers are `svz_malloc_func',
+	`svz_free_func'	and `svz_realloc_func'.
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2001, 2002, 2003, 2004 Stefan Jahn
+Copyright (C) 2001, 2002 Raimund Jacob
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

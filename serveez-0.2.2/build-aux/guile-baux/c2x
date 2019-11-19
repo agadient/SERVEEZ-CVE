@@ -1,0 +1,366 @@
+#!/bin/sh
+exec ${GUILE-guile} -e '(guile-baux c2x)' -s $0 "$@" # -*- scheme -*-
+!#
+;;; c2x --- Extract initialization code from .c files
+
+;; Copyright (C) 2011 Thien-Thi Nguyen
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;; Usage: c2x [options] infile -- [cpp-options]
+;;
+;; Process INFILE using the C preprocessor.
+;; During snarfing, two preprocessor macros are defined:
+;; * SCM_MAGIC_SNARF_INITS (to support "revised" snarfing)
+;; * SCM_MAGIC_SNARFER (to support "classic" snarfing)
+;;
+;; Write output to a file or to the standard output when
+;; no filename has been specified or when the filename is "-".
+;; If there are errors during processing, delete the output file
+;; and exit with non-zero status.
+;;
+;; Options (defaults in square braces):
+;;  -o, --output OUTFILE  -- Write to OUTFILE [stdout].
+;;      --cpp PROGRAM     -- Use PROGRAM to preprocess (see below).
+;;  -d, --dumb            -- Inhibit condensation pass.
+;;
+;; The default C preprocessor is taken as either the value of
+;; env var CPP, or "cpp".  You can specify a program with args
+;; for PROGRAM (e.g., "gcc -E").
+
+;;; Code:
+
+(define-module (guile-baux c2x)
+  #:export (main)
+  #:use-module ((guile-baux common) #:select (fs fso fse
+                                                 die
+                                                 check-hv qop<-args))
+  #:use-module ((guile-baux a-dash-dash-b) #:select (a-dash-dash-b))
+  #:use-module ((srfi srfi-1) #:select (find))
+  #:use-module ((srfi srfi-11) #:select (let-values))
+  #:use-module ((srfi srfi-13) #:select (string-join
+                                         string-count
+                                         string-every
+                                         string-tokenize
+                                         string-contains))
+  #:use-module ((srfi srfi-14) #:select (char-set-complement
+                                         char-set))
+  #:use-module ((ice-9 q) #:select (make-q
+                                    enq!))
+  #:use-module ((ice-9 regex) #:select (match:substring
+                                        match:start
+                                        match:end))
+  #:use-module ((ice-9 rdelim) #:select (read-line
+                                         write-line))
+  #:use-module ((ice-9 popen) #:select (open-input-pipe
+                                        close-pipe)))
+
+(define (snarf-cmd cpp args)
+  (string-join (cons* cpp
+                      "-DSCM_MAGIC_SNARF_INITS" ; revised
+                      "-DSCM_MAGIC_SNARFER"     ; classic
+                      args)))
+
+(define STYLES
+  '((revised
+     "^^"
+     "^:^")
+    (classic
+     "SCM__I"
+     "SCM__D"
+     ;; gsubr
+     "scm_make_gsubr *\\( *([^ ,]+)[ ,]+(.+), *(.+), *(.+), .+ ([^ ()]+)\\);"
+     ;; jam
+     "^ *([^= ]+) *= *([^\"]+)\"([^\"]*)\"(.+);")))
+
+(define TRIGGERS (map cdr STYLES))
+
+(define (output-lines)
+  (let ((glop (make-q)))
+    (lambda (s . args)
+      (if s
+          (enq! glop (if (null? args)
+                         s
+                         (apply fs s args)))
+          (car glop)))))
+
+(define DQ #\")
+
+(define (grok feed)
+  (let ((inp (open-input-pipe feed))
+        (beg #f)
+        (end #f)
+        (op-op #f)                      ; optimization opportunity
+        (not-dq (char-set-complement
+                 (char-set DQ)))
+        (dq-string (string DQ))
+        (juice (output-lines)))
+
+    (define (save line)
+      (juice
+       (let ((line (cond ((string-contains line end)
+                          => (lambda (pos)
+                               (substring line 0 pos)))
+                         (else line))))
+         ;; Do C-string concatenation now, to make things easier for
+         ;; the recognition regexps later.  We convert, for example,
+         ;;   ... "foo" "bar" "baz" ...
+         ;;          AXXXB CXXXD
+         ;; into
+         ;;   ... "foobarbaz" ...
+         ;;          AB CD
+         ;; by splitting on ‘DQ’, ignoring elements that are only
+         ;; whitespace, ‘string-append’ing the surrounding elements.
+         ;; (End result: the characters marked with X are removed.)
+         (if (< 2 (string-count line DQ))
+             (let loop ((acc '()) (ls (string-tokenize line not-dq)))
+               (if (null? ls)
+                   (string-join (reverse! acc) dq-string)
+                   (let ((head (car ls))
+                         (tail (cdr ls)))
+                     (if (string-every char-whitespace? head)
+                         (loop (cons (string-append (car acc)
+                                                    (car tail))
+                                     (cdr acc))
+                               (cdr tail))
+                         (loop (cons head acc)
+                               tail)))))
+             line))))
+
+    (define (next)
+      (read-line inp))
+
+    (let loop ((line (next)))
+      (cond ((eof-object? line))
+            ((string-null? line) (loop (next)))
+            ((char=? #\# (string-ref line 0)) (loop (next)))
+            ((and (not beg) (find (lambda (ls)
+                                    (string-contains line (car ls)))
+                                  TRIGGERS))
+             => (lambda (ls)
+                  (set! beg (car ls))
+                  (set! end (cadr ls))
+                  (set! op-op (cddr ls))
+                  (loop line)))
+            ((and beg (string-contains line beg))
+             => (lambda (pos)
+                  (let ((look (substring line (+ pos (string-length beg)))))
+                    (cond
+                     ;; handle chained (not at bol) frame
+                     ((string-contains look beg)
+                      => (lambda (split)
+                           (save (substring look 0 split))
+                           (loop (substring look split))))
+                     ;; handle incomplete line
+                     ((not (string-index look #\;))
+                      (loop (string-append line (next))))
+                     ;; save the line
+                     (else
+                      (save (substring line (+ pos (string-length beg))))
+                      (loop (next)))))))
+            (else (loop (next)))))
+
+    (values (status:exit-val (close-pipe inp))
+            op-op
+            (juice #f))))
+
+(define strain
+  ;; Guile 1.8.7 sometimes neglects to end a statement w/ semicolon.
+  (let ((rx (make-regexp "; *$")))
+    ;; strain
+    (lambda (s)
+      (if (regexp-exec rx s)
+	  s
+	  (string-append s ";")))))
+
+(define (condense op-op juice)
+  ;; FIXME: This procedure is only valid for Guile 1.4.
+  (let ((count 0)
+        (nms '())
+        (fns '())
+        (rovs '())
+        (all-v-zero? #t)
+        (gsubr-rx (make-regexp (car op-op))) ; FIXME
+        (jam-rx (make-regexp (cadr op-op)))
+        (strjams (make-hash-table))
+        (glop (output-lines)))
+
+    (define (export! m)
+      (define (x n)
+        (match:substring m n))
+      (let ((nm (x 1))
+            (r (string->number (x 2)))
+            (o (string->number (x 3)))
+            (v (string->number (x 4)))
+            (fn (x 5)))
+        (or (zero? v) (set! all-v-zero? #f))
+        (set! count (1+ count))
+        (set! nms (cons nm nms))
+        (set! fns (cons fn fns))
+        (set! rovs (cons (list r o v) rovs))))
+
+    (define (strjam! match)
+      (define (sub n)
+        (match:substring match n))
+      (if (> 256 (- (match:end match 3)
+                    (match:start match 3)))
+          ;; OK.
+          (let ((key (cons (sub 2) (sub 4))))
+            (hash-set! strjams key
+                       (acons (sub 1) (sub 3)
+                              (hash-ref strjams key '()))))
+          ;; Too long for a string-pool; fall back to normal.
+          (glop (sub 0))))
+
+    (define (output-strjams!)
+      (define which
+        (let ((n 0))
+          (lambda ()
+            (set! n (1+ n))
+            n)))
+      (define (pack munge ls)
+        (let ((count (length ls))
+              (struct "struct { SCM *to; char const *s; }")
+              (name (fs "pairs~A" (which))))
+          (define (spew pair trail)
+            (glop "    {&~A, ~S}~A" (car pair) (cdr pair) trail))
+          ;; Do it!
+          (glop "{")
+          (glop "  ~A *~Aw, ~A[~A] = {" struct name name count)
+          (let loop ((ls ls))
+            (or (null? ls)
+                (let ((rest (cdr ls)))
+                  (spew (car ls) (if (null? rest) "" ","))
+                  (loop rest))))
+          (glop "  };")
+          (glop "  for (~Aw = ~A; ~Aw < ~A + ~A; ~Aw++)"
+                name name name name count name)
+          (glop "    *~Aw->to = ~A~Aw->s~A;" name (car munge) name (cdr munge))
+          (glop "}")))
+      (hash-for-each pack strjams))
+
+    (define (output-exports-truly . lines)
+      (define (indent-append-out! x)
+        (glop (string-append "  " x)))
+      (glop "{")
+      (let loop ((ls lines))
+        (cond ((null? ls))
+              ((list? (car ls))
+               (for-each indent-append-out! (car ls))
+               (loop (cdr ls)))
+              (else
+               (indent-append-out! (car ls))
+               (loop (cdr ls)))))
+      (glop "}"))
+
+    (for-each (lambda (line)
+                (cond ((regexp-exec gsubr-rx line) => export!)
+                      ((regexp-exec jam-rx line) => strjam!)
+                      (else (glop line))))
+              juice)
+    (output-strjams!)
+    (or (zero? count)
+        (output-exports-truly
+         (fs "struct { char const *nm; SCM (*fn)(); } *d, def[~A] = {" count)
+         (map (lambda (nm fn i)
+                (fs "  {~A, ~A}~A" nm fn (if (= i (1- count)) "" ",")))
+              nms fns (iota count))
+         (fs "};")
+         (fs "/* NOTE: ~A.  */" (if all-v-zero?
+                                    "All ‘v’ are zero"
+                                    "There are some non-zero ‘v’"))
+         (fs "unsigned ~A *r, rov[~A] = {"
+             (if all-v-zero? "char" "short")
+             count)
+         (map (lambda (rov i)
+                (apply (lambda (r o v)
+                         (fs "  /* ~A */ 0x~A~A~A~A"
+                             rov
+                             (if all-v-zero? "" (number->string v 16))
+                             (number->string o 16)
+                             (number->string r 16)
+                             (if (= i (1- count)) "" ",")))
+                       rov))
+              rovs (iota count))
+         (fs "};")
+         (fs "for (d = def, r = rov; r < rov + ~A; d++, r++)" count)
+         (fs "  scm_make_gsubr (d->nm, ~A, ~A, ~A, d->fn);"
+             "(*r) & 0xf"
+             "((*r) >> 4) & 0xf"
+             (if all-v-zero?
+                 0
+                 "(*r) >> 8"))))
+
+    (glop #f)))
+
+(define (bail s . args)
+  (apply die #f (string-append "c2x: " s "~%") args))
+
+(define (howdy)
+  (write-line "/* greetings from -*-c-*- init snarfer c2x! */"))
+
+(define (main/qop qop cpp-opts)
+  (let* ((infile (let ((rest (qop '())))
+                   (cond ((null? rest)
+                          (bail "no input file specified"))
+                         ((pair? (cdr rest))
+                          (for-each (lambda (filename)
+                                      (fse "c2x: warning: ignoring ~A~%"
+                                           filename))
+                                    (cdr rest)))
+                         (else
+                          (car rest)))))
+         (outfile (qop 'output))
+         (stdout? (or (not outfile) (string=? "-" outfile))))
+    ;; Ensure something non-empty is in the output file before snarfing,
+    ;; since the C file normally does #include "OUTFILE", and might not
+    ;; properly guard against circular dependency.  (Non-empty because
+    ;; file existence alone is insufficient for some old pre-processors.)
+    (or stdout? (with-output-to-file outfile howdy))
+    (let-values (((ev op-op juice) (grok (snarf-cmd (or (qop 'cpp)
+                                                        (getenv "CPP")
+                                                        "cpp")
+                                                    (cons infile
+                                                          cpp-opts)))))
+      (cond ((zero? ev)
+             (let ((p (if stdout?
+                          (current-output-port)
+                          (open-output-file outfile))))
+               (set-current-output-port p)
+               (howdy)
+               (for-each write-line (if (or (null? op-op)
+                                            (qop 'dumb))
+                                        (map strain juice)
+                                        (condense op-op juice)))
+               (close-port p)))
+            (else
+             (or stdout? (delete-file outfile))
+             (bail "preprocessor had problems (exit val ~A)" ev))))))
+
+(define (main args)
+  (check-hv args '((package . "Guile-BAUX")
+                   (version . "0.0")
+                   (help . commentary)))
+  (let-values (((c2x-args cpp-opts) (a-dash-dash-b args)))
+    (main/qop
+     (qop<-args c2x-args '((output (single-char #\o) (value #t))
+                           (dumb (single-char #\d))
+                           (cpp (value #t))))
+     cpp-opts)))
+
+;;; c2x ends here

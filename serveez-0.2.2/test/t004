@@ -1,0 +1,182 @@
+;;; t004 --- HTTP CGI
+
+;; Copyright (C) 2011-2013 Thien-Thi Nguyen
+;;
+;; This is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This software is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
+
+;; Skip this test if the HTTP server is not enabled.
+(primitive-load-path "but-of-course")
+(or (boc? 'ENABLE_HTTP_PROTO)
+    (exit 77))
+
+(primitive-load-path "common")
+(set! TESTBASE "t004")
+
+(define SCRIPT-NAME (string-append TESTBASE ".cgi"))
+(define SCRIPT-BODY
+  '((define (crlf-after s . args)
+      (apply simple-format #t s args)
+      (display "\r\n"))
+    ;; do it!
+    (define ANS (with-output-to-string
+                  (lambda ()
+                    (define (spew v)
+                      (simple-format
+                       ;; don't bother w/ CR
+                       #t "~S ~S~%"
+                       v (or (getenv (symbol->string v))
+                             "")))
+                    (for-each spew '(CONTENT_LENGTH
+                                     CONTENT_TYPE
+                                     HTTP_ACCEPT
+                                     HTTP_REFERER
+                                     HTTP_USER_AGENT
+                                     HTTP_HOST
+                                     HTTP_CONNECTION
+                                     HTTP_ACCEPT_ENCODING
+                                     HTTP_ACCEPT_LANGUAGE
+                                     HTTP_ACCEPT_CHARSET
+                                     SERVER_NAME
+                                     SERVER_PORT
+                                     REMOTE_ADDR
+                                     REMOTE_PORT
+                                     SCRIPT_NAME
+                                     GATEWAY_INTERFACE
+                                     SERVER_PROTOCOL
+                                     SERVER_SOFTWARE
+                                     REQUEST_METHOD
+                                     PATH_INFO
+                                     QUERY_STRING)))))
+    ;; head
+    (crlf-after "Content-Type: text/plain")
+    (crlf-after "Content-Length: ~A" (string-length ANS))
+    ;; neck
+    (crlf-after "")
+    ;; body
+    (display ANS)))
+
+(with-output-to-file SCRIPT-NAME
+  (lambda ()
+    (for-each (lambda (line)
+                (fso "~A~%" line))
+              '("#!/bin/sh"
+                "exec ${GUILE-guile} -s $0 ;# -*- scheme -*-"
+                "!#"))
+    (for-each write SCRIPT-BODY)
+    (newline)
+    (chmod (current-output-port) #o755)))
+
+(write-config!
+ `((or (equal? "1" (getenv "VERBOSE"))
+       (set! println (lambda x x)))
+
+   (define-server! 'http-server '((cgi-dir . ".")
+                                  (logfile . ,(string-append
+                                               TESTBASE
+                                               "-http.log"))))
+   (define-port! 'http-tcp-port '((proto . tcp)
+                                  (port . 2000)
+                                  (ipaddr . *)))
+   (bind-server! 'http-tcp-port 'http-server)))
+
+(define HEY (bud!))
+
+(use-modules
+ ((ice-9 rdelim) #:select (read-line write-line)))
+
+(define IGNORABLE (string-length "Echo: "))
+
+(or VERBOSE? (set! fso (lambda x x)))
+
+(define BASE (in-vicinity "/cgi-bin/" SCRIPT-NAME))
+
+(let ((port (HEY #:try-connect 10 "127.0.0.1" 2000)))
+
+  (define (crlf-after s . args)
+    (apply simple-format port s args)
+    (display "\r\n" port))
+
+  (define (try method path-info query-string . text)
+
+    (define (badness s . args)
+      (let ((cep (current-error-port)))
+        (apply simple-format cep s args)
+        (newline cep))
+      (exit #f))
+
+    ;; Make the request.
+    (crlf-after "~A ~A~A~A HTTP/1.0" method BASE
+                path-info
+                (if query-string
+                    (string-append "?" query-string)
+                    ""))
+    (cond ((null? text)
+           (crlf-after ""))
+          (else
+           (crlf-after "Content-Type: text/plain")
+           (crlf-after "Content-Length: ~A" (string-length text))
+           (crlf-after "")
+           (display text port)))
+
+    ;; Get the answer and validate it.
+    ;; NB: We avoid ‘string<-drain’ because that disconnects.
+    (let ((ans (let loop ((lines '()))
+                 (let ((line (read-line port)))
+                   (if (eof-object? line)
+                       (reverse! lines)
+                       (loop (cons line lines)))))))
+      (and VERBOSE? (for-each (lambda (idx s)
+                                (fso "~A:\t~A~%" idx s))
+                              (iota (length ans))
+                              ans))
+      ;; Ignore headers for now.  (TODO: Validate them, too.)
+      (set! ans (cdr (member "\r" ans)))
+      ;; Convert body to alist.
+      (let ((alist (map (lambda (s)
+                          (with-input-from-string s
+                            (lambda ()
+                              ;; NB: Use ‘let*’ to enforce order.
+                              (let* ((k (read))
+                                     (v (read)))
+                                (cons k v)))))
+                        ans)))
+        (define (ref k)
+          (assq-ref alist k))
+        (define (chk k expected)
+          (let ((actual (ref k)))
+            (or (equal? expected actual)
+                (badness "ERROR: mismatch: for ‘~S’ expect ~S but got ~S"
+                         k expected actual))))
+        (chk 'GATEWAY_INTERFACE "CGI/1.1")
+        (chk 'REQUEST_METHOD (symbol->string method))
+        (chk 'SERVER_PORT "2000")
+        (chk 'REMOTE_ADDR "127.0.0.1")
+        (chk 'SCRIPT_NAME BASE)
+        (chk 'PATH_INFO path-info)
+        (chk 'QUERY_STRING query-string)
+        )))
+
+  (try 'GET "/some/path" "n1=v1&n2=v2")
+  (close-port port))
+
+(and (file-exists? SCRIPT-NAME)
+     (delete-file SCRIPT-NAME))
+
+(HEY #:done! #t)
+
+;;; Local variables:
+;;; mode: scheme
+;;; End:

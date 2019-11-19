@@ -1,0 +1,2022 @@
+2013-12-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.2
+
+	* configure.ac (AC_INIT): Bump version to "0.2.2" for release.
+	(PROGRAM_VERSION): Bump to "1.4".
+	(LIBSERVEEZ_INTERFACE): Bump to "2:0:1".
+
+2013-12-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[build int] Move serveez(1) version into configure.ac.
+
+	* configure.ac (PROGRAM_VERSION):
+	New var, AC_SUBST and AC_DEFINE_UNQUOTED.
+
+2013-11-01  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[boot] Import Guile-BAUX headers.
+
+	* autogen.sh: Invoke "guile-baux-tool snuggle h".
+
+2013-11-01  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[boot] Use Guile-BAUX for Autoconf macros.
+
+	* autogen.sh: Invoke "guile-baux-tool snuggle m4".
+	* m4/inc.m4 (SVZ_GUILE_FLAGS): Use ‘SNUGGLE_PROGS’.
+
+2013-04-28  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[maint] Add GNUmakefile for maintainer convenience.
+
+	This replaces "make chk" with "make CHECK" and adds
+	"make ALL" and "make AC" support.
+
+	* GNUmakefile: New file.
+	* Makefile.am (chk): Delete target.
+
+2013-03-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.1
+
+	* configure.ac (AC_INIT): Bump version to "0.2.1" for release.
+
+2013-03-13  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[doc] Revamp manpages; include release info.
+
+	* build-aux/fake-soelim.in: New file.
+	* configure.ac (AC_PROG_GREP): New macro call.
+	(SOELIM): New AC_CHECK_PROG.
+	(AC_CONFIG_FILES): Add build-aux/fake-soelim; chmod +x it.
+
+2013-03-08  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[boot] Bump Automake min vers to 1.12.2.
+
+	* configure.ac (AM_INIT_AUTOMAKE): ...here.
+
+2013-03-01  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[boot] Avoid bashism.
+
+	* autogen.sh: Don't use echo(1) and ‘$(...)’ for "using:"
+	messages; instead, handle it all in the sed(1) script.
+
+2013-02-25  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[dist] Create .lz tarball, too, on "make dist".
+
+	* configure.ac (AM_INIT_AUTOMAKE): Add option ‘dist-lzip’.
+
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.0
+
+	* configure.ac (AC_INIT): Bump version to "0.2.0" for release.
+
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[maint] Import epsf.tex from Texinfo 4.13.94.
+
+	* build-aux/epsf.tex: New file.
+	* Makefile.am (EXTRA_DIST): Add build-aux/epsf.tex.
+	* AUTHORS: Add Tom Rokicki.
+
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[maint] Upgrade to Automake 1.13.1, but keep serial tests.
+
+	* configure.ac (AM_INIT_AUTOMAKE): Bump prereq to 1.12;
+	add option ‘serial-tests’.
+
+2012-12-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[dist] Create .xz tarball instead of .gz on "make dist".
+
+	* configure.ac (AM_INIT_AUTOMAKE): Add options ‘no-dist-gzip’, ‘dist-xz’.
+
+2012-12-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Arrange for libserveez.h to #include system headers.
+
+	* configure.ac (AC_CHECK_HEADERS_ONCE): Add netinet/in.h, arpa/inet.h.
+
+2012-11-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v int] Add "make chk".
+
+	This is ‘int’ because ideally we could specify things so
+	that "make check" DTRT, avoiding need to publish this target.
+	See comment in Makefile.am.
+
+	* Makefile.am (chk): New target.
+
+2012-11-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Use Automake conditional to gate windoze.[hc].
+
+	* configure.ac (MINGW32): New AM_CONDITIONAL.
+
+2012-11-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Fix typo in PLATFORM grep invocation.
+
+	This was probably a debugging dingleberry.
+
+	* configure.ac <grep PLATFORM>: Look for $host at bol.
+
+2012-10-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot] Use Automake-supplied macro to search for archiver.
+
+	Suggested by autoreconf.
+
+	* configure.ac <before doing any compilation>:
+	Move ‘AC_USE_SYSTEM_EXTENSIONS’ to here...
+	<checks for programs>: ...from here.
+	Also, replace ‘AC_CHECK_PROG([AR],...)’ with ‘AM_PROG_AR’.
+
+2011-10-26  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Fix bug: Move codec glue Automake conditionals later.
+
+	Regression introduced 2011-07-15, "Use
+	Automake conditionals to gate codec glue".
+	Reported by Mike Gran.
+
+	* configure.ac (WITH_ZLIB, WITH_BZLIB): Move into section
+	"write it out", which is after "checks for header files".
+
+2011-07-26  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot] Bump Automake required version to 1.11.1.
+
+	* configure.ac (AM_INIT_AUTOMAKE): Specify "1.11.1".
+
+2011-07-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use Automake conditionals to gate codec glue.
+
+	* configure.ac (WITH_ZLIB, WITH_BZLIB): New AM_CONDITIONALs.
+
+2011-06-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Don't define some procs that Guile might already provide.
+
+	* m4/inc.m4 (SVZ_GUILE_HAS_PROC)
+	(SVZ_CHECK_GUILE_MISSING): New AC_DEFUNs.
+	* configure.ac (AC_CONFIG_HEADERS): Add src/guile-missing.h.
+	(SVZ_CHECK_GUILE_MISSING): New macro call.
+
+2011-06-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use facilities that implicitly ‘AC_DEFINE’.
+
+	* configure.ac <netinet/tcp.h>: Use ‘AC_CHECK_HEADERS_ONCE’.
+	(HAVE_NETINET_TCP_H): Delete AC_DEFINE.
+	(timezone, daylight): Use ‘AC_CHECK_DECLS’ for these C vars.
+	(HAVE_TIMEZONE): Delete AC_DEFINE.
+	(hstrerror): Use ‘SVZ_LIBS_MAYBE’; update
+	conditional around related AC_CHECK_DECLS.
+
+2011-06-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Merge ‘$(SERVEEZ_LIBS)’ into ‘$(LIBS)’.
+
+	* configure.ac (SERVEEZ_LIBS): Delete var, AC_SUBST.
+	(getopt_long): Use ‘SVZ_LIBS_MAYBE’ for this C func.
+	(getopt): Likewise, but only if ‘getopt_long’ is not found.
+	(alphasort, scandir, strsignal): Remove surrounding
+	‘LIBS’ save/munge/restore for these C funcs.
+
+2011-06-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Merge ‘$(LIBSERVEEZLIBS)’ into ‘$(LIBS)’.
+
+	* configure.ac (LIBSERVEEZLIBS): Delete var, AC_SUBST.
+	(dlopen, dld_link): Use ‘SVZ_LIBS_MAYBE’ for these C funcs.
+	(have_threads): Delete var.
+	(threadsp): New var.
+	(SVZ_SET_THREADSP): New AC_DEFUN.
+	(pthread_create): Use ‘SVZ_LIBS_MAYBE’ for this C func.
+
+2011-06-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Merge ‘EXTRALIBS’ into ‘LIBS’.
+
+	* m4/inc.m4 (SVZ_GOT_X, SVZ_LIBS_MAYBE): New AC_DEFUNs.
+	(SVZ_HAVE_FUNC_MAYBE_IN_LIB): Use ‘SVZ_GOT_X’.
+	(SVZ_EXTRALIBS_MAYBE): Delete AC_DEFUN.
+	* configure.ac (EXTRALIBS): Delete var; throughout,
+	do s/SVZ_EXTRALIBS_MAYBE/SVZ_LIBS_MAYBE/, removing any
+	surrounding save/restore of ‘LIBS’.
+
+2011-06-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build woe] For libs, grow ‘LIBS’ R2L, not ‘EXTRALIBS’ L2R.
+
+	* configure.ac: Check for libmwsock, libws2_32, libuser32,
+	libshell32 and libadvapi32 using simplified AC_CHECK_LIB calls,
+	reordered to grow right-to-left.
+
+2011-06-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Remove redundant AC_DEFINE.
+
+	* configure.ac (HAVE_LIBKSTAT): Delete AC_DEFINE;
+	simplify surrounding AC_CHECK_LIB so that it does the job.
+
+2011-06-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Move success and "new platform" notices after AC_OUTPUT.
+
+	* configure.ac: Move success and "new platform"
+	notices after ‘AC_OUTPUT’; use ‘AC_MSG_NOTICE’.
+
+2011-06-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Merge $(CODECLIBS) into $(LIBS).
+
+	* configure.ac (CODECLIBS): Delete var, AC_SUBST.
+	(HAVE_ZLIB, HAVE_BZ2LIB): Delete AC_SUBSTs; rewrite
+	the AC_CHECK_LIB calls to not specify ACTION-IF-FOUND;
+	for libz2, check for ‘BZ2_bzCompress’ before ‘bzCompress’.
+
+2011-06-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove more "native MSVC" support.
+
+	Omission from 2011-06-02, "Remove "native MSVC" support".
+
+	* autogen.sh: Don't recognize/handle option ‘--woe32’.
+
+2011-06-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove "AWCS protocol / server" support.
+
+	* configure.ac (awcs-proto): Delete SVZ_FLAG.
+	(AC_CONFIG_FILES): Remove src/awcs-server/Makefile.
+
+2011-06-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove "native MSVC" support.
+
+	* Makefile.am (EXTRA_DIST): Remove README-Win32, serveez.dsw,
+	serveez.ap, build-aux/vcgen.bat, build-ax/autodsp.
+	(MAINTAINERCLEANFILES): Remove serveez.dsw.
+	(woe32-project-files): Delete target.
+	(serveez.dsw): Delete prerequistite decl.
+	(no-woe32): Delete target.
+	* README-Win32: Delete file.
+	* build-aux/autodsp: Delete file.
+	* build-aux/vcgen.bat: Delete file.
+	* serveez.ap: Delete file.
+
+2011-05-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Drop ‘--with-guile’; use only guile-config(1).
+
+	* m4/inc.m4 (SVZ_GUILE_FLAGS): New AC_DEFUN.
+	(SVZ_GUILE, SVZ_GUILE_CHECK): Delete AC_DEFUNs.
+	* configure.ac (SVZ_GUILE_FLAGS): Add macro call.
+	(SVZ_GUILE, SVZ_GUILE_CHECK): Delete macro calls.
+	(guile/gh.h): New AC_CHECK_HEADERS.
+
+2011-05-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Make libserveez + headers installation optional.
+
+	* configure.ac (libserveez-install): New SVZ_FLAG.
+	(COURAGEOUS): New AM_CONDITIONAL.
+
+2011-05-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use automake conditionals to gate sub-proto libs.
+
+	* configure.ac (SERVERDIRS, SERVERLIBS): Delete
+	AC_SUBSTs and all related code that sets these vars.
+	(SNTP, GNUTELLA, TUNNEL, CONTROL, IRC, AWCS, HTTP)
+	(FAKEIDENT, PROG): New AM_CONDITIONALs.
+
+2011-05-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Decruft: Don't bother maintaining a makefile in data/.
+
+	* Makefile.am (SUBDIRS): Remove data.
+	(EXTRA_DIST): Add data.
+	* configure.ac (AC_CONFIG_FILES): Remove data/Makefile.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build guile] Determine smob tag type at configure time.
+
+	* configure.ac (svz_smob_tag_t): New AC_DEFINE_UNQUOTED,
+	based on check for ‘scm_t_bits’ or ‘scm_bits_t’ in libguile.h.
+
+2011-05-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Use "/**" for lib API docs, s3as + tsin to wrangle them.
+
+	* build-aux/guile-baux/s3as: New file.
+
+2011-05-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use Guile-BAUX for init snarfing.
+
+	* autogen.sh: Import Guile-BAUX module ‘c2x’.
+
+2011-05-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use Guile-BAUX for "Scheme proc from C source" snarfing.
+
+	* autogen.sh: Use Guile-BAUX module ‘c-tsar’.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Fix bug: #include <sys/time.h> when seeking ‘gettimeofday’.
+
+	* configure.ac (gettimeofday): New ‘AC_CHECK_DECLS’,
+	but only if the system has <sys/time.h>
+	(AC_CHECK_FUNCS): Remove ‘gettimeofday’.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Require a C99 compiler.
+
+	* configure.ac (AC_PROG_CC): Delete macro call.
+	(AC_PROG_CC_C99): New macro call, followed by check;
+	if a C99 compiler is not available, error out.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Have configure define ‘uid_t’ and ‘gid_t’ if necessary.
+
+	* configure.ac (AC_TYPE_UID_T): New macro call.
+
+2011-04-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Check for ‘inet_pton’.
+
+	* configure.ac (inet_pton): New ‘AC_CHECK_FUNCS’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v woe] Fix bug: Update list of "project files".
+
+	Omission from 2011-03-18, "Consolidate
+	C support; trigger its build on "make check"".
+
+	* serveez.ap (PROJECTS): Remove test/array, test/codec,
+	test/hash, test/spvec, test/vector, test/prog; add test/btdt.
+	(array_DEPENDENCIES): Delete var.
+	(codec_DEPENDENCIES): Likewise.
+	(hash_DEPENDENCIES): Likewise.
+	(spvec_DEPENDENCIES): Likewise.
+	(vector_DEPENDENCIES): Likewise.
+	(btdt_DEPENDENCIES): New var.
+
+2011-03-25  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize SIZEOF_UINT{16,32}.
+
+	* configure.ac (SIZEOF_UINT16, SIZEOF_UINT32):
+	New ‘AC_DEFINE_UNQUOTED’.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc int] Snarf docstrings of built-in Scheme procs.
+
+	* autogen.sh: Use Guile-BAUX modules ‘tsar’, ‘tsin’.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[guile] Promote "convenience" Scheme to "built-in".
+
+	* autogen.sh: Use Guile-BAUX modules ‘as-C-byte-array’, ‘punify’.
+
+2011-03-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot build] Start using Guile-BAUX.
+
+	* autogen.sh: Add guile-baux-tool to the list of
+	prerequisite tools; call it with one module: ‘gbaux-do’.
+	* Makefile.am (EXTRA_DIST): Add build-aux/guile-baux.
+	* build-aux/common.mk (gx): New var.
+
+2011-03-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Drop ‘PREFIX’ support in ‘SVZ_HAVE_FUNC_MAYBE_IN_LIB’.
+
+	* m4/inc.m4 (SVZ_HAVE_FUNC_MAYBE_IN_LIB): Don't take 3rd arg.
+
+2011-03-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Embed mutex functionality; expose only feature ‘log-mutex’.
+
+	* configure.ac (thread-safety): Delete SVZ_FLAG.
+	(SVZ_HAVE_PTHREAD_H): Delete AC_DEFINE and associated check.
+	(have_threads): Update ‘AS_IF’ test expression.
+	(ENABLE_LOG_MUTEX): Rename AC_DEFINE from ‘SVZ_HAVE_THREADS’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Don't bother checking for broken ‘inet_ntoa’.
+
+	* configure.ac (BROKEN_INET_NTOA):
+	Delete ‘AC_DEFINE’ and related test.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib int] Avoid using a log mutex when stdio is locking.
+
+	* configure.ac (fwrite_unlocked): New ‘AC_CHECK_FUNCS’.
+	(SVZ_HAVE_THREADS): Inhibit if system has ‘fwrite_unlocked’.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Presume <stdio.h> availability.
+
+	* configure.ac (AC_CHECK_HEADERS_ONCE): Remove stdio.h.
+
+2011-03-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use libtool-style interface version for libserveez.
+
+	* configure.ac (LIBSERVEEZ_INTERFACE): New ‘AC_SUBST’.
+	(LIBSERVEEZ_INTERFACE): New ‘AC_DEFINE_UNQUOTED’.
+
+2011-03-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Add configure check for GCC "hidden visibility" attribute.
+
+	* configure.ac (GCC_HAS_ATTRIBUTE_VISIBILITY): New AC_DEFINE.
+
+2011-03-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘PACKAGE_VERSION’ directly.
+
+	* configure.ac (AC_CONFIG_FILES): Remove src/version.h.
+	* build-aux/vcgen.bat: Don't create version.h.
+	* README-Win32: Update.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_strcasecmp
+
+	* configure.ac (strcasecmp, stricmp): Drop AC_CHECK_FUNCS.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop: svz_strncasecmp
+
+	* configure.ac (strncasecmp, strnicmp): Drop AC_CHECK_FUNCS.
+
+2011-02-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop var: svz_build
+
+	* configure.ac (TIMESTAMP): Delete AC_SUBST.
+
+2011-02-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘AC_USE_SYSTEM_EXTENSIONS’.
+
+	* configure.ac (AC_USE_SYSTEM_EXTENSIONS): New macro call.
+	(HAVE_DECL_STRSIGNAL): Don't #define ‘_GNU_SOURCE’, ‘__EXTENSIONS__’.
+
+2011-02-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Merge API documentation into primary; use GFDL 1.3.
+
+	* autogen.sh: Remove doc/serveez-api.texi kludge.
+	* README: Update.
+
+2011-02-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Internalize debug support.
+
+	* configure.ac (ENABLE_DEBUG):
+	Rename AC_DEFINE from ‘SVZ_ENABLE_DEBUG’.
+	(NDEBUG): Delete ‘AC_DEFINE’.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Look for <sys/sysinfo.h>; assume ‘sysget’.
+
+	* configure.ac (sys/sysinfo): New ‘AC_CHECK_HEADERS_ONCE’.
+	(HAVE_DECL_SYSGET, HAVE_SYSGET): Delete ‘AC_DEFINE’s.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Look for <sys/pstat.h>; assume ‘pstat_getdynamic’.
+
+	* configure.ac (sys/pstat.h): New ‘AC_CHECK_HEADERS_ONCE’.
+	(HAVE_DECL_PSTAT_GETDYNAMIC, HAVE_PSTAT): Delete ‘AC_DEFINE’s.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Decruft: Don't link with ‘-no-undefined’.
+
+	This change may damage mipsel-unknown-linux-gnu and/or
+	mips-unknown-linux-gnu, the original cruft beneficiaries.
+	We do it anyway because the truth is that the affected
+	libraries do indeed depend on other libraries.  Why lie?
+
+	* configure.ac (NOUNDEFINED): Delete AC_SUBST.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘crypt’ support.
+
+	* configure.ac: If --enable-crypt, look for header crypt.h.
+	(HAVE_CRYPT): Use ‘SVZ_EXTRALIBS_MAYBE’; if not
+	found, display error message and exit unsuccessfully.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Drop $(bindir) program: mkpassword
+
+	* configure.ac (MKPASSWORD): Delete AC_SUBST.
+	* serveez.ap (PROJECTS): Remove src/mkpassword.
+	* README, README-Win32: Update; nfc.
+
+2011-02-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Factor standard blurb into its own file.
+
+	* README (Description): Eviscerate; add ">BLURB<" marker.
+	* Makefile.am (dist-hook): New target.
+
+2011-02-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Include ‘svz_sock_flood_protect’ in API unconditionally.
+
+	* configure.ac (ENABLE_FLOOD_PROTECTION):
+	Rename AC_DEFINE from ‘SVZ_ENABLE_FLOOD_PROTECTION’.
+
+2011-02-19  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Drop support for building RPM and Debian packages.
+
+	* Makefile.am [MAINTAINER_MODE] (redhat, debian): Delete targets.
+	* configure.ac (RPM, RPM3): Delete AC_SUBST.
+	(TIMESTAMP_RFC822, REDHAT_TOPDIR): Likewise.
+	(AC_CONFIG_FILES): Remove build-aux/redhat.sh, build-aux/debian.sh.
+	* build-aux/debian.sh.in: Delete file.
+	* build-aux/redhat.sh.in: Delete file.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Presume ‘vsprintf’, ‘snprintf’, ‘vsnprintf’.
+
+	* configure.ac (HAVE_VSPRINTF, HAVE_SNPRINTF)
+	(HAVE_VSNPRINTF): Delete these AC_CHECK_FUNCS.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Decruft: Don't patch the configure script.
+
+	Patching  was for "libtool 1.5 code for MinGW32 build".
+	It probably won't be missed.
+
+	* autogen.sh: Don't patch the configure script.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Decruft: Remove redundant/obsolete configure.ac bits.
+
+	* configure.ac (CPPEXTRAFLAGS, CPPFLAGS): Delete AC_SUBST.
+	(SERVERDIRS): Don't add to this var incrementally; instead,
+	compute its value on output, deriving from ‘SERVERLIBS’.
+	(AC_HEADER_STDC): Delete macro call.
+	(strings.h, unistd.h, dlfcn.h): Remove these AC_CHECK_HEADERS_ONCE.
+	(HAVE_WINSOCK2_H): Delete redundant AC_DEFINE.
+	(AC_EXEEXT, AC_OBJEXT): Delete obsolete macro calls.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘HAVE_VARARGS_H’ directly.
+
+	* configure.ac (SVZ_HAVE_VARARGS_H): Delete AC_DEFINE.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘signed’ directly.
+
+	* configure.ac (svz_c_signed): Delete AC_DEFINE_UNQUOTED.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Decruft: Drop "libtool 1.4.2 on solaris" workaround.
+
+	This workaround is no longer relevant:
+	http://lists.gnu.org/archive/html/libtool/2011-02/msg00009.html
+
+	* m4/inc.m4 (SVZ_LIBTOOL_SOLARIS): Delete AC_DEFUN.
+	* configure.ac (SERVEEZ_LDFLAGS): Delete unused AC_SUBST.
+	(SVZ_LIBTOOL_SOLARIS): Delete macro call.
+
+2011-02-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Bump GNU Libtool prereq version to 2.4.
+
+	* configure.ac (LT_PREREQ): Bump to "2.4".
+	* autogen.sh: Update prereq tools comment.
+
+2011-02-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Reorder configure.ac top-level.
+
+	See: (info "(autoconf) Autoconf Input Layout")
+	for the general approach, to which we add section
+	"miscellaneous checks" (just for the broken ‘inet_ntoa’ :-).
+
+	* configure.ac: Reorder top-level.
+
+2011-02-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Drop configure --enable-{warn,opt,ppro,486}, ‘--with-opt’.
+
+	* configure.ac (warn, opt, ppro, 486): Delete ‘SVZ_FLAG’s.
+	(opt): Delete ‘SVZ_WITH’.
+
+2011-02-16  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop ‘svz_snprintf’; use ‘vsnprintf’, ‘snprintf’ directly.
+
+	* configure.ac (SVZ_HAVE_SNPRINTF): Remove support
+	for this AC_DEFINE; leave only AC_CHECK_FUNCS and arrange
+	for failureful exit if ‘snprintf’ is not found.
+	(SVZ_HAVE_VSNPRINTF): Likewise for ‘vsnprintf’.
+
+2011-02-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘const’ directly.
+
+	* configure.ac (AC_C_CONST): Delete macro call.
+	(svz_c_const): Delete AC_DEFINE_UNQUOTED.
+
+2011-02-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Fix bug: Delete everything on "make uninstall".
+
+	* Makefile.am (uninstall-hook): New target.
+
+2011-02-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ and ‘off_t’ directly.
+
+	* configure.ac (svz_t_size, svz_t_off): Delete ‘AC_DEFINE’s.
+
+2011-02-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Do more precise checks instead of ‘AC_EGREP_HEADER’.
+
+	Here, "U (S, M...)" means "Don't use ‘AC_EGREP_HEADER’;
+	instead, arrange to ‘AC_DEFINE’ S via macro call(s) M...";
+	"D (S)" means "U (S, AC_CHECK_DECLS)"; and
+	"H (S)" means "U (S, AC_CHECK_HEADERS_ONCE, AC_CHECK_DECL)".
+	* configure.ac (getopt_long): D (HAVE_DECL_GETOPT_LONG).
+	(alphasort): D (HAVE_DECL_ALPHASORT).
+	(pstat_getdynamic): H (HAVE_PSTAT).
+	(sysget): H (HAVE_SYSGET).
+	(strsignal): D (HAVE_DECL_STRSIGNAL).
+	(hstrerror): D (HAVE_DECL_HSTRERROR).
+	(h_errno): D (HAVE_DECL_H_ERRNO).
+	(setrpcent): H (HAVE_DECL_SETRPCENT).
+	(endrpcent): H (HAVE_DECL_ENDRPCENT).
+
+2011-02-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Use ‘AC_CHECK_HEADERS_ONCE’.
+
+	* configure.ac: Convert all top-level single-arg
+	‘AC_CHECK_HEADERS’ calls to ‘AC_CHECK_HEADERS_ONCE’.
+
+2011-02-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Add abstraction: SVZ_NOT_Y; use AS_{IF,CASE} more.
+
+	* m4/inc.m4 (SVZ_NOT_Y): New macro.
+	(SVZ_GUILE, SVZ_GUILE_CHECK, SVZ_LIBTOOL_SOLARIS):
+	Use ‘SVZ_NOT_Y’, ‘AS_IF’, ‘AS_CASE’.
+	* configure.ac: Throughout, use ‘SVZ_NOT_Y’, ‘AS_IF’, ‘AS_CASE’.
+
+2011-02-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Improve portability of shell substitutions.
+
+	See: (info "(autoconf) Shell Substitutions")
+
+	* m4/inc.m4 (SVZ_GUILE, SVZ_LIBTOOL_SOLARIS):
+	Rewrite "`COMMAND`" as simply `COMMAND`, in some
+	cases eliminating the useless initial ‘eval’ in COMMAND.
+
+2011-02-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Avoid ‘test EXP -o EXP ...’.
+
+	See: (info "(autoconf) Limitations of Builtins")
+
+	* m4/inc.m4 (SVZ_GUILE): Split ‘test’ sub-expressions
+	combined by ‘-o’ into separate invocations combined by ‘||’.
+
+2011-02-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Change package name to "GNU Serveez".
+
+	* configure.ac (AC_INIT): Change name to "GNU Serveez".
+
+2011-02-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Use ‘AC_SEARCH_LIBS’ more.
+
+	Here, "U" means "Use ‘AC_SEARCH_LIBS’, ‘SVZ_HAVE_FUNC_MAYBE_IN_LIB’".
+	* m4/inc.m4 (SVZ_HAVE_FUNC_MAYBE_IN_LIB): New macro.
+	(SVZ_EXTRALIBS_MAYBE): Likewise.
+	* configure.ac (HAVE_GETOPT, HAVE_GETOPT_LONG): U;
+	update consequent checks to use ‘ac_cv_search_getopt_long’,
+	and the value of ‘getoptlib’ directly.
+	(HAVE_DLOPEN): U.
+	(HAVE_SOCKETPAIR, HAVE_GETHOSTBYADDR)
+	(HAVE_INET_ATON): Use ‘SVZ_EXTRALIBS_MAYBE’.
+	(SVZ_HAVE_CRYPT): U.
+
+2011-02-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Purge ‘--with-guile-source’ reference.
+
+	Omission from 2011-02-09, "Remove
+	configure option ‘--with-guile-source’".
+
+	* m4/inc.m4 (SVZ_GUILE_CHECK): Don't mention
+	‘--with-guile-source’ in error message.
+
+2011-02-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Move config.h, version.h into src/.
+
+	* configure.ac (AC_CONFIG_HEADERS): Move config.h into src/.
+	(AC_CONFIG_FILES): Likewise for version.h.
+	* Makefile.am (EXTRA_DIST): Remove
+	config.h.serveez, version.h.serveez.
+	(config.h.serveez, version.h.serveez): Delete targets.
+	* build-aux/vcgen.bat: Update locations.
+	* version.h.in: Delete file.
+	* .gitignore: Update; nfc.
+
+2011-02-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Use ‘AC_C_BIGENDIAN’.
+
+	* configure.ac (svz_cv_sys_bigendian): Delete var.
+	(WORDS_BIGENDIAN): Delete conditional AC_DEFINE.
+	(AC_C_BIGENDIAN): New macro call.
+
+2011-02-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Make thread-safety configurable with "enable", not "with".
+
+	* configure.ac: Use ‘SVZ_FLAG’ for ‘thread-safety’.
+	(enable_threads): Delete var.
+	<check for thread libraries>: Use ‘enable_thread_safety’ directly.
+	* README-Win32: Update example; nfc.
+
+2011-02-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[doc] Overhaul methods; replace "make site" with "make stage".
+
+	* configure.ac (TEXI2HTML): Delete AC_SUBST
+	and the checks on texi2html that support it.
+	* HACKING, .gitignore: Update; nfc.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Clean up Makefile.am files; segregate woe32.
+
+	* Makefile.am (EXTRA_DIST): Remove THANKS; move
+	README-Win32, serveez.dsw, config.h.serveez,
+	version.h.serveez, build-aux/vcgen.bat,
+	build-aux/autodsp to a separate ‘EXTRA_DIST +=’.
+	(MAINTAINERCLEANFILES): Move serveez.dsw
+	to a separate ‘MAINTAINERCLEANFILES +=’.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Let configure define ‘SED’ in makefiles.
+
+	* configure.ac (AC_PROG_SED): New macro call.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Decruft: Don't bother checking for func ‘connect’.
+
+	* configure.ac (connect): Delete unused ‘AC_CHECK_FUNCS’.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove configure option ‘--with-guile-source’.
+
+	* m4/inc.m4 (SVZ_GUILE_SOURCE): Delete macro.
+	(SVZ_GUILE_CHECK): Don't mention ‘--with-guile-source’.
+	* configure.ac (SVZ_GUILE_SOURCE): Delete macro call.
+	* README (Installation): Remove suggested configure
+	script option set; don't mention ‘--with-guile-source’.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build guile] If no <guile/gh.h>, #include <libguile.h>.
+
+	* m4/inc.m4 (SVZ_GUILE): Make sure ‘GUILEDIR’ is
+	defined for all non-missing code paths; add check
+	for file $GUILEDIR/include/guile/gh.h and define C
+	preproc symbol ‘HAVE_GUILE_GH_H’ if it exists.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot] Bump Autoconf prereq to 2.64.
+
+	This is for ‘m4_ifnblank’ et al.
+
+	* configure.ac (AC_PREREQ): Bump to "2.64".
+	* autogen.sh: Update comment; nfc.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Move local m4 macros into m4/inc.m4.
+
+	* m4: New directory.
+	* acinclude.m4: Rename file from this...
+	* m4/inc.m4: ...to this.
+	* Makefile.am (ACLOCAL_AMFLAGS): New var.
+	* configure.ac (AC_CONFIG_MACRO_DIR): New macro call.
+	* HACKING, .gitignore: Update; nfc.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Add abstraction ‘SVZ_Y’; use ‘AS_IF’ more.
+
+	* acinclude.m4 (SVZ_Y): New macro; use it throughout.
+	* configure.ac: Use ‘SVZ_Y’ throughout.
+
+2011-02-09  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Reduce ‘AC_DEFINE’ usage; use ‘AC_CHECK_FUNCS’.
+
+	Here, "F" means "Use ‘AC_CHECK_FUNCS’"; "L" means "only
+	‘AC_DEFINE’ the symbol(s) for lib; revamp lib check";
+	"S" means "use ‘AS_IF’ and/or ‘AS_CASE’".
+	Also, all items are C preprocessor symbols (#define:s).
+	* configure.ac (HAVE_GETOPT, HAVE_GETOPT_LONG): F; L; S.
+	(HAVE_STRCASECMP, HAVE_STRICMP, HAVE_STRNCASECMP, HAVE_STRNICMP): F.
+	(HAVE_DLOPEN): F; L; S;	spell "svld" correctly.
+	(HAVE_HOST_STATISTICS, HAVE_VSPRINTF, HAVE_SNPRINTF)
+	(HAVE__SNPRINTF, SVZ_HAVE_SNPRINTF, HAVE_CONNECT): F.
+	(HAVE_SOCKETPAIR, HAVE_GETHOSTBYADDR): F; L.
+	(SVZ_HAVE_CRYPT): F; L; S.
+	(HAVE_HSTRERROR): F; L.
+
+2011-02-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Use ‘AS_UNSET’.
+
+	* acinclude.m4: Use ‘AS_UNSET’ instead of raw ‘unset’.
+	* configure.ac: Likewise.
+
+2011-02-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Dose acinclude.m4, configure.ac with m4 quotes.
+
+	* acinclude.m4: Add many left and right braces.
+	* configure.ac: Likewise.
+
+2011-02-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Avoid AC_TRY_{RUN,COMPILE,LINK,CPP} in configure.ac.
+
+	Here, R (A, B, C) means "Replace ‘A’ with ‘B’ + ‘C’".
+	* configure.ac: R (AC_TRY_RUN, AC_RUN_IFELSE, AC_LANG_SOURCE);
+	R (AC_TRY_COMPILE, AC_COMPILE_IFELSE, AC_LANG_PROGRAM);
+	R (AC_TRY_LINK, AC_LINK_IFELSE, AC_LANG_PROGRAM);
+	R (AC_TRY_CPP, AC_PREPROC_IFELSE, AC_LANG_SOURCE).
+
+2011-02-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Add abstractions: SVZ_{HELP_STRING,FLAG,WITH}
+
+	* acinclude.m4 (SVZ_HELP_STRING, SVZ_FLAG, SVZ_WITH): New macros.
+	(SVZ_GUILE, SVZ_GUILE_SOURCE): Use ‘SVZ_WITH’.
+	* configure.ac (enable_warn, enable_opt): Use ‘SVZ_FLAG’.
+	(with_opt): Use ‘SVZ_WITH’.
+	(enable_ppro, enable_486, enable_debug, enable_iflist)
+	(enable_poll, enable_sendfile): Use ‘SVZ_FLAG’.
+	(with_thread_safety): Use ‘SVZ_WITH’.
+	(enable_sntp_proto, enable_gnutella, enable_tunnel)
+	(enable_control_proto, enable_irc_proto, enable_irc_ts, enable_crypt)
+	(enable_awcs_proto, enable_http_proto, enable_fakeident)
+	(enable_passthrough, enable_flood): Use ‘SVZ_FLAG’.
+	(with_mingw): Use ‘SVZ_WITH’.
+	(enable_guile_server, enable_heap_count): Use ‘SVZ_FLAG’.
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use SVZ_ for Serveez-originated m4 macros.
+
+	The AC_ namespace is reserved for Autoconf.
+
+	* acinclude.m4 (SVZ_GUILE): Rename from ‘AC_GUILE’.
+	(SVZ_GUILE_SOURCE): Rename from ‘AC_GUILE_SOURCE’.
+	(SVZ_GUILE_CHECK): Rename from ‘AC_GUILE_CHECK’.
+	(SVZ_LIBTOOL_SOLARIS): Rename from ‘AC_LIBTOOL_SOLARIS’.
+	* configure.ac: Update macro call sites.
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Generate *.serveez files on "make dist".
+
+	* config.h.serveez: Delete file.
+	* version.h.serveez: Likewise.
+	* Makefile.am (config.h.serveez, version.h.serveez): New targets.
+	(no-woe32): Also delete all *.serveez files in build tree.
+	* .gitignore: Ignore all *.serveez files.
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘MAINTAINERCLEANFILES’.
+
+	* build-aux/common.mk (MAINTAINERCLEANFILES): New var.
+	* Makefile.am (MAINTAINERCLEANFILES): Use ‘+=’; update.
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Make ‘--with-guile-source’ expect an already-configured tree.
+
+	* configure.ac (AC_GUILE_CONFIGURE): Delete call.
+	* acinclude.m4 (AC_GUILE_SOURCE): Make success also
+	conditional on existence of ‘$GUILESRC/config.status’.
+	(AC_GUILE_CONFIGURE): Delete macro.
+	* README: Document former configure option set.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Use ‘if MAINTAINER_MODE’ for "make {redhat, debian}".
+
+	* Makefile.am (redhat, debian): Surround with
+	‘if MAINTAINER_MODE’; don't use ‘@MAINTAINER_MODE_TRUE@’ directly.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Specify Autoconf and Automake prereq in configure.ac.
+
+	* configure.ac (AC_PREREQ): New.
+	(AM_INIT_AUTOMAKE): Add "1.10".
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘CLEANFILES’.
+
+	* build-aux/common.mk (CLEANFILES): New var.
+	* Makefile.am: Include common.mk.
+	(CLEANFILES): Use ‘+=’; update.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Assume signal handlers return ‘void’.
+
+	See (info "(autoconf) Obsolete Macros")
+	for ‘AC_TYPE_SIGNAL’.
+
+	* configure.ac (AC_TYPE_SIGNAL): Delete.
+	(NONVOID_SIGNAL): Delete ‘AC_DEFINE’.
+	(svz_t_retsig): Delete ‘AC_DEFINE_UNQUOTED’.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use LT_{PREREQ,INIT} in configure.ac; bump libtool version.
+
+	* configure.ac (LT_PREREQ, LT_INIT): New.
+	(AC_LIBTOOL_WIN32_DLL, AC_PROG_LIBTOOL): Delete.
+	* autogen.sh: Bump GNU Libtool minimal version to "1.9b"; nfc.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use one-arg form of ‘AM_INIT_AUTOMAKE’.
+
+	* configure.ac (AM_INIT_AUTOMAKE): Use one-arg form.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use ‘AC_CONFIG_FILES’; do ‘AC_OUTPUT’ lastly.
+
+	* configure.ac (AC_CONFIG_FILES): New.
+	(AC_OUTPUT): Use no-arg variant; move to end of file.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize ‘AM_CPPFLAGS’; zonk obsolete ‘INCLUDES’.
+
+	* build-aux/common.mk: New file.
+	* autogen.sh: Bump GNU Automake minimal version to "1.10"; nfc.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] Use ‘AC_CONFIG_HEADERS’, not ‘AC_CONFIG_HEADER’.
+
+	* configure.ac (AC_CONFIG_HEADERS): New.
+	(AC_CONFIG_HEADER): Delete.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Make configure not check for texi2dvi, makeinfo.
+
+	Setting these vars clobbers the standard Automake vars.
+
+	* configure.ac (TEXI2DVI, MAKEINFO): Don't AC_SUBST these
+	vars, and don't search for texi2dvi and makeinfo, respectively.
+	* autogen.sh <prerequisite tools>: Add GNU Texinfo 4.11
+	to the comment; display version info for makeinfo(1).
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Don't backslash-escape backtick in AC_MSG_* text.
+
+	This change relies on Autoconf 2.55, which introduced
+	the ‘autoreconf -Wall’ check to diagnose the situation.
+
+	* acinclude.m4 (AC_GUILE_CONFIGURE, AC_GUILE_CHECK):
+	Don't backslash-escape backtick in ‘AC_MSG_RESULT’
+	and ‘AC_MSG_ERROR’, respectively, text.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Use autoreconf in bootstrap; enable all warnings.
+
+	Bootstrap now displays a bunch of warnings, so this change is not
+	completely "clean", although it is "standalone" (enough).  Before the
+	next release, we still need to modify configure.ac, and the various
+	.m4 and Makefile.am files to ensure no warnings.
+
+	* autogen.sh: Don't run aclocal, autoheader, libtoolize,
+	automake and autoconf individually; instead, run autoreconf.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Make creation of .ds[wp] files optional in bootstrap.
+
+	* Makefile.am (woe32-project-files, no-woe32): New targets.
+	(serveez.dsw): Make this depend on ‘woe32-project-files’.
+	* autogen.sh: Don't invoke build-aux/autodsp; instead, if given
+	arg ‘--woe32’, do "make woe32-project-files" using Makefile.am.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Move vcgen.bat to build-aux/.
+
+	* vcgen.bat: Move from here...
+	* build-aux/vcgen.bat: ...to here.
+	* README-Win32: Update location of vcgen.bat.
+	* Makefile.am (EXTRA_DIST): Likewise.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Use symlinks for autotools files.
+
+	* autogen.sh: Don't specify ‘--copy’ to libtoolize, automake.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Move autodsp, {debian,redhat}.sh to build-aux/.
+
+	Here, "F" means "Move from here...";
+	"T" means "...to here; remove #! line; chmod -x";
+	"U (x)" means "Update location of x".
+	* autodsp: F
+	* build-aux/autodsp: T.
+	* autogen.sh: Update autodsp invocation.
+	* debian.sh.in: F
+	* build-aux/debian.sh.in: T.
+	* redhat.sh.in: F
+	* build-aux/redhat.sh.in: T.
+	* Makefile.am (EXTRA_DIST): U (autodsp).
+	(redhat, debian): Remove foo.sh, respectively, from
+	list of prerequisites; U (redhat.sh), U (debian.sh).
+	* configure.ac (AC_OUTPUT): U (redhat.sh), U (debian.sh);
+	don't apply executable permissions to those scripts.
+	* .gitignore: Update.
+	* README-Win32: Update.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Display version numbers of prerequisite tools on bootstrap.
+
+	* autogen.sh: Display first line of ‘$tool --version’
+	output for each tool: autoconf, libtool, automake.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use build-aux/ as the "config aux dir".
+
+	See (info "(autoconf) Input").
+
+	* configure.ac (AC_CONFIG_AUX_DIR): Specify build-aux/.
+	* Makefile.am (EXTRA_DIST): Remove depcomp.
+	* .gitignore: Update.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Don't run configure as part of bootstrap.
+
+	* autogen.sh: Don't run configure at end;
+	instead, display an informative message.
+
+2011-02-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Don't mention CVS repo; update snapshot command.
+
+	* README (Getting the latest source): Rename from "Getting
+	the latest CVS snapshot"; update blurb and snapshot command.
+	* autogen.sh: Add comment listing prerequisite tools; nfc.
+
+2011-02-01  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Rename configure.in to configure.ac.
+
+	* configure.ac: Rename from configure.in.
+	* HACKING (<release process>): Update.
+
+2011-01-30  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[maint] Delete obsoleted files RELEASE, TODO.
+
+	* RELEASE: Delete file.
+	* TODO: Delete file.
+	* Makefile.am (EXTRA_DIST): Remove RELEASE.
+
+2011-01-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	Move to GPLv3+.
+
+	* COPYING: Update to GPLv3+.
+	* AUTHORS: Bump version in license notice to 3.
+	* BUGS: Likewise.
+	* Makefile.am: Likewise.
+	* NEWS: Likewise.
+	* README: Likewise.
+	* README-Win32: Likewise.
+	* README-alpha: Likewise.
+	* README-cross: Likewise.
+	* THANKS: Likewise.
+	* autodsp: Likewise.
+	* autogen.sh: Likewise.
+	* configure.in: Likewise.
+	* data/Makefile.am: Likewise.
+	* data/init.serveez.in: Likewise.
+	* data/serveez.cfg: Likewise.
+	* doc/Makefile.am: Likewise.
+	* doc/serveez-doc-snarf.awk: Likewise.
+	* doc/serveez.texi: Likewise.
+	* serveez.ap: Likewise.
+	* src/Makefile.am: Likewise.
+	* src/awcs-server/Makefile.am: Likewise.
+	* src/awcs-server/awcs-proto.c: Likewise.
+	* src/awcs-server/awcs-proto.h: Likewise.
+	* src/cfgfile.c: Likewise.
+	* src/cfgfile.h: Likewise.
+	* src/ctrl-server/Makefile.am: Likewise.
+	* src/ctrl-server/control-proto.c: Likewise.
+	* src/ctrl-server/control-proto.h: Likewise.
+	* src/fakeident-server/Makefile.am: Likewise.
+	* src/fakeident-server/ident-proto.c: Likewise.
+	* src/fakeident-server/ident-proto.h: Likewise.
+	* src/foo-server/Makefile.am: Likewise.
+	* src/foo-server/foo-proto.c: Likewise.
+	* src/foo-server/foo-proto.h: Likewise.
+	* src/guile-api.c: Likewise.
+	* src/guile-api.h: Likewise.
+	* src/guile-bin.c: Likewise.
+	* src/guile-bin.h: Likewise.
+	* src/guile-server.c: Likewise.
+	* src/guile-server.h: Likewise.
+	* src/guile-server/Makefile.am: Likewise.
+	* src/guile-server/echo-server.scm: Likewise.
+	* src/guile-server/eval-server.scm: Likewise.
+	* src/guile-server/icecast-server.scm: Likewise.
+	* src/guile-server/inetd.scm: Likewise.
+	* src/guile-server/mandel-client.scm: Likewise.
+	* src/guile-server/mandel-server.scm: Likewise.
+	* src/guile-server/mandel-shared.scm: Likewise.
+	* src/guile.c: Likewise.
+	* src/guile.h: Likewise.
+	* src/http-server/Makefile.am: Likewise.
+	* src/http-server/http-cache.c: Likewise.
+	* src/http-server/http-cache.h: Likewise.
+	* src/http-server/http-cgi.c: Likewise.
+	* src/http-server/http-cgi.h: Likewise.
+	* src/http-server/http-core.c: Likewise.
+	* src/http-server/http-core.h: Likewise.
+	* src/http-server/http-dirlist.c: Likewise.
+	* src/http-server/http-dirlist.h: Likewise.
+	* src/http-server/http-proto.c: Likewise.
+	* src/http-server/http-proto.h: Likewise.
+	* src/irc-core/Makefile.am: Likewise.
+	* src/irc-core/irc-core.c: Likewise.
+	* src/irc-core/irc-core.h: Likewise.
+	* src/irc-server/Makefile.am: Likewise.
+	* src/irc-server/irc-config.c: Likewise.
+	* src/irc-server/irc-config.h: Likewise.
+	* src/irc-server/irc-crypt.c: Likewise.
+	* src/irc-server/irc-event-1.c: Likewise.
+	* src/irc-server/irc-event-2.c: Likewise.
+	* src/irc-server/irc-event-3.c: Likewise.
+	* src/irc-server/irc-event-4.c: Likewise.
+	* src/irc-server/irc-event-5.c: Likewise.
+	* src/irc-server/irc-event-6.c: Likewise.
+	* src/irc-server/irc-event-7.c: Likewise.
+	* src/irc-server/irc-event.h: Likewise.
+	* src/irc-server/irc-proto.c: Likewise.
+	* src/irc-server/irc-proto.h: Likewise.
+	* src/irc-server/irc-server.c: Likewise.
+	* src/irc-server/irc-server.h: Likewise.
+	* src/libserveez.h: Likewise.
+	* src/libserveez/Makefile.am: Likewise.
+	* src/libserveez/alloc.c: Likewise.
+	* src/libserveez/alloc.h: Likewise.
+	* src/libserveez/array.c: Likewise.
+	* src/libserveez/array.h: Likewise.
+	* src/libserveez/asprintf.c: Likewise.
+	* src/libserveez/asprintf.h: Likewise.
+	* src/libserveez/binding.c: Likewise.
+	* src/libserveez/binding.h: Likewise.
+	* src/libserveez/boot.c: Likewise.
+	* src/libserveez/boot.h: Likewise.
+	* src/libserveez/cfg.c: Likewise.
+	* src/libserveez/cfg.h: Likewise.
+	* src/libserveez/codec/Makefile.am: Likewise.
+	* src/libserveez/codec/bzip2.c: Likewise.
+	* src/libserveez/codec/bzip2.h: Likewise.
+	* src/libserveez/codec/codec.c: Likewise.
+	* src/libserveez/codec/codec.h: Likewise.
+	* src/libserveez/codec/gzlib.c: Likewise.
+	* src/libserveez/codec/gzlib.h: Likewise.
+	* src/libserveez/core.c: Likewise.
+	* src/libserveez/core.h: Likewise.
+	* src/libserveez/coserver/Makefile.am: Likewise.
+	* src/libserveez/coserver/coserver.c: Likewise.
+	* src/libserveez/coserver/coserver.h: Likewise.
+	* src/libserveez/coserver/dns.c: Likewise.
+	* src/libserveez/coserver/dns.h: Likewise.
+	* src/libserveez/coserver/ident.c: Likewise.
+	* src/libserveez/coserver/ident.h: Likewise.
+	* src/libserveez/coserver/reverse-dns.c: Likewise.
+	* src/libserveez/coserver/reverse-dns.h: Likewise.
+	* src/libserveez/defines.h: Likewise.
+	* src/libserveez/dynload.c: Likewise.
+	* src/libserveez/dynload.h: Likewise.
+	* src/libserveez/hash.c: Likewise.
+	* src/libserveez/hash.h: Likewise.
+	* src/libserveez/icmp-socket.c: Likewise.
+	* src/libserveez/icmp-socket.h: Likewise.
+	* src/libserveez/interface.c: Likewise.
+	* src/libserveez/interface.h: Likewise.
+	* src/libserveez/ipdata.h: Likewise.
+	* src/libserveez/iphlpapi.h: Likewise.
+	* src/libserveez/libserveez.ap: Likewise.
+	* src/libserveez/mutex.c: Likewise.
+	* src/libserveez/mutex.h: Likewise.
+	* src/libserveez/passthrough.c: Likewise.
+	* src/libserveez/passthrough.h: Likewise.
+	* src/libserveez/pipe-socket.c: Likewise.
+	* src/libserveez/pipe-socket.h: Likewise.
+	* src/libserveez/portcfg.c: Likewise.
+	* src/libserveez/portcfg.h: Likewise.
+	* src/libserveez/raw-socket.c: Likewise.
+	* src/libserveez/raw-socket.h: Likewise.
+	* src/libserveez/server-core.c: Likewise.
+	* src/libserveez/server-core.h: Likewise.
+	* src/libserveez/server-loop.c: Likewise.
+	* src/libserveez/server-loop.h: Likewise.
+	* src/libserveez/server-socket.c: Likewise.
+	* src/libserveez/server-socket.h: Likewise.
+	* src/libserveez/server.c: Likewise.
+	* src/libserveez/server.h: Likewise.
+	* src/libserveez/snprintf.c: Likewise.
+	* src/libserveez/snprintf.h: Likewise.
+	* src/libserveez/socket.c: Likewise.
+	* src/libserveez/socket.h: Likewise.
+	* src/libserveez/sparsevec.c: Likewise.
+	* src/libserveez/sparsevec.h: Likewise.
+	* src/libserveez/tcp-socket.c: Likewise.
+	* src/libserveez/tcp-socket.h: Likewise.
+	* src/libserveez/udp-socket.c: Likewise.
+	* src/libserveez/udp-socket.h: Likewise.
+	* src/libserveez/util.c: Likewise.
+	* src/libserveez/util.h: Likewise.
+	* src/libserveez/vector.c: Likewise.
+	* src/libserveez/vector.h: Likewise.
+	* src/libserveez/windoze.c: Likewise.
+	* src/libserveez/windoze.h: Likewise.
+	* src/mkpassword.ap: Likewise.
+	* src/mkpassword.c: Likewise.
+	* src/nut-server/Makefile.am: Likewise.
+	* src/nut-server/gnutella.c: Likewise.
+	* src/nut-server/gnutella.h: Likewise.
+	* src/nut-server/nut-core.c: Likewise.
+	* src/nut-server/nut-core.h: Likewise.
+	* src/nut-server/nut-hostlist.c: Likewise.
+	* src/nut-server/nut-hostlist.h: Likewise.
+	* src/nut-server/nut-request.c: Likewise.
+	* src/nut-server/nut-request.h: Likewise.
+	* src/nut-server/nut-route.c: Likewise.
+	* src/nut-server/nut-route.h: Likewise.
+	* src/nut-server/nut-transfer.c: Likewise.
+	* src/nut-server/nut-transfer.h: Likewise.
+	* src/option.c: Likewise.
+	* src/option.h: Likewise.
+	* src/prog-server/Makefile.am: Likewise.
+	* src/prog-server/prog-server.c: Likewise.
+	* src/prog-server/prog-server.h: Likewise.
+	* src/serveez-config.in: Likewise.
+	* src/serveez.ap: Likewise.
+	* src/serveez.c: Likewise.
+	* src/serveez.h: Likewise.
+	* src/serveez.scm: Likewise.
+	* src/sntp-server/Makefile.am: Likewise.
+	* src/sntp-server/sntp-proto.c: Likewise.
+	* src/sntp-server/sntp-proto.h: Likewise.
+	* src/svzconfig.h.in: Likewise.
+	* src/svzconfig.h.serveez: Likewise.
+	* src/tunnel-server/Makefile.am: Likewise.
+	* src/tunnel-server/tunnel.c: Likewise.
+	* src/tunnel-server/tunnel.h: Likewise.
+	* test/Makefile.am: Likewise.
+	* test/array-test.c: Likewise.
+	* test/array.ap: Likewise.
+	* test/binary-test.scm: Likewise.
+	* test/codec-test.c: Likewise.
+	* test/codec.ap: Likewise.
+	* test/guile-server-test.scm: Likewise.
+	* test/hash-test.c: Likewise.
+	* test/hash.ap: Likewise.
+	* test/prog-test.c: Likewise.
+	* test/prog.ap: Likewise.
+	* test/server-test.scm: Likewise.
+	* test/spvec-test.c: Likewise.
+	* test/spvec.ap: Likewise.
+	* test/test-suite.scm: Likewise.
+	* test/test.c: Likewise.
+	* test/test.h: Likewise.
+	* test/vector-test.c: Likewise.
+	* test/vector.ap: Likewise.
+
+2007-03-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Fixed a bug occurring due to updated automake
+	version.
+
+2004-03-20  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for <floss.h> in order to support the
+	nsr-tandem-nsk system.  Thanks to Tom Bates <tom.bates@hp.com>.
+	Changed header inclusion where necessary.
+
+2003-08-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Improvement and bug fixes in the build
+	system.
+
+2003-07-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Partly reverted previous patch.  Use target,
+	build and host where appropriate.
+
+2003-06-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in, acinclude.m4: Proper use of the AC_CANONICAL_*
+	macros.	 Using host_alias instead of host, build_alias instead
+	of build and target_alias instead of target.
+
+2003-06-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Removed the SVZ_ENABLE_CRYPT #define.
+	Simplified to SVZ_HAVE_CRYPT only.  Changed all callers/users.
+
+2003-06-14  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Corrected the AC_INIT() call.  Definition of
+	svz_c_const, SVZ_ENABLE_DEBUG, SVZ_ENABLE_CRYPT,
+	SVZ_ENABLE_FLOOD_PROTECTION, SVZ_HAVE_VARARGS_H,
+	SVZ_HAVE_PTHREAD_H, SVZ_HAVE_THREADS, SVZ_HAVE_SNPRINTF,
+	SVZ_HAVE_VSNPRINTF, svz_t_socket, svz_t_handle, svz_t_retsig,
+	svz_t_size, svz_t_off, SVZ_HAVE_CRYPT, svz_c_signed.  Thus we
+	avoid macro name clashes with other applications using the serveez
+	core library.  Changed *all* callers/users.  Renamed the
+	--enable-* and --disable-* options corresponding to its default
+	value.  Removed INVALID_SOCKET and inline definition.
+
+	* README-Win32, RELEASE, doc/serveez.en.html, doc/serveez.texi:
+	Replaced each occurrence of 'www.textsure.net' by 'www.lkcc.org'.
+
+2003-06-03  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Released version `0.1.5' and bumped up to
+	version `0.1.6'.
+
+2003-06-02  Stefan Jahn  <stefan@lkcc.org>
+
+	* THANKS, NEWS, config.h.serveez, version.h.serveez,
+	src/svzconfig.h.serveez: Updated these file for the upcoming
+	release.
+
+2003-05-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* Updated configure and build system to `libtool 1.4.2',
+	`automake 1.7.5' and `autoconf 2.57'.
+
+	* autogen.sh: Patching libtool 1.5 code to build on MinGW32.
+
+	* acinclude.m4, configure.in: Modified to conform with
+	Autoconf 2.57.
+
+	* README-cross: Clarified confusions about host and target
+	system.
+
+	* COPYING, INSTALL, README, config.guess, config.sub, depcomp,
+	install-sh, ltmain.sh, mkinstalldirs, doc/mdate-sh: Updated.
+
+2003-01-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (have_threads): Checking for `pthread_create()'
+	in `-lc_r' for FreeBSD platforms.
+
+2003-01-09  Stefan Jahn  <stefan@lkcc.org>
+
+	* README-Win32, svzconfig.h.serveez, version.h.serveez,
+	config.h.serveez: Updated Windows files.
+
+2003-01-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: New option `--with-thread-safety'.  Enables
+	support for some thread safety functionality.
+	Conditionalized the `-no-undefined' flag for libtool.
+
+2002-12-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* debian.sh.in: Added `check' target and use of some
+	standard variables.
+
+	* README: Propagated the CVS repository at
+	<subversions.gnu.org>.
+
+2002-10-14  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Released version `0.1.4' and bumped up to
+	version `0.1.5'.
+
+2002-10-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.ap (PROJECTS): Added the `prog' and `mkpassword'
+	project.  Updated the project dependencies.
+
+	* configure.in: Fixed check for `getrpcent()'.
+
+	* config.h.serveez, version.h.serveez: Updated.
+
+	* config.guess, config.sub: Updated these files from the
+	GNU servers.
+
+	* autodsp (create_dsp): Some more sane checks for certain
+	variable names.  Bumped up version number.
+
+	* vcgen.bat: Additionally copy `svzpath.h.serveez'.
+
+2002-09-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* Changed every occurrence of <ftp://ftp.gnu.org/...> into
+	<http://ftp.gnu.org/...>.
+
+	* Makefile.am: Added `config.cache' and `config.log' to the
+	DISTCLEANFILES.
+
+2002-07-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for `host_statistics()'.
+
+2002-07-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* README-cross: Added comment about the `HOST_CC' environment
+	variable for mingw32 host builds.
+
+2002-07-25  Stefan Jahn  <stefan@lkcc.org>
+
+	* depcomp: New file.
+
+	* missing: Updated.
+
+	* configure.in, autogen.sh: Compatibility with Autoconf 2.5x
+	for a possible change of the 'Auto*' tools.
+
+	* Makefile.am (EXTRA_DIST): Added 'depcomp' script.
+
+2002-07-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* README: Updated anonymous CVS instructions.
+
+	* configure.in: Better support for non GNU date	commands.
+	Checking for getrpcent() and alike systems calls in -lnsl.
+
+2002-06-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for <sys/ioctl.h>.
+
+	* BUGS: Added new bug related to out-of-band data on
+	GNU/Linux and poll().
+
+2002-02-16  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Released version `0.1.3' and bumped up to
+	version `0.1.4'.
+
+2002-02-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* INSTALL: Added missing documentation for the `configure'
+	options `--enable-iflist' and `--enable-heap-count'.
+
+	* Makefile.am (debian): Rule for running the Debian script.
+
+	* debian.sh.in: New file.  For automated Debian packaging.
+
+2002-02-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Added some more checks for RPC capabilities.
+
+	* acinclude.m4: Fixed type when configuring Guile.
+
+2002-01-02  Stefan Jahn  <stefan@lkcc.org>
+
+	* acinclude.m4: Let `--with-guile=DIR' override the results
+	from `guile-config'.
+
+	* README-cross: New file describing how to cross-compile
+	the Serveez package.
+
+2001-12-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* acinclude.m4: Widened pattern to allow Guile 1.3
+	installations and above version.
+
+2001-12-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for more rpc functionality and
+	headers.
+
+2001-12-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* acinclude.m4: New macro AC_LIBTOOL_SOLARIS.  Helps libtool
+	to cope with SunOS/Solaris when building shared libraries.
+	Also added a macro which checks the Guile configuration and
+	exits if necessary.
+
+2001-12-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checks now also for declaration of
+	`alphasort()' in <dirent.h>.
+
+2001-12-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Solaris libtool/gcc/ld fix.  Adds the location
+	of libiberty.a and libgcc.a itself to the linker line.
+	Checks for the getrpc*() functions added to the Guile interface
+	of Serveez.
+
+2001-12-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Released version `0.1.2' and bumped up to
+	version `0.1.3'.
+
+2001-11-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for working `signed' keyword for
+	pre-ANSI compilers.
+
+	* autodsp: Code cleanups.
+
+	* acinclude.m4: Some more magic, *sigh*, to detect a valid
+	Guile version (broken sed).
+	Enabling networking API in Guile source build.
+
+2001-11-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* autodsp: First draft of a perl script generating Workspace
+	and Project files for MSVC from *.ap files.
+
+2001-10-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* Applied John Fitzgerald's patches for the top level
+	directory.
+
+2001-10-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: New option `--enable-passthrough' enables
+	the builtin program passthrough server.
+
+2001-10-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Released version `0.1.1' and bumped up to
+	version `0.1.2'.
+
+2001-09-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for NSAddImage() and the appropriate
+	header. This dynamic linker interface is Darwin (MacOS)
+	specific.
+
+2001-09-24  Stefan Jahn  <s.jahn@bit-side.com>
+
+	* redhat.sh.in: Added RPM command lines for version 3.0.0
+	and above.
+
+2001-09-17  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (MAKEINFO): Changed sed reg-expression for
+	parsing the correct version number.
+
+	* configure.in: Updated to `libtool 1.4.2'.
+
+2001-09-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* BUGS: Removed bug id 0015. Declared the named pipe interface
+	under Windows to be ok.
+
+2001-09-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for strsignal() declaration.
+	Checking for hstrerror() declaration.
+
+2001-09-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Updated to `libtool 1.4.1'.
+	New configure option `--with-opt=FLAGS' introduced. Thus the
+	user can pass additional compiler flags.
+
+2001-09-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (RPM): Checking for RPM builder version in
+	maintainer mode only.
+
+2001-09-03  Stefan Jahn  <stefan@lkcc.org>
+
+	* redhat.sh.in: Changed file owner of the package files to
+	root.root which is the default for RPMs.
+	Also included directories.
+
+2001-08-17  Stefan Jahn  <stefan@lkcc.org>
+
+	* autogen.sh: Let automake find "doc/serveez-api.texi".
+
+	* configure.in: Disable test for "-fschedule-insns2" on i386 and
+	i486 architectures.
+
+2001-07-25  Stefan Jahn  <stefan@lkcc.org>
+
+	* redhat.sh.in: New file. Creates a source and binary RPM
+	package. Make sure you can access REDHAT_TOPDIR defined in
+	`configure.in'. Type `make redhat' in the top level directory
+	in order to actually pack serveez.
+
+2001-07-16  Stefan Jahn  <stefan@lkcc.org>
+
+	* acinclude.m4: Checking for proper Guile version and state
+	a warning if it failed.
+
+2001-07-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (MAKEINFO): Checking the version of `makeinfo'.
+	We require version >= 4.0 because texi files use @exampleindent.
+
+2001-07-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Released version `0.1.0' and bumped up to
+	version `0.1.1'.
+
+2001-07-11  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Caching some more results.
+
+2001-07-09  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Conditionalized the use of sendfile().
+
+2001-07-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Fixed a bug for which the user could not disable
+	the sntp server.
+	(SERVERDIRS): The server sub directories. If you are going to
+	disable one of the servers the build process will leave the
+	directories untouched. Thus if you want to `make dist' make sure
+	you enabled all servers.
+
+	* README: Added a paragraph about build problems due to
+	dynamic linking.
+
+2001-06-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: New option: `--disable-guile-server' can suppress
+	the support for guile servers since it is included by default. This
+	is yet experimental code.
+
+2001-06-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* INSTALL: Documented the `--with-guile-source=DIR' option.
+
+2001-06-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Use the below macros. Those we have a new
+	configure option: `--with-guile-source=DIR' specifying a guile
+	source tree (tested with Guile 1.4 only).
+
+	* acinclude.m4: New file containing three m4 macros:
+	AC_GUILE, AC_GUILE_SOURCE and AC_GUILE_CONFIGURE.
+
+2001-05-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Added checks for texi2dvi (requires tex)
+	and texi2html (version >= 1.64 required). Target "distcheck"
+	now successfully processing due to some changes to the
+	Makefile.am's in `doc/' and `test/' directory.
+
+2001-05-22  Stefan Jahn  <stefan@lkcc.org>
+
+	* Wiped out all references to sizzle within the sources.
+	Documentation is still waiting for that...
+	* Made a lot of changes in order to get the package compiled
+	under Win32 and GNU/Linux-ia64.
+
+2001-05-18  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Let the `configure' script create a
+	`svzconfig.h' file which gets installed.
+
+2001-04-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Using `libtool 1.4'.
+
+2001-04-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Dropped everything related to sizzle.
+
+	* NEWS: Bumped up version to 0.1.0
+
+	* Makefile.am (EXTRA_DIST): Dropped sizzle specific files.
+
+	* INSTALL: Replaced `--with-sizzle' note with `--with-guile'
+	note.
+
+2001-04-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for -lmswsock library.
+	Included AC_TYPE_MODE_T.
+
+2001-02-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Dropped configure options for the coservers.
+	Always compiling them into the core library.
+
+2001-01-24  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (SERVERLIBS): If you add some additional library
+	here you can include static/shared server modules.
+
+	* configure.in: Checking for GNU libtool.
+
+2001-01-21  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for dl library and the `dlfcn.h' header
+	file for dynamic server loading.
+
+2001-01-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Bumped up version to 0.0.21
+
+2001-01-04  Raimund Jacob  <raimi@lkcc.org>
+
+	* configure.in: Configuring the `ENABLE_FAKEIDENT' define
+	for the Fake Ident Server.
+
+2001-01-02  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (dist-check): This target is derived from the
+	automatically created target `distcheck' and checks the
+	distribution. Changed `AM_CPPFLAGS = -I..' into
+	`AM_CPPFLAGS = -I$(top_srcdir)/src'.
+
+2000-12-15  Stefan Jahn  <stefan@lkcc.org>
+
+	* INSTALL: Documented newly available option
+	`--enable-sntp-proto' and dropped `--enable-q3key-proto'.
+
+	* configure.in: Checking for gettimeofday() for the newly
+	created SNTP server.
+
+2000-12-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Bumped up version to 0.0.20
+
+	* Release of version 0.0.19: Last known to include the Quake III
+	license server which we are going to drop due to legacy reasons
+	and the support of commercial software which is not the aim
+	of the GNU project.
+
+2000-12-06  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* autogen.sh: Added `--enable-maintainer-mode' so that the
+	documentation builds after a CVS checkout without problems.
+
+2000-12-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for ws2_32.dll instead of wsock32.dll
+	because use of WSAStringToAddress().
+	Checking for `ws2tcpip.h' where IP_HDRINCL is defined.
+
+2000-11-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* serveez.dsp: From now on we are using the ws2_32.dll as socket
+	implementation. This is windoze's version 2. Maybe the support of
+	raw sockets is better like this...
+
+2000-10-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Replaced the AC_C_BIGENDIAN macro to keep the
+	configure script still usable for cross compilers.
+
+2000-10-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Check for `waitpid'.
+
+2000-09-28  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (SUBDIRS): Added the `data' directory and put
+	all data files from the `doc' directory there. Put sizzle cgi
+	example there, too.
+
+2000-09-16  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Added some checks for the crypt() interface.
+
+2000-09-11  Raimund Jacob  <raimi@lkcc.org>
+
+	* configure.in (have_inet_aton): Stefan added check for broken
+	inet_ntoa. Workaround is in util.c.
+
+2000-08-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* README: Inserted a short description of what Serveez does
+	and what not. Should get "official" description.
+
+	* README-Win32: Updated documentation about the Win32
+	port.
+
+	* Makefile.am (EXTRA_DIST): Include the `version.h' files
+	for both projects for the M$ Visual C++ compiler port.
+
+	* configure.in: Added check for big endian architectures.
+
+2000-08-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (EXTRA_DIST): Added files for building the
+	serveez project with M$ Visual C++ compiler including
+	the README-Win32 file.
+
+2000-08-26  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (define_enable_nut): With the new option
+	--enable-gnutella the user is allowed to compile in the
+	gnutella spider.
+
+2000-08-20  Stefan Jahn  <stefan@lkcc.org>
+
+	* INSTALL: Added documentation for --enable-poll.
+
+	* configure.in (define_enable_poll): If you do not want to
+	use poll() instead of select() you might now --disable-poll.
+	Now always using full version numbers (no more pre's).
+
+2000-08-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Checking for the get-/setrlimit interface.
+	Also try finding the appropriate headers for that.
+	Check for netint/tcp.h (for TCP_CORK), sys/poll.h and poll()
+	itself for the alternative server loop and direct.h for Win32's
+	directory functions.
+
+	* configure.in: Added check for Quake license key server.
+
+2000-07-14  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Added check for unistd.h,
+	sys/time.h and the AC_HEADER_DIRENT macro.
+
+	* configure.in: Checking for inet_aton in the
+	library "libresolv.so" on Solaris.
+
+2000-06-21  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Added check for typedef off_t.
+	This is used with sendfile().
+
+2000-06-20  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Add check for sendfile(). The
+	integrated http server might use it.
+
+2000-06-16  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Added detection of _vsprintf,
+	_vsnprintf and _snprintf.
+
+2000-06-16  Raimund Jacob  <raimi@lkcc.org>
+
+	* configure.in: We can now use either an already installed sizzle
+	[dynamically linked] or build our own from the source distribution
+	[statically linked]. If mgrabmue provides a 'sizzle-config link-static'
+	we can statically link against a already installed sizzle.
+
+2000-06-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in: Dropped AWCS_MASTER_PIPE feature because this is
+	now part of the general server concept.
+
+2000-04-12  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (define_enable_warn): Checking for -ansi compiler
+	option if Linux was detected.
+
+	* INSTALL: Detailed description of all the ./configure script
+	options.
+
+2000-03-19  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (enable_procstat): Checking for snprintf.
+
+2000-02-05  Stefan Jahn  <stefan@lkcc.org>
+
+	* configure.in (CPPEXTRAFLAGS): AC_HEADER_SYS_WAIT checks
+	if the <sys/wait.h> is present and includes it, if necessary.
+
+	* configure.in (CPPEXTRAFLAGS): --enable-optimizations checks
+	for some compiler switches.
+
+	* configure.in : Checking for socklen_t, SOCKET, the library
+	wsock32 and the feature --enable-http-proto.
+
+1999-12-17  Raimund Jacob  <raimi@lkcc.org>
+
+	* configure.in: Bumped version number to 0.0.11a. The is tons
+	of stuff todo. mgrabmue should go from here...
+
+1999-12-16  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* configure.in: Bumped version number to 0.0.11.
+	Threw in Cygwin detection, but without consequences yet.
+
+1999-11-26  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* configure.in: Bumped version number to 0.0.10.
+
+1999-11-18  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* configure.in: Bumped version number to 0.0.9.
+
+1999-10-21  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* configure.in: Added configure switch --enable-debug to
+	enable/disable debugging output and wrapped up all callers to
+	log_printf() in #if/#endifs.
+	Added check for libnsl, which is needed on Solaris for
+	gethostbyname().
+	Fixed check for vsprintf() and vsnprintf().  Now configure does
+	abort if no vsprintf() is available, and give a warning if
+	vsnprintf() is emulated by the unsafe vsprintf().
+
+1999-10-19  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* INSTALL: Cleanup and minor corrections (refer to the AUTHORS
+	file for email addresses).
+
+	* configure.in: Added support for autoconf reverse host name
+	lookup support.  Added support for user specified CC and CPP
+	flags.
+
+1999-10-03  Martin Grabmueller  <mgrabmue@cs.tu-berlin.de>
+
+	* configure.in: Created this package.
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2000, 2001, 2002, 2003, 2004, 2007 Stefan Jahn
+Copyright (C) 1999, 2000, 2001 Raimund Jacob
+Copyright (C) 1999, 2000 Martin Grabmueller
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

@@ -1,0 +1,311 @@
+#!/bin/sh
+exec ${GUILE-guile} -e '(guile-baux tsin)' -s $0 "$@" # -*- scheme -*-
+!#
+;;; tsin --- Interpolate texinfo snippets
+
+;; Copyright (C) 2010, 2011 Thien-Thi Nguyen
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;; Usage: tsin [options] file...
+;;
+;; Process `@tsin' directives in each FILE, writing output to
+;; a new file made by replacing the extension (if any) of the
+;; `basename' of FILE with ".texi".
+;;
+;; Options (defaults in square braces):
+;;  -c, --coding CODING     -- Use encoding CODING [binary].
+;;  -f, --file ARCHIVE      -- Consult ARCHIVE for texinfo snippets.
+;;  -m, --default MOD       -- Use MOD for non-moduled items [(guile-user)].
+;;  -e, --error-if-missing  -- Fail if a reference cannot be resolved.
+;;  -s, --same-dir          -- Write to same directory as FILE [cwd].
+;;  -v, --verbose           -- Write progress info to stderr.
+;;
+;; The option `-f' is obligatory.
+
+;;; Code:
+
+(define-module (guile-baux tsin)
+  #:export (main)
+  #:use-module ((guile-baux common) #:select (fs fso fse die check-hv qop<-args))
+  #:use-module ((guile-baux ts-base) #:select (ts:name
+                                               ts:module
+                                               ts:blurb
+                                               ts:category
+                                               ts:sig
+                                               ts:options
+                                               ar:modules
+                                               ar:items
+                                               read-ar-file))
+  #:use-module ((guile-baux read-string) #:select (read-string))
+  #:use-module ((guile-baux stemname) #:select (stemname))
+  #:use-module ((ice-9 and-let-star) #:select (and-let*))
+  #:use-module ((ice-9 rdelim) #:select (read-line write-line))
+  #:use-module ((srfi srfi-1) #:select (any find))
+  #:use-module ((srfi srfi-13) #:select (string-prefix?
+                                         string-trim-both
+                                         string-join
+                                         (string-index . str-index)
+                                         string-concatenate-reverse))
+  #:use-module ((srfi srfi-14) #:select (char-set)))
+
+(define no-parens
+  (let ((cs (char-set #\( #\))))
+    (lambda (s)
+      (string-trim-both s cs))))
+
+(define format-rovn
+  (let ((ht (make-hash-table)))
+    (define (h-ref k)
+      (hash-ref ht k))
+    (define (h-set! k v)
+      (hash-set! ht k v)
+      v)
+    ;; rv
+    (lambda (r o v . names)
+      (let* ((key (cons* r o v))
+             (fmt (or (h-ref key)
+                      (let* ((ov (+ o v))
+                             (ans '()))
+                        (define (pile! x)
+                          (set! ans (cons x ans)))
+                        (define (pile-args! s count)
+                          (do ((count count (1- count)))
+                              ((zero? count))
+                            (pile! s)))
+                        (pile-args! " ~A"   r)
+                        (pile-args! " [~A" ov)
+                        (or (zero?  v) (pile! "@dots{}"))
+                        (or (zero? ov) (pile! (make-string ov #\])))
+                        (h-set! key (string-concatenate-reverse ans)))))
+             (keywords (find pair? names)))
+        (values keywords
+                (apply fs fmt (map (lambda (x)
+                                     (if (pair? x)
+                                         (fs "@t{keyword value}~A"
+                                             (if (< 1 v)
+                                                 "@dots{}"
+                                                 ""))
+                                         x))
+                                   names)))))))
+
+(define (format-texinfo name site-opts ts)
+
+  (define (site-opt x)
+    (memq x site-opts))
+
+  (define option
+    (let ((alist (ts:options ts)))
+      (lambda (x)
+        (assq-ref alist x))))
+
+  (define (format-sig sig)
+    (call-with-values (lambda () (apply format-rovn (vector->list sig)))
+      (lambda (kw s)
+        (if kw (with-output-to-string
+                 (lambda ()
+                   (display s)
+                   (or (site-opt 'no-kw-index)
+                       (for-each (let ((same (fs ", @t{~A}" name)))
+                                   (lambda (x)
+                                     (fso "~%@cindex @t{#:~A}~A" x same)))
+                                 kw))
+                   (or (site-opt 'no-kw-list)
+                       (let ((flat (fs "@r{Keywords:} ~A "
+                                       (string-join
+                                        ((if (site-opt 'kw-sort)
+                                             (lambda (ls)
+                                               (sort ls string<?))
+                                             identity)
+                                         (map (lambda (x)
+                                                (fs "~A" x))
+                                              kw))
+                                        "@r{,} "))))
+                         (let fill ((last 0) (col 0))
+                           (cond ((str-index flat #\space (1+ last))
+                                  => (lambda (next)
+                                       (let ((span (- next last)))
+                                         (cond ((< 72 (+ col span))
+                                                (string-set! flat last #\newline)
+                                                (fill next span))
+                                               (else
+                                                (fill next (+ col span)))))))))
+                         (fso "~%@~A~%~A~%@end ~A~%"
+                              'example flat 'example)))))
+            s))))
+
+  (let ((name (ts:name ts))
+        (blurb (ts:blurb ts)))
+    (if (string? name)
+        (write-line blurb)
+        (let* ((cat (or (option 'category)
+                        (ts:category ts)))
+               (sig (ts:sig ts))
+               (dtype (if sig 'deffn 'defvr)))
+          (fso "@~A {~A} ~A~A~%~A~%@end ~A~%"
+               dtype (string-capitalize (if (symbol? cat)
+                                            (symbol->string cat)
+                                            cat))
+               name (or (and-let* ((string (option 'sig)))
+                          (fs " ~A" (no-parens string)))
+                        (and (not sig) "")
+                        (format-sig sig))
+               blurb
+               dtype)))))
+
+(define (run bummer explain on-disk coding default-module
+             error-if-missing? same-dir? input)
+  (let* ((ar (read-ar-file bummer coding #f on-disk))
+         (modules (ar:modules ar))
+         (items (ar:items ar)))
+
+    (define (head! m)
+      (set! modules (cons m (delete! m modules))))
+
+    (define (set-current-module! m)
+      (cond ((and (pair? modules) (equal? m (car modules))))
+            (else
+             ;; Is this a good idea, really?
+             (fso "@set TSINCURMOD ~A~%" m)
+             (head! m))))
+
+    (define (lookup name module)
+      (hash-ref items (cons name module)))
+
+    (define (interp! loc name . rest)
+      (let* ((default? (or (null? rest) (eq? '- (car rest))))
+             (site-opts (or (and (not (string? name))
+                                 (pair? rest)
+                                 (cdr rest))
+                            '()))
+             (module (if default?
+                         (car modules)
+                         (car rest))))
+        (define (missing)
+          (fs "MISSING: ~S ~S" module name))
+        (define (fmt-texinfo ts)
+          (format-texinfo name site-opts ts))
+        (and (string? name)
+             (pair? rest)
+             (pair? (cdr rest))
+             (let ((heading (cadr rest)))
+               (fso "@~A ~A~%~%" (if (eq? '- heading)
+                                     'heading
+                                     heading)
+                    name)))
+        (cond ((lookup name module)
+               => fmt-texinfo)
+              ((any (lambda (module)
+                      (lookup name module))
+                    ((if default?
+                         identity
+                         cdr)
+                     modules))
+               => (lambda (ts)
+                    (and default? (set-current-module! (ts:module ts))
+                    (fmt-texinfo ts))))
+              (error-if-missing?
+               (bummer "~A: ~A" loc (missing)))
+              (else
+               (fse "~A: ~A~%" loc (missing))
+               (fso "~A~%" (missing))))))
+
+    (define (process filename)
+      (head! default-module)
+      (let ((p (open-input-file filename)))
+        (let loop ()
+          (let ((line (read-line p 'concat)))
+            (cond ((eof-object? line)
+                   (close-port p))
+                  ((string-prefix? "@tsin" line)
+                   ;; Mangle the line for ‘read’.
+                   (string-set! line 0 #\()
+                   (string-set! line (1- (string-length line)) #\))
+                   (let* ((form (cdr (read-string line)))
+                          (loc (fs "~A:~A" filename (port-line p))))
+                     (define (comment)
+                       (fse "~A: ~A~%" loc (cadr form)))
+                     (explain (lambda () (fse "~A: ~S~%" loc form)))
+                     (or (pair? form)
+                         (bummer "~A: no command" loc))
+                     (case (car form)
+                       ((m) (set-current-module! (cadr form)))
+                       ((i) (apply interp! loc (cdr form)))
+                       ((c) (explain comment))
+                       ((C) (comment))
+                       (else (bummer "~A: bad @tsin command: ~A"
+                                     loc (car form)))))
+                   (loop))
+                  (else
+                   (display line)
+                   (loop)))))))
+
+    (define (output-name filename)
+      (let ((texi (fs "~A.texi" (stemname filename))))
+        (if same-dir?
+            (in-vicinity (dirname filename) texi)
+            texi)))
+
+    (define (one filename output)
+      (with-output-to-file output
+        (lambda () (process filename)))
+      (explain (lambda () (fse "tsin: wrote ~A~%" output))))
+
+    (for-each one input (map output-name input))))
+
+(define (main/qop me qop)
+  (define (bummer s . rest)
+    (apply die #f (string-append "~A: " s "~%") me rest))
+  (run bummer
+       ;; explain
+       (if (qop 'verbose)
+           (lambda (thunk)
+             (thunk))
+           identity)
+       ;; on-disk
+       (or (qop 'file)
+           (bummer "missing tsar filename"))
+       ;; coding
+       (or (qop 'coding string->symbol)
+           'binary)
+       ;; default-module
+       (or (qop 'default read-string)
+           '(guile-user))
+       ;; error-if-missing?
+       (qop 'error-if-missing)
+       ;; same-dir?
+       (qop 'same-dir)
+       ;; input
+       (qop '())))
+
+(define (main args)
+  (check-hv args '((package . "Guile-BAUX")
+                   (version . "0.0")
+                   (help . commentary)))
+  (main/qop
+   ;; me
+   (basename (car args))
+   ;; qop
+   (qop<-args args '((coding (single-char #\c) (value #t))
+                     (file (single-char #\f) (value #t))
+                     (default (single-char #\m) (value #t))
+                     (error-if-missing (single-char #\e))
+                     (same-dir (single-char #\s))
+                     (verbose (single-char #\v))))))
+
+;;; tsin ends here

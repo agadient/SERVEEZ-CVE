@@ -1,0 +1,147 @@
+;;; t003 --- Guile server
+
+;; Copyright (C) 2011-2013 Thien-Thi Nguyen
+;; Copyright (C) 2001, 2002 Stefan Jahn <stefan@lkcc.org>
+;;
+;; This is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This software is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
+
+;; Skip this test if the Guile server is not enabled.
+(primitive-load-path "but-of-course")
+(or (boc? 'ENABLE_GUILE_SERVER)
+    (exit 77))
+
+(primitive-load-path "common")
+(set! TESTBASE "t003")
+
+(write-config!
+ '((or (equal? "1" (getenv "VERBOSE"))
+       (set! println (lambda x x)))
+
+   ;; The rest is based on ../src/guile-server/echo-server.scm,
+   ;; fixed up, pared down, and shoved (re-indented :-) sideways.
+
+   (define (echo-global-init servertype)
+     (println "Running echo global init " servertype ".")
+     0)
+
+   (define (echo-init server)
+     (println "Running echo init " server ".")
+     0)
+
+   (define (echo-global-finalize servertype)
+     (println "Running echo global finalizer " servertype ".")
+     0)
+
+   (define (echo-finalize server)
+     (println "Running echo finalizer " server ".")
+     0)
+
+   (define (echo-detect-proto server sock)
+     (println "Detecting echo protocol ...")
+     1)
+
+   (define (echo-handle-request sock request len)
+     (let ((idx (binary-search request "quit")))
+       (if (and idx (zero? idx))
+           -1
+           (begin
+             (svz:sock:print sock (binary-concat!
+                                   (string->binary "Echo: ")
+                                   request))
+             0))))
+
+   (define (bye-bye action . reason)
+     (lambda (sock)
+       (println "Socket " sock " " action
+                (if (null? reason)
+                    ""
+                    (fs " (~A)" (car reason))))))
+
+   (define (echo-connect-socket server sock)
+     (define (hello)
+       "Hello, type `quit' to end the connection.\r\n")
+     (println "Running connect socket.")
+     (svz:sock:boundary sock "\n")
+     (svz:sock:handle-request sock echo-handle-request)
+     (svz:sock:print sock (hello))
+     (svz:sock:disconnected sock (bye-bye "disconnected"))
+     (svz:sock:kicked sock (bye-bye "kicked"))
+     0)
+
+   ;; Port configuration.
+   (define-port! 'echo-port '((proto . tcp)
+                              (port  . 2000)))
+
+   ;; Servertype definitions.
+   (define-servertype!
+     '((prefix      . "echo")
+       (description . "guile echo server")
+       (configuration   . ((echo-port . (portcfg #t echo-port))))
+       (detect-proto    . echo-detect-proto)
+       (global-init     . echo-global-init)
+       (init            . echo-init)
+       (finalize        . echo-finalize)
+       (global-finalize . echo-global-finalize)
+       (connect-socket  . echo-connect-socket)))
+
+   ;; Server instantiation.
+   (define-server! 'echo-server '())
+
+   ;; Bind server to port.
+   (bind-server! 'echo-port 'echo-server)))
+
+(define HEY (bud!))
+
+(use-modules
+ ((ice-9 rdelim) #:select (read-line write-line)))
+
+(define IGNORABLE (string-length "Echo: "))
+
+(or VERBOSE? (set! fso (lambda x x)))
+(let ((space (make-string IGNORABLE #\space))
+      (port (HEY #:try-connect 10 "127.0.0.1" 2000)))
+
+  (define (badness s . args)
+    (apply fse (string-append TESTBASE ": ERROR: " s "~%") args)
+    (HEY #:done! #f))
+
+  (define (try x)
+    (write-line x port)
+    (and VERBOSE? (fso "said:\t~A~A~%" space x))
+    (let ((answer (read-line port)))
+      (and VERBOSE? (fso "got:\t~A~%" answer))
+      (or (equal? (fs "~A" x)
+                  (substring answer (min (string-length answer)
+                                         IGNORABLE)))
+          (badness "unexpected answer!~%said:\t~A~%got:\t~A"
+                   x answer))))
+
+  (let ((greeting (read-line port)))
+    (and VERBOSE? (fso "greeting: ~A~%" greeting)))
+  (try #\nul)
+  (try #\377)
+  (try 'simple-symbol)
+  (try "simple string")
+  ;; Enough is enough!
+  (write-line 'quit port)
+  (or (eof-object? (read-line port))
+      (badness "did not receive EOF on quit")))
+
+(HEY #:done! #t)
+
+;;; Local variables:
+;;; mode: scheme
+;;; End:

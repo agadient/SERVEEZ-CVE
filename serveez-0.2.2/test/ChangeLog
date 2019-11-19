@@ -1,0 +1,743 @@
+2013-12-02  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.2
+
+2013-11-06  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[guile] Fix bug: Make socket smob/C-obj validity precise.
+
+	* Makefile.am (XFAIL_TESTS): Remove t008.
+
+2013-10-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[v int] Decruft: Don't push ‘.’ on ‘%load-path’ twice.
+
+	The Makefile.am var ‘TESTS_ENVIRONMENT’ now DTRT for all tests.
+
+	* t005: Don't call ‘push-dot-on-load-path!’.
+	* t006: Likewise.
+	* t007: Likewise.
+	* t008: Likewise.
+	* common (push-dot-on-load-path!): Delete proc.
+
+2013-10-21  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[v] Fix bug: Support VPATH "make check".
+
+	Reported by Eric Bavier:
+	<http://lists.gnu.org/archive/html/bug-serveez/2013-10/msg00000.html>.
+
+	* Makefile.am (TESTS_ENVIRONMENT): Add ‘GUILE_LOAD_PATH’,
+	with . and $(srcdir) prefixed onto the rest of the value.
+	* t001: Use ‘primitive-load-path’ throughout, instead
+	of ‘primitive-load’ and ‘(load (in-vicinity ...) ...)’.
+	* t002: Likewise.
+	* t003: Likewise.
+	* t004: Likewise.
+	* t005: Likewise.
+	* t006: Likewise.
+	* t007: Likewise.
+	* t008: Likewise.
+
+2013-10-16  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[v] Drop "set but not used" local var.
+
+	Omission from 2011-04-07, "[lib] Drop func: svz_array_ins".
+
+	* btdt.c (array_main): No longer expect/take arg GAP.
+	* t000: Don't specify GAP in ‘btdt array’ invocation.
+
+2013-04-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[v] Add test for disappearing obj prop on socket; mark xfail.
+
+	* t008: New file.
+	* Makefile.am (XFAIL_TESTS, TESTS): Add t008.
+
+2013-04-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[v] Specify disconnected and kicked for the echo server test.
+
+	* t003 <write-config> (bye-bye): New proc.
+	<write-config> (echo-connect-socket): Specify ‘bye-bye’
+	as the socket's "disconnected" and "kicked" callback.
+
+2013-03-25  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[v int] Add abstraction: oneshot-loopback-datagram
+
+	* common (oneshot-loopback-datagram): New proc.
+	* t007 (zow!): Use ‘oneshot-loopback-datagram’.
+
+2013-03-24  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.1
+
+2013-03-20  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[Scheme int] Use ‘zero?’ more.
+
+	* t003 <write-config!> (echo-handle-request): ...here.
+
+2013-03-11  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[Scheme int] Re-word one-armed ‘if’ expressions.
+
+	Use ‘or’, ‘and’, ‘cond’, ‘and=>’, etc.
+
+	* t005 <micro-version check>: ...here.
+	* t006 <micro-version check>: Likewise.
+	* test-suite.scm <micro-version check>: Likewise.
+
+2013-03-06  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[v] Add test for ‘guile-error’ w/ closed config file.
+
+	* t007: New file.  Suggested by Mike Gran.
+	* Makefile.am (TESTS): Add t007.
+
+2013-02-26  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	[Scheme int] Use ‘in-vicinity’ more.
+
+	* t004 (BASE): Use ‘in-vicinity’.
+
+2013-01-22  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Release: 0.2.0
+
+2011-07-16  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Add test for misconfiguration handling.
+
+	* server-test.scm: Incorporate into...
+	* guile-server-test.scm: Incorporate into...
+	* t006: ...new file.
+	* Makefile.am (TESTS): Add t006.
+	(EXTRA_DIST): Remove server-test.scm, guile-server-test.scm.
+
+2011-07-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Add test for procs for binary objects.
+
+	* binary-test.scm: Incorporate into...
+	* t005: ...new file.
+	* Makefile.am (TESTS): Add t005.
+	(EXTRA_DIST): Remove binary-test.scm.
+
+2011-07-15  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v int] Enhance testing environment somewhat.
+
+	* common (fs, push-dot-on-load-path!, the-serveez-binary)
+	(simple-serveez-invocation): New procs.
+	(exec-serveez!): Use ‘the-serveez-binary’.
+	* t003 <main>: Use ‘fs’.
+	* test-suite.scm: Rewrite.
+
+2011-07-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[http cgi] Handle ‘PATH_INFO’; bump to CGI 1.1.
+
+	* t004: Test both ‘PATH_INFO’ and ‘QUERY_STRING’ handling.
+
+2011-07-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Add test for HTTP CGI.
+
+	* t004: New file.
+	* Makefile.am (TESTS): Add t004.
+
+2011-06-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Decruft: Delete unused test/prog-test.cfg.
+
+	The passthrough test (t001) uses an inline configuration.
+
+	* prog-test.cfg: Delete file.
+	* Makefile.am (EXTRA_DIST): Remove prog-test.cfg.
+
+2011-06-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Remove "native MSVC" support.
+
+	* Makefile.am (stems, woeap, woedsp): Delete vars.
+	(MAINTAINERCLEANFILES): Remove $(woedsp).
+	(EXTRA_DIST): Remove $(woedsp), $(woeap).
+	* btdt.ap: Delete file.
+
+2011-05-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Don't use -L/-l for in-tree ‘LDADD’; use .la instead.
+
+	See (info "(automake) Linking").
+
+	* Makefile.am (LDADD): Specify .../libserveez.la directly.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Use ‘primitive-load’ for but-of-course.
+
+	* t001: Say ‘(primitive-load "but-of-course")’.
+	* t002: Likewise.
+	* t003: Likewise.
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_free_and_zero’, SVZ_{NUM2PTR,PTR2NUM}.
+
+	* btdt.c: #include "misc-macros.h".
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v btdt] Check value of env var ‘VERBOSE’ as well.
+
+	* btdt.c (main): Enable verbose mode only if
+	env var ‘VERBOSE’ is set and its value is "1".
+
+2011-05-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Add test for Guile server.
+
+	* t003: New file.
+	* Makefile.am (TESTS): Add t003.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib tcp] Fix bug: Inhibit "final write" on previous short write flush.
+
+	* Makefile.am (XFAIL_TESTS): Remove t002.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Add test for SNTP server; mark xfail.
+
+	* t002: New file.
+	* Makefile.am (TESTS, XFAIL_TESTS): Add t002.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v int] Declare no tests are known to fail.
+
+	* Makefile.am (XFAIL_TESTS): New var.
+
+2011-04-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Centralize some common Scheme code.
+
+	* common: New file.
+	* Makefile.am (EXTRA_DIST): Add common.
+	* t001: Rewrite to use common.
+
+2011-04-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v int] Drop defunct "array index" tests.
+
+	* btdt.c (array_idx): Delete func.
+	(array_main) <index>: Delete tests.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for ‘svz_array_t’ dimensions and indices.
+
+	U ≡ "Convert type to ‘size_t’ for local var".
+	* btdt.c (array_size_correct): Delete func.
+	(array_popcount): U; return ‘size_t’.
+	(array_idx): U.
+	(array_main): U; compare rv of ‘svz_array_size’ directly.
+	(hash_main): U.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Use ‘size_t’ for memory allocation state.
+
+	* btdt.c (array_main, hash_main, codec_main):
+	Update type of arg to ‘svz_get_curalloc’.
+
+2011-04-12  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize ‘#include <arpa/inet.h>’.
+
+	* btdt.c: Don't #include <arpa/inet.h>.
+
+2011-04-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v int] Avoid svz_hash_{keys,values,xfree}.
+
+	* btdt.c (hash_pair): New struct.
+	(hash_accumulate): New func.
+	(hash_main): Use it and ‘svz_hash_foreach’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add ‘svz_foreach_codec’; move ‘svz_codec_list’ to client.
+
+	* btdt.c (codec_list_closure): New struct.
+	(codec_list_internal, codec_list): New funcs.
+	(codec_main): Use ‘codec_list’.
+
+2011-04-08  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Mine all ‘#define foo 1’ symbols from ../src/config.h.
+
+	* Makefile.am (check_DATA): New var.
+	(but-of-course): New target.
+	* t001: Load ./but-of-course; use ‘boc?’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_ins
+
+	* btdt.c (array_main) <insert>: Delete tests.
+	(array_main) <stress>: Delete tests.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_array_clear’.
+
+	* btdt.c (array_main): Add/use internal
+	macros ‘AGAIN’, ‘CLEAR’ to effect array clearing.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_idx
+
+	* btdt.c (array_idx): New func.
+	(array_main): Use ‘array_idx’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_array_contains
+
+	* btdt.c (array_popcount): New func.
+	(array_main): Use ‘array_popcount’.
+
+2011-04-07  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize svz_array_{dup,strdup}.
+
+	* btdt.c (array_main) <replication>: Delete tests.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop func: svz_hash_clear
+
+	* btdt.c (hash_clear): New func.
+	(hash_main): Use ‘hash_clear’.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘svz_hash_rehash’.
+
+	* btdt.c (hash_main) <rehashing>: Delete tests.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Add test for passthrough server.
+
+	* btdt.c (spew_main): Require one arg, SLEEP,
+	to specify how many seconds to sleep when done.
+	* t001: New file.
+	* Makefile.am (TESTS): Add t001.
+	(CLEANFILES): Add *.log.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v int] Fix OBOE: Compare given and required number of args correctly.
+
+	* btdt.c (check_nargs): Use ‘>=’ instead of simply ‘>’.
+
+2011-04-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize ‘vector’ data structure and funcs.
+
+	* btdt.c (vector_main): Delete func.
+	(avail): Delete ‘SUB (vector)’.
+	* t000: Don't test ‘vector’.
+
+2011-04-05  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add abstractions for runtime parameter manipulation.
+
+	* btdt.c (codec_main): Use ‘SVZ_RUNPARM_X’.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v hash] Also check for non-NULL key.
+
+	* btdt.c (hash_count): Increment count only for non-NULL key.
+
+2011-03-31  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Make btdt silent unless env var ‘VERBOSE’ is set.
+
+	* btdt.c (verbosep): New var.
+	(test_print, test_ok, test_failed): Do nothing if ‘!verbosep’.
+	(spew_main): Display "start" and args only if ‘verbosep’.
+	(main): Check env var ‘VERBOSE’; conditionally set ‘verbosep’.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename SOCK_FLAG_* to SVZ_SOFLG_*.
+
+	* btdt.c: Update all refs.
+
+2011-03-29  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Internalize structs svz_hash{,_entry,_bucket}.
+
+	* btdt.c (hash_main): Use ‘svz_hash_capacity’.
+
+2011-03-28  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Drop unused "sparse vector" functionality.
+
+	* btdt.c (spvec_main): Delete func.
+	(avail): Delete ‘SUB (spvec)’.
+	* t000: Remove spvec test.
+
+2011-03-27  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move client name specification to ‘svz_boot’.
+
+	* btdt.c (codec_main): Update call to ‘svz_boot’.
+
+2011-03-18  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[v] Consolidate C support; trigger its build on "make check".
+
+	* btdt.c: New file.
+	* btdt.ap: New file.
+	* t000: New file.
+	* Makefile.am (GUILE, TESTS_ENVIRONMENT): New vars.
+	(TESTS): Add t000; remove vector-test,
+	array-test, hash-test, spvec-test.
+	(EXTRA_DIST): Add $(TESTS).
+	(noinst_PROGRAMS): Delete var.
+	(check_PROGRAMS, btdt_SOURCES): New vars.
+	(hash_test_SOURCES): Delete var.
+	(spvec_test_SOURCES, array_test_SOURCES, vector_test_SOURCES)
+	(codec_test_SOURCES, prog_test_SOURCES): Likewise.
+	(stems): Use ‘check_PROGRAMS’.
+	* prog-test.cfg (prog-server): Arrange to invoke "./btdt spew".
+	* array-test.c: Delete file.
+	* array.ap: Likewise.
+	* codec-test.c: Likewise.
+	* codec.ap: Likewise.
+	* hash-test.c: Likewise.
+	* hash.ap: Likewise.
+	* prog-test.c: Likewise.
+	* prog.ap: Likewise.
+	* spvec-test.c: Likewise.
+	* spvec.ap: Likewise.
+	* test.c: Likewise.
+	* test.h: Likewise.
+	* vector-test.c: Likewise.
+	* vector.ap: Likewise.
+
+2011-03-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Mark unused function parameters.
+
+	Here, "U" means "Mark unused func parms with ‘SVZ_UNUSED’".
+	* array-test.c (main): U.
+	* hash-test.c (count, main): U.
+	* prog-test.c: #include <libserveez.h>.
+	(main): U.
+	* spvec-test.c (main): U.
+	* vector-test.c (main): U.
+
+2011-03-17  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Decruft: Delete unused local variables.
+
+	Here, "D (...)" means "Delete local vars ...".
+	* hash-test.c (main): D (val).
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename some #define:s with "SVZ_" prefix.
+
+	* codec-test.c (codec_recv, codec_send): Update.
+
+2011-03-14  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Rename some #define:s with "SVZ_" prefix.
+
+	* hash-test.c (main): Update.
+
+2011-03-13  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_closesocket
+
+	* prog-test.c (main) [__MINGW32__]: Use ‘svz_closesocket’.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Add func: svz_hash_foreach
+
+	* hash-test.c (it_test): New struct.
+	(count): New func.
+	(main): Test ‘svz_hash_foreach’, combining portions of tests
+	for ‘svz_hash_foreach_key’ and ‘svz_hash_foreach_value’;
+	delete those now-obsoleted tests.
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize ‘#define O_BINARY’.
+
+	* codec-test.c: #include "o-binary.h".
+
+2011-03-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Centralize <netinet/in.h>/<winsock2.h> #include.
+
+	Here, "U" means "#include "networking-headers.h";
+	don't #include <winsock.h>, <netinet/in.h>".
+	* codec-test.c: U.
+	* prog-test.c: U.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Never #include <config.h> in a header.
+
+	* test.h: Don't #include <config.h>.
+
+2011-03-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move "shutting down?" behind functional interface.
+
+	* codec-test.c (main): Use ‘svz_shutting_down_p’.
+
+2011-03-02  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build int] #include "config.h" unconditionally.
+
+	* array-test.c: #include "config.h" unconditionally.
+	* codec-test.c: Likewise.
+	* hash-test.c: Likewise.
+	* prog-test.c: Likewise.
+	* spvec-test.c: Likewise.
+	* test.c: Likewise.
+	* vector-test.c: Likewise.
+
+2011-02-24  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Require type info in macro ‘svz_hash_foreach_value’.
+
+	* hash-test.c (main): Update call to ‘svz_hash_foreach_value’.
+
+2011-02-23  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Use ‘AC_USE_SYSTEM_EXTENSIONS’.
+
+	* array-test.c: Remove #define:s
+	‘_GNU_SOURCE’, ‘__EXTENSIONS__’, ‘_ALL_SOURCE’.
+	* codec-test.c: Likewise.
+	* hash-test.c: Likewise.
+	* prog-test.c: Likewise.
+	* spvec-test.c: Likewise.
+	* test.c: Likewise.
+	* vector-test.c: Likewise.
+
+2011-02-22  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[C] Internalize debug support.
+
+	* codec-test.c: Do ‘s/SVZ_ENABLE_DEBUG/ENABLE_DEBUG/g’.
+
+2011-02-21  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[lib] Move current allocation info behind functional interface.
+
+	* array-test.c (main): Use ‘svz_get_curalloc’;
+	also, do heap check unconditionally.
+	* codec-test.c (main): Likewise.
+	* hash-test.c (main): Likewise.
+	* spvec-test.c (main): Likewise.
+	* vector-test.c (main): Likewise.
+
+2011-02-10  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[boot int] Clean up Makefile.am files; segregate woe32.
+
+	* Makefile.am (EXTRA_DIST): Move hash.dsp, vector.dsp,
+	array.dsp, spvec.dsp, codec.dsp, prog.dsp, hash.ap, vector.ap,
+	array.ap, spvec.ap, codec.ap, prog.ap to a separate ‘EXTRA_DIST +=’.
+	(hash_test_LDADD, spvec_test_LDADD, array_test_LDADD)
+	(vector_test_LDADD, codec_test_LDADD): Delete vars.
+	(LDADD, stems, woeap, woedsp): New vars.
+	(MAINTAINERCLEANFILES): Use $(woedsp).
+
+2011-02-06  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘MAINTAINERCLEANFILES’.
+
+	* Makefile.am (MAINTAINERCLEANFILES): Use ‘+=’; update.
+
+2011-02-04  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize Makefile.am var ‘CLEANFILES’.
+
+	* Makefile.am (CLEANFILES): Delete var.
+
+2011-02-03  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	[build] Centralize ‘AM_CPPFLAGS’; zonk obsolete ‘INCLUDES’.
+
+	* Makefile.am: Include common.mk.
+	(INCLUDES): Delete var.
+
+2003-06-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* guile-server-test.scm: New test.  Tests the error conditions
+	of the Guile procedure (define-servertype!).
+
+	* Makefile.am (EXTRA_DIST): Added 'guile-server-test.scm'.
+
+2003-06-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* server-test.scm: New test. Basically tests the error conditions
+	of (define-port!) (define-server!) and (bind-server!).
+
+	* test-suite.scm, binary-test.scm: Hopefully fixed the
+	Guile 1.6.x issue about	modules.
+
+2003-05-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* test-suite.scm (resolve-serveez-api): In Guile 1.6.x a post
+	versions the serveez API seems to be outside the scope of extra
+	Guile modules.  That is why we need some importing code.  Needs
+	to be fixed yet...
+
+2002-10-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* prog-test.c: Include <io.h> for MinGW32.
+
+	* Makefile.am (EXTRA_DIST): Added `prog.dsp' and `prog.ap'.
+
+2002-07-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* hash-test.c: Checking `svz_hash_exists()'.
+
+2002-07-27  Stefan Jahn  <stefan@lkcc.org>
+
+	* binary-test.scm: Some more tests added.
+
+2002-07-25  Stefan Jahn  <stefan@lkcc.org>
+
+	* binary-test.scm: Binary smob function test suite using the
+	test suite library.  This is a draft, to be continued...
+
+	* test-suite.scm: Test suite library.
+
+	* Makefile.am: New files: 'test-suite.scm' and 'binary-test.scm'
+	added.
+
+2002-07-23  Stefan Jahn  <stefan@lkcc.org>
+
+	* test.c (test_value): Fixed 'division by zero' bug.
+
+2002-01-02  Stefan Jahn  <stefan@lkcc.org>
+
+	* prog-test.c: New test program.  Can be used to test the
+	program passthrough server.
+
+2001-12-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* hash-test.c (main): Better hash iteration testing.  Reveals
+	the invalid code of gcc version 2.8.1 on IRIX.
+
+2001-10-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec.dsp: New file. Project file for the codec test under
+	Windows.
+
+2001-10-07  Stefan Jahn  <stefan@lkcc.org>
+
+	* codec-test.c: New test. Demonstrates both: using the serveez
+	core library and usage of the codec interface.
+
+2001-07-03  Stefan Jahn  <s.jahn@bit-side.com>
+
+	* test.c: Removed unnecessary functions `svz_log()' and
+	`svz_hexdump()'.
+
+2001-06-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* array-test.c (main): Two more checks for the replication
+	functions `svz_array_dup()' and `svz_array_strdup()'
+	implemented.
+
+2001-05-03  Stefan Jahn  <stefan@lkcc.org>
+
+	* test.c (svz_hexdump): Added this as wrapper if
+	DEBUG_MEMORY_LEAKS is defined.
+
+2001-04-04  Stefan Jahn  <stefan@lkcc.org>
+
+	* array-test.c (main): Added check for array iteration.
+
+2001-03-31  Stefan Jahn  <stefan@lkcc.org>
+
+	* vector-test.c: Implemented tests for the vector lists.
+
+2001-03-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* array-test.c (main): Added stress test for arrays.
+
+2001-03-10  Stefan Jahn  <stefan@lkcc.org>
+
+	* hash-test.c (main): Added tests for the iteration macros.
+
+	* spvec-test.c: Renamed array list to sparse vectors.
+
+	* array-test.c (test): Added new test suite for the array
+	functions.
+
+2001-02-06  Stefan Jahn  <stefan@lkcc.org>
+
+	* alist-test.c: Made necessary changes since the array list's
+	name space has been changed.
+
+2001-01-29  Stefan Jahn  <stefan@lkcc.org>
+
+	* alist-test.c (main): Added new stress test for alist_set()
+	and alist_unset() functions.
+
+2001-01-13  Stefan Jahn  <stefan@lkcc.org>
+
+	* alist-test.c (main): Testing new function alist_unset().
+
+2000-11-22  Stefan Jahn  <stefan@lkcc.org>
+
+	* Makefile.am (EXTRA_DIST): Added the alist-test and hash-test
+	project file for the MSVC compiler.
+
+2000-11-08  Stefan Jahn  <stefan@lkcc.org>
+
+	* alist-test.c (main): The stress test includes now a delete
+	range section, too. Thus it was possible to find another bug in
+	alist_delete().
+
+2000-11-01  Stefan Jahn  <stefan@lkcc.org>
+
+	* alist-test.c (main): Added `delete range' checking.
+
+	* ChangeLog: File created and committed into CVS.
+
+2000-10-22  Stefan Jahn  <stefan@lkcc.org>
+
+	* test.c: Helper functions for the test suites.
+
+	* hash-test.c: Hash function test suite.
+
+	* alist-test.c: Array list function test suite.
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2000, 2001, 2002, 2003 Stefan Jahn
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

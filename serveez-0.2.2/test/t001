@@ -1,0 +1,47 @@
+;;; t001 --- prog (passthrough) server
+
+;; Copyright (C) 2011-2013 Thien-Thi Nguyen
+;;
+;; This is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This software is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
+
+;; Skip this test if the passthrough server is not enabled.
+(primitive-load-path "but-of-course")
+(or (boc? 'ENABLE_PROG_SERVER)
+    (exit 77))
+
+(primitive-load-path "common")
+(set! TESTBASE "t001")
+
+(write-config!
+ '((define-server! 'prog-server '((binary  . "./btdt")
+                                  (argv    . ("spew" "spew" "0"))
+                                  (do-fork . #t)))
+   (define-port! 'prog-tcp-port '((proto  . tcp)
+                                  (port   . 1026)
+                                  (ipaddr . *)))
+   (bind-server! 'prog-tcp-port 'prog-server)))
+
+(define HEY (bud!))
+
+(let ((s (string<-drain (HEY #:try-connect 10 "127.0.0.1" 1026))))
+  (and VERBOSE? (display s)))
+;; TODO: Validate ‘s’ in some way.
+
+(HEY #:done! #t)
+
+;;; Local variables:
+;;; mode: scheme
+;;; End:

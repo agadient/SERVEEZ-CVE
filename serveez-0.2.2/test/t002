@@ -1,0 +1,93 @@
+;;; t002 --- SNTP server
+
+;; Copyright (C) 2011-2013 Thien-Thi Nguyen
+;;
+;; This is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This software is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
+
+;; Skip this test if the SNTP server is not enabled.
+(primitive-load-path "but-of-course")
+(or (boc? 'ENABLE_SNTP_PROTO)
+    (exit 77))
+(define EXPECT-8? (and-map boc? '(HAVE_DECL_GETTIMEOFDAY
+                                  HAVE_SYS_TIME_H)))
+
+(primitive-load-path "common")
+(set! TESTBASE "t002")
+
+(define UNIX-EPOCH-OFFSET 2208988800)   ; per RFC 868
+
+(write-config!
+ '((define-server! 'sntp-server '())
+   (define-port! 'sntp-tcp-port '((proto  . tcp)
+                                  (port   . 1026)
+                                  (ipaddr . *)))
+   (bind-server! 'sntp-tcp-port 'sntp-server)))
+
+(define HEY (bud!))
+
+(or VERBOSE? (set! fso (lambda x x)))
+(let* ((bytes (intvec<-drain (HEY #:try-connect 10 "127.0.0.1" 1026)))
+       (len (vector-length bytes)))
+
+  (define (badness s . args)
+    (apply fse (string-append TESTBASE ": ERROR: " s " ~A\n")
+           (append args (list (cons* len 'bytes:
+                                     (map hex (vector->list bytes))))))
+    (HEY #:done! #f))
+
+  (define (v i)
+    (vector-ref bytes i))
+
+  (define (u32 start)
+    (logior (ash (v (+ 0 start)) 24)
+            (ash (v (+ 1 start)) 16)
+            (ash (v (+ 2 start)) 8)
+            (ash (v (+ 3 start)) 0)))
+
+  (define (etc s u)
+    (let ((n (- s UNIX-EPOCH-OFFSET)))
+      (fso "u32:\t~A (~A)" (hex s) s)
+      (and u (fso ", usec: ~A (~A)" (hex u) u))
+      (fso "\n")
+      (fso "no-ofs:\t~A (~A)\n" (hex n) n)
+      (fso "local:\t~A\n" (strftime "%c" (localtime n)))
+      (fso "utc:\t~A\n" (strftime "%c" (gmtime n)))
+      (let ((scheme (gettimeofday)))
+        (fso "scheme:\t~A ~S\n"
+             (strftime "%c" (gmtime (car scheme)))
+             scheme))))
+
+  (fso "bytes:\t(~A)" len)
+  (do ((i 0 (1+ i)))
+      ((= i len))
+    (fso " ~A" (hex (v i))))
+  (fso "\n")
+
+  (case len
+    ((8)
+     (etc (u32 0) (u32 4))
+     (or EXPECT-8? (badness "expected only one u32, but got two")))
+    ((4)
+     (etc (u32 0) #f)
+     (and EXPECT-8? (badness "expected two u32, but got only one")))
+    (else
+     (badness "unexpected length: ~A" len))))
+
+(HEY #:done! #t)
+
+;;; Local variables:
+;;; mode: scheme
+;;; End:

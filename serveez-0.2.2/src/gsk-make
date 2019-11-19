@@ -1,0 +1,83 @@
+#!/bin/sh
+exec ${GUILE-guile} -s $0 # -*- scheme -*-
+!#
+;;; gsk-make --- spew C code representing guile-server konstants
+
+;; Copyright (C) 2013 Thien-Thi Nguyen
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;; Usage: $(gx) $(srcdir)/gsk-make > gsk.c
+
+;;; Code:
+
+(use-modules
+ ((srfi srfi-13) #:select (string-tokenize
+                           string-join))
+ ((srfi srfi-14) #:select (char-set:letter))
+ ((guile-baux common) #:select (fs fso)))
+
+(define YOW "guile-server konstants")
+
+(define (details ls proc)
+  (fso " {~%  ")
+  (fso "~A~%" (string-join (map proc ls) (fs ",~%  ")))
+  (fso "};~%"))
+
+(define (spew name prefix . ls)
+  (set! ls (map symbol->string ls))
+  (fso "static symstr_t ~A[] =" name)
+  (details ls (lambda (elem)
+                (fs "{ .str = ~S }" elem)))
+  (fso "#define ~A_count ~A~%" name (length ls))
+  (fso "enum ~A_ix" name)
+  (details ls (lambda (elem)
+                (string-join (cons (symbol->string prefix)
+                                   (string-tokenize elem char-set:letter))
+                             "_"))))
+
+(fso "/* ~A -- see gsk-make */~%" YOW)
+
+(spew 'guile_functions 'fn
+      'global-init
+      'init
+      'detect-proto
+      'connect-socket
+      'finalize
+      'global-finalize
+      'info-client
+      'info-server
+      'notify
+      'reset
+      'handle-request
+      ;; Add here.
+      )
+
+(spew 'guile_sock_fns 'sfn
+      'disconnected
+      'kicked
+      'check-request
+      'handle-request
+      'idle
+      'trigger-condition
+      'trigger
+      'check-oob-request)
+
+(fso "/* ~A ends here */~%" YOW)
+
+;;; gsk-make ends here

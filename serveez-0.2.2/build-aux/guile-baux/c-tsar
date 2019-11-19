@@ -1,0 +1,686 @@
+#!/bin/sh
+exec ${GUILE-guile} -e '(guile-baux c-tsar)' -s $0 "$@" # -*- scheme -*-
+!#
+;;; c-tsar --- Extract/aggregate texinfo snippets from C files
+
+;; Copyright (C) 2011, 2013 Thien-Thi Nguyen
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;; Usage: c-tsar [options] command file... -- [cpp-options]
+;;
+;; Create or update a texinfo snippet archive, scanning
+;; C source files in the process.  Commands:
+;;
+;;  create -- scan FILE...; write a new archive
+;;  update -- scan FILE...; update entries in an existing
+;;            archive, creating one if necessary
+;;  rescan -- scan files named in an existing archive which
+;;            are newer than the archive; update entries
+;;
+;; Options (defaults in square braces):
+;;
+;;      --cpp PROGRAM    -- Use PROGRAM to preprocess (see below).
+;;  -f, --file ARCHIVE   -- Operate on ARCHIVE.
+;;  -c, --coding CODING  -- Use encoding CODING [binary].
+;;  -l, --language NAME  -- Prefix category with NAME.
+;;  -m, --default MOD    -- Use MOD for non-moduled items [(guile-user)].
+;;  -v, --verbose        -- Display information to stderr.
+;;
+;; Commands `update' and `rescan' require `--file ARCHIVE'.
+;; The default C preprocessor is taken as either the value of
+;; env var CPP, or "cpp -P".  You can specify a program with args
+;; for PROGRAM (e.g., "gcc -E -P").
+
+;;; Code:
+
+(define-module (guile-baux c-tsar)
+  #:export (main)
+  #:use-module
+  ((guile-baux common) #:select (fs fso fse die check-hv qop<-args))
+  #:use-module
+  ((guile-baux a-dash-dash-b) #:select (a-dash-dash-b))
+  #:use-module
+  ((guile-baux read-string) #:select (read-string))
+  #:use-module
+  ((guile-baux temporary-file) #:select (unlink-port-filename
+                                         unique-i/o-file-port))
+  #:use-module
+  ((guile-baux file-newer-than) #:select (file-newer-than))
+  #:use-module
+  ((guile-baux ts-base) #:select (split-filename
+                                  unsplit
+                                  make-ts ts:name ts:category
+                                  ts:filename ts:module
+                                  make-ar ar:items
+                                  read-ar-file))
+  #:use-module
+  ((guile-baux ts-output) #:select (extract-options-deleting!
+                                    ar<-snippets
+                                    write-ar))
+  #:use-module
+  ((srfi srfi-1) #:select (take
+                           find
+                           remove!
+                           break
+                           append-map!))
+  #:use-module
+  ((srfi srfi-11) #:select (let-values))
+  #:use-module
+  ((srfi srfi-13) #:select (string-join
+                            string-trim
+                            string-trim-right
+                            string-trim-both
+                            string-concatenate
+                            string-concatenate-reverse
+                            string-contains
+                            string-tokenize))
+  #:use-module
+  ((srfi srfi-14) #:select (char-set-complement
+                            char-set))
+  #:use-module
+  ((ice-9 popen) #:select (open-input-pipe
+                           close-pipe))
+  #:use-module
+  ((ice-9 rdelim) #:select (read-line
+                            write-line))
+  #:use-module
+  ((ice-9 regex) #:select (match:substring
+                           match:string
+                           match:start
+                           match:end)))
+
+;; k
+
+(define COMMANDS '(create update rescan))
+
+(define FRAMES
+  ;; Entries are listed in the order tried (see ‘determine-style’).
+  ;; Each entry is a list of the form:
+  ;;   (nick def beg end cand[...])
+  ;; where:
+  ;;   NICK ≡ overall snarfing magic style
+  ;;   DEF  ≡ C symbol used to trigger this style
+  ;;   BEG  ≡ the entry beginning string
+  ;;   END  ≡ the entry end string
+  ;;   CAND ≡ a sub-list with entries of the form:
+  ;;             (nick docs? category rx-spec)
+  ;;          where:
+  ;;            NICK     ≡ specific matcher
+  ;;            DOCS?    ≡ should we try to extract documentation?
+  ;;            CATEGORY ≡ symbol
+  ;;            RX-SPEC  ≡ a sub-list interpreted left-to-right
+  ;;                       (see ‘candidate’)
+  (list
+   '(revised
+     SCM_MAGIC_SNARF_DOCS
+     "^^ {"
+     "^^ }"
+     (procedure
+      #t procedure
+      ("cname"
+       " *([^ ]+) "                C-fn
+       ".* fname \"(.+)\""         proc-name
+       ".* location \"([^\"]+)\""  filename
+       " *([0-9]+)"                lno
+       ".* arglist [(](.*)[)]"     arglist
+       ".* argsig ([0-9]+)"        req
+       " *([0-9]+)"                opt
+       " *([0-9]+)"                var
+       " *\\^\\^ *"))
+     ;; TODO: Add other candidates here.
+     )
+   '(classic
+     SCM_MAGIC_SNARFER
+     "SCM__I"
+     "SCM__E"
+     (DP                                ; DP
+      #t procedure
+      (" +SCM__DP"
+       " *\"(.+)\""           proc-name
+       " *\"[(](.*)[)]\""     arglist
+       " *\\| *([0-9]*)"      req
+       " *\\| *([0-9]*)"      opt
+       " *\\| *([0-9]*)"      var
+       " *\\| *\"([^ ]+)\":"  filename
+       " *([0-9]+)"           lno
+       ".*SCM__S +"))
+     (DR                                ; DR
+      #f procedure
+      (".* SCM__DR"
+       " *\"(.+)\""           proc-name
+       " *\\| *([0-9]*)"      req
+       " *\\| *([0-9]*)"      opt
+       " *\\| *([0-9]*)"      var
+       " *\\| *\"([^ ]+)\":"  filename
+       " *([0-9]+)"           lno
+       ".*SCM__S *([^ ]+)"    C-fn))
+     (D1                                ; D1
+      #t procedure
+      (" *SCM__D1"
+       " *\"(.+)\""           proc-name
+       " *\"[(](.*)[)]\""     arglist
+       " *\\| *2"
+       " *\\| *0"
+       " *\\| *0"
+       " *\\| *\"([^ ]+)\":"  filename
+       " *([0-9]+)"           lno
+       ".*SCM__S +")))
+   ;; Add others here.
+   ))
+
+(define subs (or (false-if-exception make-shared-substring)
+                 substring))
+
+;; support
+
+(define (read-string-safely s)
+  (false-if-exception (read-string s)))
+
+(define-macro (hey . body)
+  `(begin (and verbose (begin ,@body))
+          #t))
+
+(define-macro (hso s . args)
+  `(hey (fse ,s ,@args)))
+
+(define (me)
+  (basename (car (command-line))))
+
+(define (sez-me prefix s)
+  (string-append "~A: " prefix s "~%"))
+
+(define (warn s . args)
+  (apply fse (sez-me "warning: " s) (me) args))
+
+(define (bail s . args)
+  (apply die #f (sez-me "" s) (me) args))
+
+(define (string<-list ls tail . portion)
+  (string-concatenate-reverse ls (apply substring tail portion)))
+
+(define clean-proc-name
+  (let ((quote-space-quote-rx (make-regexp "\" *\"")))
+    (lambda (proc-name)
+      (let loop ((start 0) (acc '()))
+        (cond ((regexp-exec quote-space-quote-rx proc-name start)
+               => (lambda (m)
+                    (loop (match:end m)
+                          (cons (subs proc-name start (match:start m))
+                                acc))))
+              (else
+               (string->symbol (string<-list acc proc-name start))))))))
+
+(define (read-docs-proc source-filename)
+
+  (define read-C-comment
+    (let ((lead-rx #f) (v #f))
+
+      (define (line i)
+        (vector-ref v i))
+
+      (define (init!)
+        (set! lead-rx (make-regexp "^[ \t]*doc: /[*][^ ]+\n"))
+        (let ((p (open-input-file source-filename)))
+          (let loop ((acc '()))
+            ;; We 'concat for the sake of Emacs-style ‘doc:’ C comments.
+            (let ((line (read-line p 'concat)))
+              (if (eof-object? line)
+                  (set! v (list->vector (cons 0 (reverse! acc))))
+                  (loop (cons line acc)))))
+          (close-port p)))
+
+      ;; read-C-comment
+      (lambda (x match)
+        (or v (init!))
+        (let* ((end (string->number (x 'lno)))
+               (ls (let loop ()
+                     (let ((s (line end)))
+                       (cond ((string-contains s "*/")
+                              => (lambda (pos)
+                                   (list (string-trim-right
+                                          (subs s 0 pos)))))
+                             (else (set! end (1- end))
+                                   (loop)))))))
+          (let loop ((beg (1- end)) (ls ls))
+            (let ((s (line beg)))
+              (if (regexp-exec lead-rx s)
+                  ls                    ; retval
+                  (loop (1- beg) (cons s ls)))))))))
+
+  (lambda (x)                           ; retval
+
+    (define (weirdness blurb)
+      (warn "~A:~A: weird doc (~A)"
+            source-filename (x 'lno) blurb)
+      '())
+
+    (let* ((match (x #f))
+           (orig (match:string match))
+           (start (match:end match))
+           (rv (cond ((= start (string-length orig))
+                      '())
+                     ((char=? #\" (string-ref orig start))
+                      (let ((xrep (fs "(~A)" (subs orig start))))
+                        (cond ((read-string-safely xrep)
+                               => (lambda (ls)
+                                    (let ((lp (last-pair ls)))
+                                      (set-car! ls (string-trim (car ls)))
+                                      (set-car! lp (string-trim-right
+                                                    (car lp))))
+                                    ls))
+                              (else
+                               (weirdness "bad string")))))
+                     ((equal? start (string-contains orig "doc:" start))
+                      (read-C-comment x match))
+                     (else
+                      (weirdness "cannot decipher format")))))
+      (if (null? rv)
+          (values '() "")
+          (let ((options (extract-options-deleting! rv)))
+            (values options (string-trim-both (string-concatenate rv))))))))
+
+(define symbolic-arglist
+  (let ((SCM-arg-rx (make-regexp "SCM *([^, ]+),* *"))
+        (not-under (char-set-complement (char-set #\_))))
+
+    (define (proper s)
+      (string->symbol (string-join (string-tokenize s not-under) "-")))
+
+    ;; symbolic-arglist
+    (lambda (string)
+      (let loop ((acc '()) (start 0))
+        (cond ((regexp-exec SCM-arg-rx string start)
+               => (lambda (m)
+                    (loop (cons (proper (match:substring m 1)) acc)
+                          (match:end m 0))))
+              (else
+               (reverse! acc)))))))
+
+;; candidates
+
+(define (candidate docs? category rx-spec)
+  (let loop ((group 1) (mspec '()) (rx '()) (ls rx-spec))
+    (if (null? ls)
+        ;; rv (see ‘scan elaborate’)
+        (list (make-regexp (apply string-append (reverse! rx)))
+              docs?
+              category
+              (assq 'arglist mspec)
+              mspec)
+        (let ((head (car ls)))
+          (if (and (pair? (cdr ls))
+                   (symbol? (cadr ls)))
+              (loop (1+ group)
+                    (acons (cadr ls) group mspec)
+                    (cons head rx)
+                    (cddr ls))
+              (loop group mspec
+                    (cons head rx)
+                    (cdr ls)))))))
+
+(define (builtin-candidates style)
+  (map (lambda (full)
+         (apply candidate (cdr full)))
+       (cdddr (assq-ref FRAMES style))))
+
+;; stages
+
+(define (determine-style cpp cpp-options)
+
+  (define (make-probe)
+    (let* ((p (unique-i/o-file-port (fs "~A-PROBE-" (me)) ".c"))
+           (filename (port-filename p)))
+      (for-each (lambda (s)
+                  (write-line s p))
+                '("#include <libguile.h>"
+                  "SCM_DEFINE (foo, \"foo\", 0, 0, 0, (void), \"\")"
+                  "{ return SCM_EOL; }"))
+      (close-port p)
+      filename))
+
+  (define (try filename)
+    (lambda (style+frame)
+      (let* ((frame (cdr style+frame))
+             (p (open-input-pipe
+                 (fs "~A ~A -D~A ~A 2>/dev/null"
+                     cpp filename (list-ref frame 0) cpp-options)))
+             (beg (list-ref frame 1)))
+        (define (return x)
+          (close-pipe p)
+          x)
+        (let loop ()
+          (let ((line (read-line p)))
+            (cond ((eof-object? line) (return #f))
+                  ((string-contains line beg) (return (car style+frame)))
+                  (else (loop))))))))
+
+  (let* ((filename (make-probe))
+         (try (try filename))
+         (style (or-map try FRAMES)))
+    (delete-file filename)
+    style))
+
+(define (cpp-output-stash verbose stem cpp-command ent-beg ent-end)
+  (let* ((inp (open-input-pipe cpp-command))
+         (ent-beg-len (string-length ent-beg))
+         (stash '()))
+
+    (define (next)
+      (read-line inp))
+
+    (define (stash! s)
+      ;; If ‘infile’ #include:s another, avoid processing those.
+      (and (string-contains s stem)
+           (set! stash (cons s stash))))
+
+    (let loop ((line (next)))
+      (cond ((eof-object? line))
+            ((or (string-null? line)
+                 (char=? #\# (string-ref line 0)))
+             (loop (next)))
+            ;; ISO preprocessors nicely output macro expansions on one
+            ;; line, with a single space between tokens.  This hair is
+            ;; to support older programs (e.g., "gcc -E -traditional"),
+            ;; which might drape an expansion over multiple lines, and
+            ;; generally partake in arbitrary whitespace zaniness.
+            ((string-contains line ent-beg)
+             => (lambda (b-pos)
+                  (set! b-pos (+ b-pos ent-beg-len))
+                  (cond ((string-contains line ent-end b-pos)
+                         => (lambda (e-pos)
+                              (stash! (subs line b-pos e-pos))
+                              (loop (subs line e-pos))))
+                        (else
+                         (let more ((parts (list (subs line b-pos))))
+                           (set! line (next))
+                           (cond ((eof-object? line))
+                                 ((string-contains line ent-end)
+                                  => (lambda (e-pos)
+                                       (stash! (string<-list
+                                                parts line 0 e-pos))
+                                       (loop (subs line e-pos))))
+                                 (else
+                                  (more (cons line parts)))))))))
+            (else
+             (loop (next)))))
+
+    (and (zero? (status:exit-val (close-pipe inp)))
+         (or (null? stash)
+             (hso "\tfound: ~A~%" (length stash)))
+         (reverse! stash))))
+
+(define (scan default style lang inp read-docs)
+  (let ((maybe (builtin-candidates style))
+        ;; TODO: Add facility for a file to declare its "current module".
+        ;;       (Presently, ‘module’ is always ‘default’.)
+        (module default))
+
+    (define (elaborate m docs? category arglist? spec)
+
+      (define (x sel)
+        (if sel
+            (match:substring m (assq-ref spec sel))
+            m))
+
+      (define (canonical-sig override)
+        (define (numeric part)
+          (string->number (x part)))
+        (define (normal-arglist)
+          (cond ((and arglist? (x 'arglist)) => symbolic-arglist)
+                (else '())))
+        (define (bad-jam reason)
+          (bail "~A:~A: invalid value (~A) for ‘args’ option: ~A"
+                (x 'filename) (x 'lno) reason override))
+        (define (check-names! ls)
+          (or (and-map symbol? ls)
+              (bad-jam "arg name not a symbol")))
+        (define (bad-name-count reason)
+          (bad-jam (string-append reason " arg names")))
+        (let ((r (numeric 'req))
+              (o (numeric 'opt))
+              (v (numeric 'var))
+              (jam (and=> override read-string-safely)))
+          (cond ((not jam))
+                ((not (list? jam)) (bad-jam "not a proper list"))
+                ((null? jam) (bad-jam "empty list")))
+          (list->vector
+           (cond ((not jam)
+                  (cons* r o v (normal-arglist)))
+                 ((eq? '- (car jam))
+                  (apply (lambda (o v . names)
+                           (check-names! names)
+                           ;; TODO: Add more checks.
+                           (cons* r o v (append! (take (normal-arglist) r)
+                                                 names)))
+                         (cdr jam)))
+                 ((integer? (car jam))
+                  (apply (lambda (r o v . rest)
+                           (let ((count (length rest))
+                                 (ro (+ r o)))
+                             (or (<= ro count)
+                                 (bad-name-count (if (null? rest)
+                                                     "missing"
+                                                     "too few")))
+                             (and (zero? v)
+                                  (< ro count)
+                                  (bad-name-count "too many")))
+                           (check-names! rest))
+                         jam)
+                  ;; TODO: Add more checks.
+                  jam)
+                 (else
+                  (and (zero? v)
+                       (< (+ r o) (length jam))
+                       (bad-name-count "too many"))
+                  (check-names! jam)
+                  ;; TODO: Add more checks.
+                  (cons* r o v jam))))))
+
+      (let-values (((options blurb) (if docs?
+                                        (read-docs x)
+                                        (values '() ""))))
+        (make-ts (clean-proc-name (x 'proc-name))
+                 module
+                 (split-filename (x 'filename))
+                 blurb
+                 (if lang
+                     (fs "~A ~A" lang category)
+                     category)
+                 (canonical-sig (assq-ref options 'args))
+                 (vector (string->number (x 'lno))
+                         ;; COL BEG END
+                         0 0 0)
+                 (assq-remove! options 'args))))
+
+    (define (canonicalize line)
+
+      (define (try pair)
+        (and=> (regexp-exec (car pair) line)
+               (lambda (m)
+                 (apply elaborate m (cdr pair)))))
+
+      (cond ((or-map try maybe))
+            (else (warn "unrecognized: ~A" line)
+                  #f)))
+
+    (delq! #f (map canonicalize inp))))
+
+;; dispatch
+
+(define (pretty-localtime stat-object)
+  (strftime "%Y-%m-%d %T" (localtime (stat:mtime stat-object))))
+
+(define (run cmd verbose on-disk default lang input coding cpp cpp-options)
+  (let ((style (or (determine-style cpp cpp-options)
+                   (bail "could not determine style")))
+        (prev-stat (and (memq cmd '(update rescan))
+                        (file-exists? on-disk)
+                        (stat on-disk))))
+
+    (define (previous)
+      (let-values (((d f m i) (read-ar-file bail coding #t on-disk)))
+        (hso "archive: ~A (~A, ~Ad ~Af ~Am ~Ai)~%"
+             on-disk
+             (pretty-localtime prev-stat)
+             (length d) (length f) (length m) (length i))
+        (values d f m i)))
+
+    (define (preproc def beg-ent end-ent . unused)
+      (let ((command (fs "~A -D~A ~A " cpp def cpp-options)))
+        (lambda (filename)
+          (hso "preprocessing: ~A ~A~%"
+               (pretty-localtime (stat filename))
+               filename)
+          (or (cpp-output-stash
+               verbose
+               (basename filename)
+               (string-append command filename)
+               beg-ent end-ent)
+              (bail "C pre-processor had problems")))))
+
+    (define (extract inp filename)
+      (scan default style lang inp (read-docs-proc filename)))
+
+    (hso "style: ~A~%" style)
+    (let-values (((d f m i) (if prev-stat
+                                (previous)
+                                (values '() '() '() '()))))
+
+      (define (seen-before filename)
+        (member (split-filename filename) f))
+
+      (define (up-to-date? filename)
+        (let ((rv (and (seen-before filename)
+                       (file-newer-than prev-stat filename))))
+          (and rv (hso "up-to-date: ~A~%" filename))
+          rv))
+
+      (define (bye-bye! infirm)
+        (let ((bef (length i)))
+          (set! i (remove! (lambda (ts)
+                             (memq (ts:filename ts) infirm))
+                           i))
+          (let ((carry (length i)))
+            (or (= bef carry)
+                (hso "bye-bye: ~A/~A snippet(s) from ~A file(s)~%"
+                     (- bef carry) bef (length infirm))))))
+
+      (case cmd
+        ((update)
+         (cond (prev-stat
+                (set! input (remove! up-to-date? input))
+                ;; If there is nothing to update, exit early.
+                (and (null? input)
+                     (hso "~A: archive ‘~A’ up to date~%~A: exiting~%"
+                          (me) on-disk (me))
+                     (exit #t))))
+         (hso "info: need to (re)scan ~A file(s)~%"
+              (length input))
+         (bye-bye! (delq! #f (map (lambda (filename)
+                                    (and=> (seen-before filename)
+                                           car))
+                                  input))))
+        ((rescan)
+         (set! input (map unsplit f))
+         (hso "info: need to rescan ~A file(s)~%"
+              (length f))
+         (bye-bye! f)))
+      (let ((first (map (apply preproc (assq-ref FRAMES style))
+                        input))
+            (outp #f))
+        (catch #t                       ; everything
+               (lambda ()
+                 (let ((snippets (append-map! extract first input)))
+                   (hey (for-each (lambda (ts)
+                                    (fse "ts: ~S ~S ~S~%"
+                                         (ts:category ts)
+                                         (ts:module ts)
+                                         (ts:name ts)))
+                                  snippets))
+                   (set! outp (or (and=> on-disk open-output-file)
+                                  (current-output-port)))
+                   (write-ar (ar<-snippets coding (append! i snippets))
+                             outp)))
+               (lambda args             ; handler
+                 (unlink-port-filename outp #t)
+                 ;; re-throw
+                 (apply scm-error args)))))))
+
+(define (main/qop qop cpp-options)
+  (let* ((in (qop '()))
+         (cmd (if (null? in)
+                  (bail "missing command (try --help)")
+                  (string->symbol (car in))))
+         (rescan? (eq? 'rescan cmd))
+         (on-disk (qop 'file)))
+    (or (memq cmd COMMANDS)
+        (bail "invalid command: ‘~A’ (try one of: ~A)"
+              cmd (string-join (map symbol->string COMMANDS) ", ")))
+    (and (memq cmd '(update rescan))
+         (not on-disk)
+         (bail "missing ‘-f ARCHIVE’ for command ‘~A’" cmd))
+    (run
+     ;; cmd
+     cmd
+     ;; verbose
+     (qop 'verbose)
+     ;; on-disk
+     on-disk
+     ;; default
+     (or (qop 'default read-string)
+         '(guile-user))
+     ;; lang
+     (qop 'language)
+     ;; input
+     (let ((ls (cdr in)))
+       (if (pair? ls)
+           (and rescan?
+                (warn "ignoring ~A file(s) for ‘rescan’"
+                      (length ls)))
+           (or rescan?
+               (warn "no files specified")))
+       ls)
+     ;; coding
+     (or (qop 'coding string->symbol)
+         'binary)
+     ;; cpp
+     (or (qop 'cpp)
+         (getenv "CPP")
+         "cpp -P")
+     ;; cpp-options
+     (string-join cpp-options " "))))
+
+(define (main args)
+  (check-hv args '((package . "Guile-BAUX")
+                   (version . "0.0")
+                   (help . commentary)))
+  ;; Unfortunately, ‘getopt-long’ discards the "--" so we need to
+  ;; "manually" split the args as PROGRAM-ARGS "--" CPP-OPTIONS.
+  (let-values (((program-args cpp-options) (a-dash-dash-b args)))
+    (main/qop
+     (qop<-args program-args
+                '((coding   (value #t) (single-char #\c))
+                  (cpp      (value #t))
+                  (default  (value #t) (single-char #\m))
+                  (file     (value #t) (single-char #\f))
+                  (language (value #t) (single-char #\l))
+                  (verbose             (single-char #\v))))
+     cpp-options)))
+
+;;; c-tsar ends here

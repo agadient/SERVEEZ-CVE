@@ -1,0 +1,1776 @@
+@c -*-texinfo-*-
+@c
+@c This file includes the embedding documentation.
+@c It is included by `serveez.texi'.
+@c
+
+This chapter documents how to embed Serveez into C programs and describes
+all parts of the API it provides.
+
+The Serveez core library provides all of the functionality necessary in
+order to write Internet protocol servers (currently TCP, UDP, ICMP and
+RAW sockets), pipe servers (connection-oriented via a pair of named
+pipes) and coservers in a portable way.  All of the included servers are
+based upon this library, which encapsulates the native network and file
+system programming interface of different Unices and Windows systems.
+
+The following sections will give the reader
+an overview about how to use its core library.
+
+@menu
+* Embedding Serveez::     How to embed Serveez into C programs
+* Embedding API::         Description of functions and data in the library
+@end menu
+
+@node Embedding Serveez
+@section Embedding Serveez
+
+This chapter deals with embedding the Serveez core library into standalone
+C/C++ applications and using it in order to write additional servers.
+
+@menu
+* Compiling and linking::      How to compile and link against the library
+* A simple example::           A very small example showing the basics
+@end menu
+
+@node Compiling and linking
+@subsection Compiling and linking
+
+When you have installed a version of Serveez passing the
+@file{configure} script the @code{$prefix} argument, e.g.,
+@samp{./configure --prefix=/usr/local}, you will find the
+@file{libserveez} library in @file{/usr/local/lib} and the include
+headers in @file{/usr/local/include}.  If you want to compile a C
+program using the Serveez API and link against the Serveez core library
+@code{libserveez}, which is @file{libserveez.so} for Unices and
+@file{libserveez.dll} for Windows systems, you need to tell the compiler
+and linker where to find the headers and libraries.
+
+Most C compilers you can use will understand the following command line
+options for this purpose.  The @samp{-I} argument specifies the
+directory of additional include headers, the @samp{-L} argument the
+direcory to additional libraries and the @samp{-l} argument the library
+itself to link against.
+
+@example
+$ cc test.c -I/usr/local/include -o test -L/usr/local/lib -lserveez
+@end example
+
+In order to obtain the correct compiler and linker flag you can also run
+the @samp{serveez-config} script which gets installed with the Serveez
+package.  The @samp{serveez-config} script can be invoked with the
+following set of option.
+
+@table @code
+@item -h, --help
+Displays the usage information.
+
+@item -v, --version
+Displays installed Serveez version.
+
+@item -l, --ldflags
+Prints the linker flags (libraries to link with including
+directory information).
+
+@item -c, --cflags
+Prints the compiler flags to compile with.
+@end table
+
+@node A simple example
+@subsection A simple example
+
+The following small example shows how to use the Serveez core library to
+print the list of known network interface.  As you will notice there are
+three major steps to do: Include the library header with @code{#include
+<libserveez.h>}, initialize the library via @code{svz_boot} and finalize
+it via @code{svz_halt}.  In between these calls you can use all of the
+API functions, variables and macros described in @ref{Embedding API}.
+
+@example
+#include <stdio.h>
+#include <stdlib.h>
+#include <libserveez.h>
+
+static int
+display_ifc (const svz_interface_t *ifc,
+             void *closure)
+@{
+  char *addr = svz_inet_ntoa (ifc->ipaddr);
+
+  if (ifc->description)
+    /* interface with description */
+    printf ("%40s: %s\n",
+            ifc->description, addr);
+  else
+    /* interface with interface # only */
+    printf ("%31s%09lu: %s\n",
+            "interface # ", ifc->index, addr);
+  return 0;
+@}
+
+int
+main (int argc, char **argv)
+@{
+  /* Library initialization.  */
+  svz_boot ("example");
+
+  /* Display a list of interfaces.  */
+  printf ("local interfaces:\n");
+  svz_foreach_interface (display_ifc, NULL);
+
+  /* Library finalization.  */
+  svz_halt ();
+
+  return EXIT_SUCCESS;
+@}
+@end example
+
+@node Embedding API
+@section Embedding API
+
+In this chapter the reader will find a short description of each
+function, global variable and macro provided by the Serveez core
+library.  The API can either be used to implement a new server or
+coserver module for use with Serveez or for supporting network and
+server functionality within your own applications without caring about
+the details and system programming.
+
+Most of the Serveez core library interface functionality should be
+prefixed with @code{svz_}.  Small symbols will refer to functions and
+variables in most cases and big letter symbols refer to macros.
+
+[FIXME: The subsections are named inconsistently because
+originally, the API reference was a separate document; on merge,
+weirdness like ``Port config funcs'' was necessary to avoid
+conflict with the other ``Port configuration'' node. ---ttn]
+
+@menu
+* Library features::      A high-level list of what libserveez provides
+* Memory management::     How memory is managed in Serveez
+* Data structures::       Data structure helpers
+* svz_address_t::         A data type to hold family plus bits
+* Utility functions::     Miscellaneous helper functions
+* Core functions::        Network core implementations
+* Client connections::    Client connection functions
+* Socket management::     Socket management functions
+* Coserver functions::    Coserver interface
+* Codec functions::       Codec interface
+* Server types::          Server type implementations
+* Server functions::      Server object functions
+* Port config funcs::     Port configuration functions
+* Booting::               Configuration and boot functions
+* Interface::             Network interface function implementation
+* Windoze::               Windows port implementations
+@end menu
+
+@node Library features
+@subsection Library features
+
+The @file{configure} script used to build libserveez takes many options
+(@pxref{Build and install}).
+Some of these are encapsulated by @code{svz_library_features}.
+
+@set TSINCURMOD (-- s3as sez thx tsin --)
+@deftypefun {const char * const *} svz_library_features (size_t@tie{}*@var{count})
+Return a list (length saved to @var{count}) of strings
+representing the features compiled into libserveez.
+@end deftypefun
+
+@noindent
+Here is a table describing the features in detail:
+
+@table @code
+@item debug
+Present when @samp{--enable-debug}.
+
+@item heap-counters
+Present when @samp{--enable-heap-count}.
+
+@item interface-list
+Present when @samp{--enable-iflist}.
+
+@item poll
+Present when @samp{--enable-poll} and you have poll(2).
+
+@item sendfile
+Present when @samp{--enable-sendfile} and you have sendfile(2)
+or some workalike (e.g., @code{TransmitFile}).
+
+@item log-mutex
+Present when @code{svz_log} uses a mutex around its internal stdio
+operations, implying that you have some kind of thread capability
+(perhaps in a separate library).  If your system has
+@code{fwrite_unlocked}, the configure script assumes that @code{fwrite}
+et al already operate in a locked fashion, and disables this.
+
+@item flood-protection
+Present when @samp{--enable-flood}.
+
+@item core
+The networking core.  This is always present.
+@end table
+
+@node Memory management
+@subsection Memory management
+
+The core library of Serveez is able to keep track of the memory an
+application or part of a program consumes, and also controls itself in
+the same manner.  When you are using this memory allocator interface you
+can determine and afterwards remove memory leaks.  This is a very
+important feature as servers are by nature long-lived programs.
+
+The three allocator function pointers for @code{malloc}, @code{realloc}
+and @code{free} make it possible to instruct Serveez to use different
+kinds of memory, which might be necessary if you want the library to work
+with shared memory arenas or any other underlying memory API.
+
+@deftypefun {void} svz_set_mm_funcs (svz_malloc_func_t@tie{}@var{cus_malloc}, svz_realloc_func_t@tie{}@var{cus_realloc}, svz_free_func_t@tie{}@var{cus_free})
+Set the internal memory management functions to @var{cus_malloc},
+@var{cus_realloc} and @var{cus_free}, respectively.
+The default internal values are @code{malloc}, @code{realloc}
+and @code{free}.
+@end deftypefun
+
+@deftypefun {void *} svz_malloc (size_t@tie{}@var{size})
+Allocate @var{size} bytes of memory and return a pointer to this block.
+@end deftypefun
+
+@deftypefun {void *} svz_calloc (size_t@tie{}@var{size})
+Allocate @var{size} bytes of memory and return a pointer to this block.
+The memory is cleared (filled with zeros).
+@end deftypefun
+
+@deftypefun {void *} svz_realloc (void@tie{}*@var{ptr}, size_t@tie{}@var{size})
+Change the size of a block of memory at @var{ptr}, previously
+returned by @code{svz_malloc}, to @var{size} bytes.  If @var{ptr}
+is @code{NULL}, allocate a new block.
+@end deftypefun
+
+@deftypefun {void} svz_free (void@tie{}*@var{ptr})
+Free a block of memory at @var{ptr}, previously returned by
+@code{svz_malloc} or @code{svz_realloc}.  If @var{ptr} is
+@code{NULL}, do nothing.
+@end deftypefun
+
+@deftypefun {char *} svz_strdup (const@tie{}char@tie{}*@var{src})
+Duplicate the given string @var{src} if it is not @code{NULL} and has
+non-zero length.  Return the new string.
+@end deftypefun
+
+@deftypefun {void} svz_get_curalloc (size_t@tie{}*@var{to})
+Write values to @code{to[0]} and @code{to[1]} representing the
+number of currently allocated bytes and blocks, respectively.
+If Serveez was not configured with @samp{--enable-debug},
+the values are always 0.
+@end deftypefun
+
+@node Data structures
+@subsection Data structures
+
+Since most servers need to store information about its clients or want
+to keep track of data during runtime, we include a pair of of useful
+data structures.  The actual aim was to provide higher level data
+structures which the C programming language does not support.  Some of
+the included servers which come with Serveez make extensive use of them.
+
+@menu
+* Array::                 A growable array implementation
+* Hashtable::             Hashtable implementation
+@end menu
+
+@node Array
+@subsubsection Array
+
+The array data structure is a simple array implementation.  Each array
+has a size and capacity.  The array indices range from zero to the
+array's size minus one.  You can put any kind of data into this array
+which fits into the size of a pointer.  The array grows automatically if
+necessary.
+
+@deftypefun {svz_array_t *} svz_array_create (size_t@tie{}@var{capacity}, svz_free_func_t@tie{}@var{destroy})
+Create a new array with the initial capacity @var{capacity} and return
+a pointer to it.  If @var{capacity} is zero it defaults to some value.
+If @var{destroy} is non-@code{NULL}, @code{svz_array_destroy} calls
+that function (typically used to free dynamically allocated memory).
+For example, if the array contains data allocated by @code{svz_malloc},
+@var{destroy} should be specified as @code{svz_free}.  If the array
+contains data which should not be released, @var{destroy} should
+be @code{NULL}.
+@end deftypefun
+
+@deftypefun {void} svz_array_destroy (svz_array_t@tie{}*@var{array})
+Completely destroy the array @var{array}.  The @var{array} handle is
+invalid afterwards.  The routine runs the @var{destroy} callback for each
+element of the array.
+@end deftypefun
+
+@deftypefun {void *} svz_array_get (svz_array_t@tie{}*@var{array}, size_t@tie{}@var{index})
+Return the array element at the position @var{index} of the array
+@var{array} if the index is within the array range.  Return @code{NULL}
+if not.
+@end deftypefun
+
+@deftypefun {void *} svz_array_set (svz_array_t@tie{}*@var{array}, size_t@tie{}@var{index}, void@tie{}*@var{value})
+Replace the array element at the position @var{index} of the array
+@var{array} with the value @var{value} and return the previous value
+at this index.  Return @code{NULL} and do nothing
+if @var{array} is @code{NULL} or the @var{index} is out of the array
+range.
+@end deftypefun
+
+@deftypefun {void} svz_array_add (svz_array_t@tie{}*@var{array}, void@tie{}*@var{value})
+Append the value @var{value} at the end of the array @var{array}.
+Do nothing if @var{array} is @code{NULL}.
+@end deftypefun
+
+@deftypefun {void *} svz_array_del (svz_array_t@tie{}*@var{array}, size_t@tie{}@var{index})
+Remove the array element at the position @var{index} of the array
+@var{array}.  Return its previous value or @code{NULL} if the index
+is out of the array's range.
+@end deftypefun
+
+@deftypefun {size_t} svz_array_size (svz_array_t@tie{}*@var{array})
+Return the current size of @var{array}.
+@end deftypefun
+
+@defmac svz_array_foreach (array, value, i)
+Expand into a @code{for}-statement header, for iterating over
+@var{array}.  On each cycle, @var{value} is assigned to successive
+elements of @var{array}, and @var{i} the element's position.
+@end defmac
+
+@node Hashtable
+@subsubsection Hashtable
+
+A hashtable associates keys of arbitrary size and content with values.
+This data structure is also called associative array sometimes because
+you use keys in order to access values instead of numbers.  You cannot
+store two values associated with the same key.  The values can have any
+simple C types like integers or pointers.
+
+@deftypefun {svz_hash_t *} svz_hash_create (size_t@tie{}@var{size}, svz_free_func_t@tie{}@var{destroy})
+Create a new hash table with an initial capacity @var{size}.  Return a
+non-zero pointer to the newly created hash.  The size is calculated down
+to a binary value.  The @var{destroy} callback specifies an
+element destruction callback for use by @code{svz_hash_clear} and
+@code{svz_hash_destroy} for each value.  If no such operation should be
+performed the argument must be @code{NULL}.
+@end deftypefun
+
+@deftypefun {svz_hash_t *} svz_hash_configure (svz_hash_t@tie{}*@var{hash}, size_t@tie{}(*@tie{}keylen)@tie{}(const@tie{}char@tie{}*)@tie{}@var{}, unsigned@tie{}long@tie{}(*@tie{}code)@tie{}(const@tie{}char@tie{}*)@tie{}@var{}, int@tie{}(*@tie{}equals)@tie{}(const@tie{}char@tie{}*@var{}, const@tie{}char@tie{}*@var{})
+Set the internal @var{keylen}, @var{code} and and @var{equals}
+functions for hash table @var{hash}.  Return @var{hash}.
+
+@var{keylen} takes @code{const char *data} and returns @code{size_t},
+the number of bytes in @var{data} representing the key.
+
+@var{code} takes @code{const char *data}
+and returns @code{unsigned long}.
+
+@var{equals} takes @code{const char *data1, const char *data2}
+and returns @code{int}, which should be non-zero if equal.
+
+As a special case, a @code{NULL} value means don't set that function,
+leaving it to its default value.
+@end deftypefun
+
+@deftypefun {void} svz_hash_destroy (svz_hash_t@tie{}*@var{hash})
+Destroy the existing hash table @var{hash}, @code{svz_free}ing
+all keys within the hash, the hash table and the hash itself.
+If a non-@code{NULL} element destruction callback was specified to
+@code{svz_hash_create}, that function is called on each value.
+@end deftypefun
+
+@deftypefun {void *} svz_hash_delete (svz_hash_t@tie{}*@var{hash}, const@tie{}char@tie{}*@var{key})
+Delete an existing entry accessed via a @var{key} from the
+hash table @var{hash}.  Return @code{NULL} if there is no
+such key, otherwise the previous value.
+@end deftypefun
+
+@deftypefun {void *} svz_hash_put (svz_hash_t@tie{}*@var{hash}, const@tie{}char@tie{}*@var{key}, void@tie{}*@var{value})
+Add a new element consisting of @var{key} and @var{value} to @var{hash}.
+When @var{key} already exists, replace and return the old value.
+@strong{Note}: This is sometimes the source of memory leaks.
+@end deftypefun
+
+@deftypefun {void *} svz_hash_get (const@tie{}svz_hash_t@tie{}*@var{hash}, const@tie{}char@tie{}*@var{key})
+Return the value associated with @var{key} in the hash table
+@var{hash}, or @code{NULL} if there is no such key.
+@end deftypefun
+
+@deftypefun {void} svz_hash_foreach (svz_hash_do_t@tie{}*@var{func}, svz_hash_t@tie{}*@var{hash}, void@tie{}*@var{closure})
+Iterate @var{func} over each key/value pair in @var{hash}.
+@var{func} is called with three @code{void *} args: the key,
+the value and the opaque (to @code{svz_hash_foreach}) @var{closure}.
+@end deftypefun
+
+@deftypefun {size_t} svz_hash_size (const@tie{}svz_hash_t@tie{}*@var{hash})
+Return the number of keys in the hash table @var{hash}.
+If @var{hash} is @code{NULL}, return zero.
+@end deftypefun
+
+@deftypefun {char *} svz_hash_contains (const@tie{}svz_hash_t@tie{}*@var{hash}, void@tie{}*@var{value})
+Return the key associated with @var{value} in the hash table
+@var{hash}, or @code{NULL} if there is no such value.
+@end deftypefun
+
+@deftypefun {int} svz_hash_exists (const@tie{}svz_hash_t@tie{}*@var{hash}, char@tie{}*@var{key})
+Return non-zero if @code{key} is stored within
+the hash table @code{hash}, otherwise zero.
+This function is useful when you cannot tell whether the return
+value of @code{svz_hash_get} (@code{== NULL}) indicates a real
+value in the hash or a non-existing hash key.
+@end deftypefun
+
+@node svz_address_t
+@subsection svz_address_t
+
+A network address comprises a @dfn{family}, such as @code{AF_INET}
+(also known as IPv4), and its @dfn{bits} in network byte order, such as
+the bytes 127, 0, 0 and 1 (also known as the @dfn{IPv4 loopback
+address}).  Many libserveez functions take @code{svz_address_t *}.
+
+@strong{Please note}: Although @code{svz_address_t}
+supports@footnote{that is, if your system supports it} IPv6, the rest
+of libserveez it does not (yet).  This means you can freely create and
+manipulate address objects with the functions described in this
+section, but any attempt to pass to the rest of libserveez an address
+with a @var{family} other than @code{AF_INET} will immediately abort
+the process.  When full IPv6 support is in place, this blurb will be
+deleted and the list returned by @code{svz_library_features} will
+include an appropriate indicator (@pxref{Library features}).
+
+@deftypefun {svz_address_t *} svz_address_make (int@tie{}@var{family}, const@tie{}void@tie{}*@var{bits})
+Return an address object to hold an address in @var{family},
+represented by @var{bits}.  @var{family} must be one of:
+
+@table @code
+@item AF_INET
+An IPv4 address; @var{bits} is @code{in_addr_t *}.
+
+@item AF_INET6
+(if supported by your system) An IPv6 address;
+@var{bits} is @code{struct in6_addr *}.
+@end table
+
+The @var{bits} are expected in network byte order.
+If there are problems, return @code{NULL}.
+@end deftypefun
+
+@deftypefun {int} svz_address_family (const@tie{}svz_address_t@tie{}*@var{addr})
+Return the address family of @var{addr}.
+@end deftypefun
+
+@deftypefun {int} svz_address_to (void@tie{}*@var{dest}, const@tie{}svz_address_t@tie{}*@var{addr})
+Copy the address bits out of @var{addr} to @var{dest}.
+Return 0 on success, -1 if either @var{addr} or @var{dest}
+is @code{NULL}, or the @var{addr} family is @code{AF_UNSPEC}.
+@end deftypefun
+
+@deftypefun {int} svz_address_same (const@tie{}svz_address_t@tie{}*@var{a}, const@tie{}svz_address_t@tie{}*@var{b})
+Return 1 if @var{a} and @var{b} represent the same address
+(identical family and bits), otherwise 0.
+@end deftypefun
+
+@deftypefun {const char *} svz_pp_address (char@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}svz_address_t@tie{}*@var{addr})
+Format an external representation of @var{addr} into @var{buf},
+of @var{size} bytes.  The format depends on the family of
+@var{addr}.  For IPv4, this is numbers-and-dots.  For IPv6, it
+is ``the most appropriate IPv6 network address format for
+@var{addr}'', according to the manpage of @code{inet_ntop}, the
+function that actually does the work.
+
+If @var{buf} or @var{addr} is @code{NULL}, or @var{size} is not
+big enough, return @code{NULL}.  Otherwise, return @var{buf}.
+@end deftypefun
+
+@deftypefun {const char *} svz_pp_addr_port (char@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}svz_address_t@tie{}*@var{addr}, in_port_t@tie{}@var{port})
+Format an external representation of @var{addr} and @var{port}
+(in network byte order) into @var{buf}, of @var{size} bytes.
+The address @dfn{xrep} (external representation) is done by
+@code{svz_pp_address}, q.v.  The rest of the formatting depends
+on the @var{addr} family.
+
+@multitable @columnfractions 0.4 0.6
+@headitem Family
+@tab Formatting
+@item @code{AF_INET} (IPv4)
+@tab @code{@var{xrep}:@var{port}}
+@item @code{AF_INET6} (IPv6)
+@tab @code{[@var{xrep}]:@var{port}}
+@end multitable
+
+If @var{buf} or @var{addr} is @code{NULL}, or @var{size} is not
+big enough, return @code{NULL}.  Otherwise, return @var{buf}.
+@end deftypefun
+
+@deftypefun {svz_address_t *} svz_address_copy (const@tie{}svz_address_t@tie{}*@var{addr})
+Return a copy of @var{addr}.
+@end deftypefun
+
+@defmac SVZ_SET_ADDR (place, family, bits)
+Expand to a series of commands.  First, if @var{place} is
+non-@code{NULL}, then @code{svz_free} it.  Next, assign to
+@var{place} a new address object made by calling
+@code{svz_address_make} with @var{family} and @var{bits}.
+@end defmac
+
+@defmac SVZ_PP_ADDR (buf, addr)
+Expand to a call to @code{svz_pp_address}, passing it
+@var{buf} and @code{sizeof @var{buf}}, in addition to @var{addr}.
+@end defmac
+
+@defmac SVZ_PP_ADDR_PORT (buf, addr, port)
+Expand to a call to @code{svz_pp_addr_port}, passing it
+@var{buf} and @code{sizeof @var{buf}}, in addition to
+@var{addr} and @var{port}.
+@end defmac
+
+@node Utility functions
+@subsection Utility functions
+
+Within this section you will find some miscellaneous functionality and
+left overs of the C API.
+
+@deftypefun {void} svz_log (int@tie{}@var{level}, const@tie{}char@tie{}*@var{format}, @dots{})
+Print a message to the log system.  @var{level} specifies the prefix.
+@end deftypefun
+
+@deftypefun {void} svz_log_setfile (FILE@tie{}*@var{file})
+Set the file stream @var{file} to the log file all messages
+are printed to.  Can also be @code{stdout} or @code{stderr}.
+@end deftypefun
+
+@deftypefun {int} svz_hexdump (FILE@tie{}*@var{out}, char@tie{}*@var{action}, int@tie{}@var{from}, char@tie{}*@var{buffer}, int@tie{}@var{len}, int@tie{}@var{max})
+Dump @var{buffer} with the length @var{len} to the file stream @var{out}.
+Display description @var{action} along with origin and size info first,
+followed by the hexadecimal text representation.
+Stop output at either @var{max} or @var{len} (if @var{max} is zero) bytes.
+@var{from} is a numerical identifier of the buffers creator.
+@end deftypefun
+
+@deftypefun {char *} svz_itoa (unsigned@tie{}int@tie{}@var{i})
+Convert an unsigned integer to its decimal string representation,
+returning a pointer to an internal buffer.  (You should copy the result.)
+@end deftypefun
+
+@deftypefun {unsigned int} svz_atoi (char@tie{}*@var{str})
+Convert string @var{str} in decimal format to an unsigned integer.
+Stop conversion on any invalid characters.
+@end deftypefun
+
+@deftypefun {char *} svz_getcwd (void)
+Return the current working directory in a newly allocated string.
+(You should @code{svz_free} it when done.)
+@end deftypefun
+
+@deftypefun {int} svz_openfiles (int@tie{}@var{max_sockets})
+Check for the current and maximum limit of open files of the
+current process and try to set the limit to @var{max_sockets}.
+@end deftypefun
+
+@deftypefun {char *} svz_time (long@tie{}@var{t})
+Transform the given binary data @var{t} (UTC time) to an ASCII time text
+representation without any trailing characters.
+@end deftypefun
+
+@deftypefun {char *} svz_tolower (char@tie{}*@var{str})
+Convert the given string @var{str} to lower case text representation.
+@end deftypefun
+
+@deftypefun {char *} svz_sys_version (void)
+Return a statically-allocated string describing some operating system
+version details.
+@end deftypefun
+
+@deftypefun {int} svz_socket_unavailable_error_p (void)
+Return 1 if there was a "socket unavailable" error recently, 0
+otherwise.  This checks @code{svz_errno} against @code{WSAEWOULDBLOCK}
+(woe32) or @code{EAGAIN} (Unix).
+@end deftypefun
+
+@deftypefun {const char *} svz_sys_strerror (void)
+Return a string describing the most recent system error.
+@end deftypefun
+
+The next two functions log (with @code{SVZ_LOG_ERROR}) the current
+@dfn{system error} or @dfn{network error}, forming the prefix of the
+message using @var{fmt} and @var{args}.  This formatted prefix cannot
+exceed 255 bytes.  The rest of the message comprises: colon, space,
+error description, newline.
+
+@deftypefun {void} svz_log_sys_error (char@tie{}const@tie{}*@var{fmt}, @dots{})
+Log the current @dfn{system error}.
+@end deftypefun
+
+@deftypefun {void} svz_log_net_error (char@tie{}const@tie{}*@var{fmt}, @dots{})
+Log the current @dfn{network error}.
+@end deftypefun
+
+@deftypefun {int} svz_mingw_at_least_nt4_p (void)
+Return 1 if running MinGW (Windows) NT4x or later,
+otherwise 0.
+@end deftypefun
+
+@node Core functions
+@subsection Networking and other low level functions
+
+This chapter deals with the basic networking and file systems functions.
+It encapsulates systems calls in a portable manner.  These functions
+should behave identically on Windows and Unices.
+
+@deftypefun {char *} svz_inet_ntoa (in_addr_t@tie{}@var{ip})
+Convert @var{ip}, an address in network byte order, to its dotted
+decimal representation, returning a pointer to a statically
+allocated buffer.  (You should copy the result.)
+@end deftypefun
+
+@deftypefun {int} svz_inet_aton (char@tie{}*@var{str}, struct@tie{}sockaddr_in@tie{}*@var{addr})
+Convert the Internet host address @var{str} from the standard
+numbers-and-dots notation into binary data and store it in the
+structure that @var{addr} points to.
+Return zero if the address is valid, nonzero otherwise.
+As a special case, if @var{str} is @samp{*} (asterisk),
+store @code{INADDR_ANY} in @var{addr}.
+@end deftypefun
+
+@deftypefun {int} svz_closesocket (svz_t_socket@tie{}@var{sockfd})
+Close the socket @var{sock}.
+Return 0 if successful, -1 otherwise.
+@end deftypefun
+
+@deftypefun {int} svz_fd_cloexec (int@tie{}@var{fd})
+Set the close-on-exec flag of the given file descriptor @var{fd} and
+return zero on success.  Otherwise return non-zero.
+@end deftypefun
+
+@deftypefun {int} svz_tcp_cork (svz_t_socket@tie{}@var{fd}, int@tie{}@var{set})
+Enable or disable the @code{TCP_CORK} socket option of the socket
+@var{fd}.  This is useful for performance reasons when using
+@code{sendfile} with any prepending or trailing data not inside the
+file to transmit.  Return zero on success, otherwise non-zero.
+@end deftypefun
+
+@deftypefun {int} svz_tcp_nodelay (svz_t_socket@tie{}@var{fd}, int@tie{}@var{set}, int@tie{}*@var{old})
+Enable or disable the @code{TCP_NODELAY} setting for the socket
+@var{fd} depending on the flag @var{set}, effectively enabling
+or disabling the Nagle algorithm.
+This means that packets are always sent
+as soon as possible and no unnecessary delays are introduced.
+If @var{old} is not @code{NULL}, save the old setting there.
+Return zero on success, otherwise non-zero.
+@end deftypefun
+
+@deftypefun {int} svz_sendfile (int@tie{}@var{out_fd}, int@tie{}@var{in_fd}, off_t@tie{}*@var{offset}, size_t@tie{}@var{count})
+Transmit data between one file descriptor and another where
+@var{in_fd} is the source and @var{out_fd} the destination.
+The @var{offset} argument is a pointer to a variable holding
+the input file pointer position from which reading starts.
+On return, the @var{offset} variable will be set to the offset
+of the byte following the last byte that was read.
+@var{count} is the number of bytes to copy.
+Return the number of bytes actually read/written or -1 on errors.
+@end deftypefun
+
+@deftypefun {int} svz_open (const@tie{}char@tie{}*@var{file}, int@tie{}@var{flags}, mode_t@tie{}@var{mode})
+Open the filename @var{file} and convert it into a file handle.  The
+given @var{flags} specify the access mode and the @var{mode} argument
+the permissions if the @code{O_CREAT} flag is set.
+@end deftypefun
+
+@deftypefun {int} svz_close (int@tie{}@var{fd})
+Close the given file handle @var{fd}.  Return -1 on errors.
+@end deftypefun
+
+@deftypefun {int} svz_fstat (int@tie{}@var{fd}, struct@tie{}stat@tie{}*@var{buf})
+Return information about the specified file associated with the file
+descriptor @var{fd} returned by @code{svz_open}.  Store available
+information in the stat buffer @var{buf}.
+@end deftypefun
+
+@deftypefun {FILE *} svz_fopen (const@tie{}char@tie{}*@var{file}, const@tie{}char@tie{}*@var{mode})
+Open the file whose name is the string pointed to by @var{file} and
+associate a stream with it.
+@end deftypefun
+
+@deftypefun {int} svz_fclose (FILE@tie{}*@var{f})
+Dissociate the named stream @var{f} from its underlying file.
+@end deftypefun
+
+@node Client connections
+@subsection Client connections
+
+Serveez tries to handle all kinds of Internet protocols like TCP
+(connection oriented), UDP, ICMP and RAW (packet oriented) and
+communication across named pipes (also connection oriented) in the same
+way.  Therefore it uses a structure called @code{svz_socket_t} which is
+the abstraction of any kind of communication endpoint (can be client or
+server or both together).
+
+@menu
+* TCP sockets::                   TCP socket functions
+* Pipe connections::              Named and anonymous pipe functions
+* UDP sockets::                   UDP socket functions
+* ICMP sockets::                  ICMP socket functions
+* Raw sockets::                   Raw socket functions
+* Passthrough connections::       Passthrough connections to child processes
+@end menu
+
+@node TCP sockets
+@subsubsection TCP sockets
+
+TCP sockets provide a reliable, stream oriented, full duplex connection
+between two sockets on top of the Internet Protocol (IP).  TCP
+guarantees that the data arrives in order and retransmits lost packets.
+It generates and checks a per packet checksum to catch transmission
+errors.  TCP does not preserve record boundaries.
+
+@deftypefun {svz_socket_t *} svz_tcp_connect (svz_address_t@tie{}*@var{host}, in_port_t@tie{}@var{port})
+Create a TCP connection to host @var{host} and set the socket descriptor
+in structure @var{sock} to the resulting socket.  Return @code{NULL} on
+errors.
+@end deftypefun
+@deftypefun {int} svz_tcp_read_socket (svz_socket_t@tie{}*@var{sock})
+Read all data from @var{sock} and call the @code{check_request}
+function for the socket, if set.  Return -1 if the socket has died,
+zero otherwise.
+
+This is the default function for reading from @var{sock}.
+@end deftypefun
+@deftypefun {int} svz_tcp_send_oob (svz_socket_t@tie{}*@var{sock})
+If the underlying operating system supports urgent data (out-of-band) in
+TCP streams, try to send the byte in @code{sock->oob} through the socket
+structure @var{sock} as out-of-band data.  Return zero on success and -1
+otherwise (also if urgent data is not supported).
+@end deftypefun
+
+@node Pipe connections
+@subsubsection Pipe connections
+
+The pipe implementation supports both named and anonymous pipes.  Pipe
+servers are implemented as listeners on a file system FIFO on Unices or
+``Named Pipes'' on Windows (can be shared over a Windows network).
+
+A FIFO special file is similar to a pipe, except that it is created in a
+different way.  Instead of being an anonymous communications channel, a
+FIFO special file is entered into the file system.
+
+Once you have created a FIFO special file in this way, any process can
+open it for reading or writing, in the same way as an ordinary file.
+However, it has to be open at both ends simultaneously before you can
+proceed to do any input or output operations on it.
+
+@deftypefun {svz_socket_t *} svz_pipe_create (svz_t_handle@tie{}@var{recv_fd}, svz_t_handle@tie{}@var{send_fd})
+Create a socket structure containing both the pipe descriptors
+@var{recv_fd} and @var{send_fd}.  Return @code{NULL} on errors.
+@end deftypefun
+
+@deftypefun {int} svz_pipe_create_pair (svz_t_handle@tie{}@var{pipe_desc}[2])
+Create a (non blocking) pair of pipes.  This differs in Win32 and
+Unices.  Return a non-zero value on errors.
+@end deftypefun
+
+@deftypefun {svz_socket_t *} svz_pipe_connect (svz_pipe_t@tie{}*@var{recv}, svz_pipe_t@tie{}*@var{send})
+Create a pipe connection socket structure to the pair of named
+pipes @var{recv} and @var{send}.  Return @code{NULL} on errors.
+@end deftypefun
+
+@deftypefun {int} svz_invalid_handle_p (svz_t_handle@tie{}@var{handle})
+Return 1 if @var{handle} is invalid, otherwise 0.
+@end deftypefun
+
+@deftypefun {void} svz_invalidate_handle (svz_t_handle@tie{}*@var{href})
+Invalidate the handle pointed at by @var{href}.
+@end deftypefun
+
+@deftypefun {int} svz_closehandle (svz_t_handle@tie{}@var{handle})
+Close @var{handle}.
+Return 0 if successful, -1 otherwise.
+@end deftypefun
+
+@node UDP sockets
+@subsubsection UDP sockets
+
+The UDP sockets implement a connectionless, unreliable datagram packet
+service.  Packets may be reordered or duplicated before they arrive.
+UDP generates and checks checksums to catch transmission errors.
+
+@deftypefun {svz_socket_t *} svz_udp_connect (svz_address_t@tie{}*@var{host}, in_port_t@tie{}@var{port})
+Create a UDP connection to @var{host} at @var{port} and set the socket
+descriptor in structure @var{sock} to the resulting socket.  Return a
+@code{NULL} value on errors.
+
+This function can be used for port bouncing.  If you assign the
+@code{handle_request} callback to something server specific and the
+@var{cfg} field of the server's configuration to the returned socket
+structure, this socket is able to handle a dedicated UDP connection to
+some other UDP server.
+@end deftypefun
+
+@deftypefun {int} svz_udp_write (svz_socket_t@tie{}*@var{sock}, char@tie{}*@var{buf}, int@tie{}@var{length})
+Write @var{buf} into the send queue of the UDP socket @var{sock}.  If
+@var{length} argument supersedes the maximum length for UDP messages it
+is split into smaller packets.
+@end deftypefun
+
+@node ICMP sockets
+@subsubsection ICMP sockets
+
+The ICMP socket implementation is currently used in the tunnel server
+which comes with the Serveez package.  It implements a user protocol
+receiving and sending ICMP packets by opening a raw socket with the
+protocol @code{IPPROTO_ICMP}.
+
+The types of ICMP packets passed to the socket can be filtered using the
+@code{ICMP_FILTER} socket option (or by software as done here).  ICMP
+packets are always processed by the kernel too, even when passed to a
+user socket.
+
+@deftypefun {svz_socket_t *} svz_icmp_connect (svz_address_t@tie{}*@var{host}, in_port_t@tie{}@var{port}, uint8_t@tie{}@var{type})
+Create an ICMP socket for receiving and sending.
+Return @code{NULL} on errors, otherwise an enqueued socket structure.
+@end deftypefun
+
+@deftypefun {int} svz_icmp_send_control (svz_socket_t@tie{}*@var{sock}, uint8_t@tie{}@var{type})
+``If you are calling this function we will send an empty ICMP packet
+signaling that this connection is going down soon.''
+[ttn sez: huh?]
+@end deftypefun
+
+@deftypefun {int} svz_icmp_write (svz_socket_t@tie{}*@var{sock}, char@tie{}*@var{buf}, int@tie{}@var{length})
+Send @var{buf} with length @var{length} via this ICMP socket @var{sock}.
+If @var{length} supersedes the maximum ICMP message size the buffer is
+split into smaller packets.
+@end deftypefun
+
+@node Raw sockets
+@subsubsection Raw sockets
+
+A raw socket receives or sends the raw datagram not including link-level
+headers.  It is currently used by the ICMP socket implementation of the
+core library.  The IPv4 layer generates an IP header when sending a
+packet unless the @code{IP_HDRINCL} socket option is enabled on the
+socket.  When it is enabled, the packet must contain an IP header.  For
+receiving the IP header is always included in the packet.
+
+Only processes with an effective userid of zero (Administrator or root)
+or the @code{CAP_NET_RAW} capability are allowed to open raw sockets.
+All packets or errors matching the protocol number specified for the raw
+socket are passed to this socket.  A protocol of @code{IPPROTO_RAW}
+implies enabled @code{IP_HDRINCL} and receives all IP protocols.
+Sending is not allowed.
+
+[FIXME: All funcs internalized!  Write something else here!]
+
+@node Passthrough connections
+@subsubsection Passthrough connections
+
+The functions described in this section allow you to pass through client
+connections to the standard input (stdin) and standard output (stdout)
+of external programs.  Some of the routines deal with the management of
+program environments.  Basically, there are two methods for passing
+through a duplex connection: the Unix'ish @code{fork} and @code{exec}
+method and the shuffle method where the main process keeps control over
+the communication on the original duplex connection and passes this data
+through two pairs of pipes, or yet another socket connection, to the
+child process.  All of the three method are implemented calling them
+@code{SVZ_PROCESS_FORK}, @code{SVZ_PROCESS_SHUFFLE_PIPE} and
+@code{SVZ_PROCESS_SHUFFLE_SOCK}.
+
+@deftypefun {int} svz_sock_process (svz_socket_t@tie{}*@var{sock}, char@tie{}*@var{bin}, char@tie{}*@var{dir}, char@tie{}**@var{argv}, svz_envblock_t@tie{}*@var{envp}, int@tie{}@var{forkp}, char@tie{}*@var{user})
+Start a new program @var{bin}, a fully qualified executable filename,
+passing the socket or pipe descriptor(s) in the socket structure
+@var{sock} to its stdin and stdout.
+
+If @var{dir} is non-@code{NULL}, it specifies the working directory of
+the new process.
+
+The program arguments and the environment of the new process are taken
+from @var{argv} and @var{envp}.  Normally @code{argv[0]} should be set to
+the program's name.  If @code{NULL}, it defaults to @var{bin}.
+
+The @var{forkp} argument is a flag that controls the passthrough method.
+If non-zero, pipe descriptors or the socket descriptor are passed to the
+child process directly through @code{fork} and @code{exec}.  Otherwise,
+socket transactions are passed via a pair or pipes or sockets (depending
+on whether or not the system provides @code{socketpair}).
+
+You can pass the user and group identifications in the format
+@samp{user[.group]} (group is optional), as @code{SVZ_PROCESS_NONE} or
+@code{SVZ_PROCESS_OWNER} in the @var{user} argument.  This specifies the
+permissions of the new child process.  If @code{SVZ_PROCESS_OWNER} is
+passed the permissions are set to the executable file @var{bin} owner;
+@code{SVZ_PROCESS_NONE} does not change user or group.
+
+Return the new process id on success, -1 on failure.
+@end deftypefun
+
+@strong{Please note}: On M$-Windows platforms it is not possible to pass
+a socket connection to stdin/stdout of a child process.  That is why
+this function creates an inheritable version of the socket and puts the
+socket handle number into the environment variables @code{SEND_HANDLE}
+and @code{RECV_HANDLE}.  A spawned child process can use these handles
+as if they were self-created.  After calling @code{WSAStartup} the child
+process can @code{send} and @code{recv} as usual.
+
+Relatedly, Windoze does not use @code{SIGCHLD} to inform the parent when
+a child dies, so for that platform, you should use the next function
+(which is not otherwise available):
+
+@deftypefun {int} svz_mingw_child_dead_p (char@tie{}*@var{prefix}, svz_t_handle@tie{}*@var{pid})
+Check child pointed at by @var{pid} by waiting a bit.
+If it is dead, close and invalidate its handle, and return 1.
+Otherwise, return 0.
+@var{prefix} is for error messages; it should be either the
+empty string, or a string ending in colon and space.
+@end deftypefun
+
+On non-Windoze, this is the function you want to use:
+
+@deftypefun {int} svz_most_recent_dead_child_p (svz_t_handle@tie{}@var{pid})
+Return 1 if a child process @var{pid} died recently, updating
+other internal state by side effect.  Otherwise, return 0.
+@end deftypefun
+
+@deftypefun {void} svz_envblock_setup (void)
+Set up internal tables for environment block wrangling.
+
+This function must be called once after @code{svz_boot}
+so that subsequent functions
+(like @code{svz_envblock_default}) can work correctly.
+@end deftypefun
+
+@deftypefun {svz_envblock_t *} svz_envblock_create (void)
+Create and return a fresh environment block, useful for passing
+to @code{svz_envblock_default} and @code{svz_envblock_add}.  Its
+size is initially set to zero.
+@end deftypefun
+
+@deftypefun {int} svz_envblock_default (svz_envblock_t@tie{}*@var{env})
+Fill environment block @var{env} with the environment variables from
+the current process, replacing its current contents (if any).
+@end deftypefun
+
+@deftypefun {int} svz_envblock_add (svz_envblock_t@tie{}*@var{env}, char@tie{}*@var{format}, @dots{})
+Insert a new environment variable into environment block
+@var{env}.  The @var{format} argument is a @code{printf}-style format
+string describing how to format the optional arguments.  You specify
+environment variables in the @samp{VAR=VALUE} format.
+@end deftypefun
+
+@deftypefun {void} svz_envblock_destroy (svz_envblock_t@tie{}*@var{env})
+Destroy environment block @var{env} completely.  Afterwards,
+@var{env} is invalid and should therefore not be further referenced.
+@end deftypefun
+
+@deftypefun {void *} svz_envblock_get (svz_envblock_t@tie{}*@var{env})
+Convert environment block @var{env} into something which can be passed to
+@code{execve} (Unix) or @code{CreateProcess} (Windows).  Additionally,
+under Windows, sort the environment block.
+
+(Unfortunately the layout of environment blocks in Unices and Windows
+differ.  On Unices you have a NULL terminated array of character strings
+(i.e., @code{char **}) and on Windows systems you have a simple character
+string containing the environment variables in the format @samp{VAR=VALUE}
+each separated by a zero byte (i.e., @code{char *}).  The end of the list
+is indicated by a further zero byte.)
+@end deftypefun
+
+@node Socket management
+@subsection Socket management
+
+The functions described in this section deal with the
+operations on C structures called
+@code{svz_socket_t}.  See the description of each function for details
+on which kind of socket it can handle and what they are for.
+
+@deftypefun {int} svz_sock_nconnections (void)
+Return the number of currently connected sockets.
+@end deftypefun
+
+@deftypefun {int} svz_sock_write (svz_socket_t@tie{}*@var{sock}, char@tie{}*@var{buf}, int@tie{}@var{len})
+Write @var{len} bytes from the memory location pointed to by @var{buf}
+to the output buffer of the socket @var{sock}.  Also try to flush the
+buffer to the socket of @var{sock} if possible.  Return a non-zero value
+on error, which normally means a buffer overflow.
+@end deftypefun
+
+@deftypefun {int} svz_sock_printf (svz_socket_t@tie{}*@var{sock}, const@tie{}char@tie{}*@var{fmt}, @dots{})
+Print a formatted string on the socket @var{sock}.  @var{fmt} is the
+@code{printf}-style format string, which describes how to format the
+optional arguments.
+@end deftypefun
+
+@deftypefun {int} svz_sock_resize_buffers (svz_socket_t@tie{}*@var{sock}, int@tie{}@var{send_buf_size}, int@tie{}@var{recv_buf_size})
+Resize the send and receive buffers for the socket @var{sock}.
+@var{send_buf_size} is the new size for the send buffer,
+@var{recv_buf_size} for the receive buffer.  Note that data may be lost
+when the buffers shrink.  For a new buffer size of 0 the buffer is
+freed and the pointer set to NULL.
+@end deftypefun
+
+@deftypefun {int} svz_sock_check_request (svz_socket_t@tie{}*@var{sock})
+Check for the kind of packet delimiter within @var{sock} and
+and assign one of the default @code{check_request} routines
+(one or more byte delimiters or a fixed size).
+
+Afterwards this function will never ever be called again because
+the callback gets overwritten here.
+@end deftypefun
+
+@deftypefun {void} svz_sock_reduce_recv (svz_socket_t@tie{}*@var{sock}, int@tie{}@var{len})
+Shorten the receive buffer of @var{sock} by @var{len} bytes.
+@end deftypefun
+
+@deftypefun {void} svz_sock_reduce_send (svz_socket_t@tie{}*@var{sock}, int@tie{}@var{len})
+Reduce the send buffer of @var{sock} by @var{len} bytes.
+@end deftypefun
+
+Because libserveez manages the creation and destruction of
+@code{svz_socket_t} objects internally, the following API element
+is useful for syncronizing client-code references to those objects
+with those objects.
+
+@deftypefun {void} svz_sock_prefree (int@tie{}@var{addsub}, svz_sock_prefree_fn@tie{}@var{fn})
+Register (if @var{addsub} is non-zero), or unregister (otherwise)
+the function @var{fn} to be called immediately
+prior to a @code{svz_socket_t} being freed.
+@var{fn} is called with one arg @code{sock},
+and should not return anything.  In other words:
+
+@vindex svz_sock_prefree_fn
+@example
+typedef void (svz_sock_prefree_fn) (const svz_socket_t *);
+@end example
+
+Note the @code{const}!
+@end deftypefun
+
+@node Coserver functions
+@subsection Coserver functions
+
+This section describes the internal coserver interface of Serveez.
+Coservers are helper processes meant to perform blocking tasks.  This is
+necessary because Serveez itself is single threaded.  Each coserver is
+connected via a pair of pipes to the main thread of Serveez
+communicating over a simple text line protocol.  Each request/response
+is separated by a newline character.
+
+@deftypefun {int} svz_foreach_coserver (svz_coserver_do_t@tie{}*@var{func}, void@tie{}*@var{closure})
+Call @var{func} for each coserver, passing additionally the second arg
+@var{closure}.  If @var{func} returns a negative value, return immediately
+with that value (breaking out of the loop), otherwise, return 0.
+@end deftypefun
+
+@deftypefun {void} svz_coserver_check (void)
+Under woe32 check if there was any response from an active coserver.
+Moreover keep the coserver threads/processes alive.  If one of the
+coservers dies due to buffer overrun or might be overloaded,
+start a new one.
+
+Call this function whenever there is time, e.g., within the timeout of the
+@code{select} system call.
+@end deftypefun
+
+@deftypefun {void} svz_coserver_destroy (int@tie{}@var{type})
+Destroy specific coservers with the type @var{type}.
+All instances of this coserver type will be stopped.
+@end deftypefun
+
+@deftypefun {svz_coserver_t *} svz_coserver_create (int@tie{}@var{type})
+Create and return a single coserver with the given type @var{type}.
+@end deftypefun
+
+@deftypefun {const char *} svz_coserver_type_name (const@tie{}svz_coserver_t@tie{}*@var{coserver})
+Return the type name of @var{coserver}.
+@end deftypefun
+
+@deftypefun {void} svz_coserver_rdns_invoke (svz_address_t@tie{}*@var{addr}, svz_coserver_handle_result_t@tie{}@var{cb}, void@tie{}*@var{closure})
+Enqueue a request for the reverse DNS coserver
+to resolve address @var{addr},
+arranging for callback @var{cb} to be called with two args:
+the hostname (a string) and the opaque data @var{closure}.
+@end deftypefun
+
+@deftypefun {void} svz_coserver_dns_invoke (char@tie{}*@var{host}, svz_coserver_handle_result_t@tie{}@var{cb}, void@tie{}*@var{closure})
+Enqueue a request for the DNS coserver to resolve @var{host},
+arranging for callback @var{cb} to be called with two args:
+the ip address in dots-and-numbers notation and the opaque
+data @var{closure}.
+@end deftypefun
+
+@deftypefun {void} svz_coserver_ident_invoke (svz_socket_t@tie{}*@var{sock}, svz_coserver_handle_result_t@tie{}@var{cb}, void@tie{}*@var{closure})
+Enqueue a request for the ident coserver to resolve the client
+identity at @var{sock}, arranging for callback @var{cb} to be called
+with two args: the identity (string) and the opaque data @var{closure}.
+@end deftypefun
+
+To make use of coservers, you need to start the coserver interface by
+calling @code{svz_updn_all_coservers} once before, and once after,
+entering the main server loop.
+
+@deftypefun {int} svz_updn_all_coservers (int@tie{}@var{direction})
+If @var{direction} is non-zero, init coserver internals.
+Otherwise, finalize them.  Return 0 if successful.
+
+If @var{direction} is positive, init also starts one instance each
+of the builtin servers.  If negative, it doesn't.
+@end deftypefun
+
+@node Codec functions
+@subsection Codec functions
+
+The codec interface of the Serveez core API supplies routines for
+setting up socket structures to perform encoding or decoding of its
+receive or send buffers.  It is a transparent layer of buffer
+transition.  The interface itself tries to unify different types of
+codecs.  In order to add a new codec the programmer needs to write some
+wrapper functions around the actual implementation to fulfill certain
+entry and exit semantics of this interface.
+
+@deftypefun {int} svz_foreach_codec (svz_codec_do_t@tie{}*@var{func}, void@tie{}*@var{closure})
+Call @var{func} for each codec, passing additionally the second arg
+@var{closure}.  If @var{func} returns a negative value, return immediately
+with that value (breaking out of the loop), otherwise, return 0.
+@end deftypefun
+
+@deftypefun {svz_codec_t *} svz_codec_get (char@tie{}*@var{description}, int@tie{}@var{type})
+Find an appropriate codec for the given @var{description} and @var{type}
+(one of either @code{SVZ_CODEC_ENCODER} or @code{SVZ_CODEC_DECODER}).
+Return @code{NULL} if there is no such codec registered.
+@end deftypefun
+
+@deftypefun {void} svz_codec_ratio (svz_codec_t@tie{}*@var{codec}, svz_codec_data_t@tie{}*@var{data})
+Print a text representation of a codec's current ratio in percent
+if possible.
+@end deftypefun
+
+@deftypefun {int} svz_codec_register (svz_codec_t@tie{}*@var{codec})
+Register @var{codec}.  Does not register invalid or
+duplicate codecs.  Return zero on success, non-zero otherwise.
+@end deftypefun
+
+@deftypefun {int} svz_codec_unregister (svz_codec_t@tie{}*@var{codec})
+Remove @var{codec} from the list of known codecs.  Return
+zero if the codec could be successfully removed, non-zero otherwise.
+@end deftypefun
+
+@deftypefun {int} svz_codec_sock_receive_setup (svz_socket_t@tie{}*@var{sock}, svz_codec_t@tie{}*@var{codec})
+Arrange for @var{sock} to decode or encode its receive data via
+@var{codec}.  Return zero on success, non-zero otherwise.
+
+(You need to have set the @code{check_request} method previously
+for this to work.)
+@end deftypefun
+
+@deftypefun {int} svz_codec_sock_receive (svz_socket_t@tie{}*@var{sock})
+``This routine is the new @code{check_request} callback for reading
+codecs.  It is applied in @code{svz_codec_sock_receive_setup}.
+Usually it gets called whenever there is data in the receive buffer.
+It lets the current receive buffer be the input of the codec.  The
+output buffer of the codec gets the new receive buffer of @var{sock}.
+The old @code{check_request} callback of @var{sock} gets called
+afterwards.  When leaving this function, the receive buffer gets
+restored again with the bytes snipped consumed by the codec itself.''
+[ttn sez: huh?]
+@end deftypefun
+
+@deftypefun {int} svz_codec_sock_send_setup (svz_socket_t@tie{}*@var{sock}, svz_codec_t@tie{}*@var{codec})
+Arrange for @var{sock} to encode or decode its send
+buffer via @var{codec}.  Return zero on success, non-zero otherwise.
+
+(You need to have properly set the @code{write_socket} member of
+@var{sock} previously for this to work.)
+@end deftypefun
+
+@deftypefun {int} svz_codec_sock_send (svz_socket_t@tie{}*@var{sock})
+``This is the new @code{write_socket} callback for @var{sock} which is
+called whenever there is data within the send buffer available and
+@var{sock} is scheduled for writing.  It uses the current send buffer
+as input buffer for the codec.  The output buffer of the codec is
+used to invoke the @code{write_socket} callback saved within
+@code{svz_codec_sock_send_setup}.  After this the send buffer is
+restored again without the bytes consumed by the codec.''
+[ttn sez: huh?]
+@end deftypefun
+
+@deftypefun {int} svz_codec_sock_disconnect (svz_socket_t@tie{}*@var{sock})
+Try to release the resources of both
+the receiving and sending codec of @var{sock}.
+
+This callback is used as the @code{disconnected_socket} callback of
+the socket structure @var{sock}.  It is called by default if the
+codec socket structure @var{sock} gets disconnected for some external
+reason.
+@end deftypefun
+
+@deftypefun {svz_codec_t *} svz_codec_sock_detect (svz_socket_t@tie{}*@var{sock})
+Return a valid codec detected by scanning the receive buffer
+of @var{sock}, or @code{NULL} if no codec could be detected.
+@end deftypefun
+
+@node Server types
+@subsection Server types
+
+As already noted in the main Serveez manual a server type is the main
+specification of the abilities and configuration items of a server which
+can be instantiated.  It is represented by @code{svz_servertype_t} in
+Serveez.  It contains server specific members like its name, different
+callbacks, a single default configuration and a list of configuration
+items which determine what can be configured.
+
+@menu
+* Macros for setting up a new server type::
+* General server type functionality::
+* Dynamic server loading::
+@end menu
+
+@node Macros for setting up a new server type
+@subsubsection Macros for setting up a new server type
+
+When specifying a server type you also need to define configuration
+items for it.  These items refer to addresses in the example
+configuration of the server type.  These macros can be used to define
+such items.
+
+@defmac SVZ_REGISTER_INT (name, item, defaultable)
+Register a simple integer.  C-type: @code{int}.  The given @var{name}
+specifies the symbolic name of the integer and @var{item} the integer
+itself (not its address).  The @var{defaultable} argument can be either
+@code{SVZ_ITEM_DEFAULTABLE} or @code{SVZ_ITEM_NOTDEFAULTABLE}.
+@end defmac
+
+@defmac SVZ_REGISTER_BOOL (name, item, defaultable)
+Register a boolean value.  C-type: @code{int}.
+@end defmac
+
+@defmac SVZ_REGISTER_INTARRAY (name, item, defaultable)
+Register an array of integers.  C-type: @code{svz_array_t *}.
+@end defmac
+
+@defmac SVZ_REGISTER_STR (name, item, defaultable)
+Register a simple character string.  C-type: @code{char *}.
+@end defmac
+
+@defmac SVZ_REGISTER_STRARRAY (name, item, defaultable)
+Register a string array.  C-type: @code{svz_array_t *}.
+@end defmac
+
+@defmac SVZ_REGISTER_HASH (name, item, defaultable)
+Register a hash table associating strings with strings only.  C-type:
+@code{svz_hash_t *}.
+@end defmac
+
+@defmac SVZ_REGISTER_PORTCFG (name, item, defaultable)
+Register a port configuration.  C-type: @code{svz_portcfg_t *}.
+@end defmac
+
+@defmac SVZ_REGISTER_END ()
+Indicate the end of the list of configuration items.  It is
+the only mandatory item you need to specify in an example server type
+configuration.
+@end defmac
+
+@defmac SVZ_CONFIG_DEFINE (description, config, prototypes)
+Expand to a data structure that properly associates the example
+configuration @var{config} with the name @var{description} and its
+configuration items @var{prototypes}, for use within a server type
+definition.
+@end defmac
+
+@node General server type functionality
+@subsubsection General server type functionality
+
+The following set of functions are used to manage the list of known
+server types in the Serveez core library.  Serveez itself uses some of
+these functions to register its builtin server types.
+
+@deftypefun {int} svz_foreach_servertype (svz_servertype_do_t@tie{}*@var{func}, void@tie{}*@var{closure})
+Call @var{func} for each servertype, passing additionally the second arg
+@var{closure}.  If @var{func} returns a negative value, return immediately
+with that value (breaking out of the loop), otherwise, return 0.
+@end deftypefun
+
+@deftypefun {void} svz_servertype_add (svz_servertype_t@tie{}*@var{server})
+Add the server type @var{server} to the currently registered servers.
+@end deftypefun
+
+@deftypefun {svz_servertype_t *} svz_servertype_get (char@tie{}*@var{name}, int@tie{}@var{dynamic})
+Find a servertype definition by its short name.  If @var{dynamic} is
+set to non-zero, try to load a shared library that provides that
+servertype.  Return @code{NULL} if no server with the given variable
+prefix @var{name} has been found.
+@end deftypefun
+
+@deftypefun {svz_servertype_t *} svz_servertype_find (svz_server_t@tie{}*@var{server})
+Find a given server instances @var{server} server type.  Return
+@code{NULL} if there is no such server type (which should never occur
+since a server is a child of a server type).
+@end deftypefun
+
+@node Dynamic server loading
+@subsubsection Dynamic server loading
+
+The core API of Serveez is able to register server types dynamically at
+runtime.  It uses the dynamic linker capabilities of the underlying
+operating system to load shared libraries (or DLLs on Win32).  This has
+been successfully tested on Windows and GNU/Linux.  Other systems are
+supported but yet untested.  Please tell us if you notice misbehaviour
+of any sort.
+
+@deftypefun {void} svz_dynload_path_set (svz_array_t@tie{}*@var{paths})
+Set the additional search paths for the serveez library.  The given array
+of strings gets @code{svz_free}d.
+@end deftypefun
+
+@deftypefun {svz_array_t *} svz_dynload_path_get (void)
+Create an array of strings containing each an additional search path.
+The loadpath is hold in the environment variable @samp{SERVEEZ_LOAD_PATH}
+which can be set from outside the library or modified using
+@code{svz_dynload_path_set}.  The returned array needs to be destroyed
+after usage.
+@end deftypefun
+
+@node Server functions
+@subsection Server functions
+
+A server in Serveez is an instantiated (configured) server type.  It is
+merely a copy of a specific server type with a unique server name, and
+is represented by @code{svz_server_t} in the core library.
+
+@menu
+* Server functionality::  General server instance implementations
+* Server configuration::  Server instance configuration
+* Server binding::        Server instance bindings
+* Server core::           Core functionality for servers
+* Server loop::           Server loop implementation
+* Server socket::         Using and creating server sockets
+@end menu
+
+@node Server functionality
+@subsubsection Server functionality
+
+This section contains functions dealing with the list of known servers
+in the core library of Serveez, also with the basics like creation and
+destruction of such servers.
+
+@deftypefun {void} svz_foreach_server (svz_server_do_t@tie{}*@var{func}, void@tie{}*@var{closure})
+Call @var{func} for each server, passing additionally the second arg
+@var{closure}.
+@end deftypefun
+
+@deftypefun {svz_server_t *} svz_server_find (void@tie{}*@var{cfg})
+Find a server instance by the given configuration structure @var{cfg}.
+Return @code{NULL} if there is no such configuration in any server
+instance.
+@end deftypefun
+
+@deftypefun {svz_array_t *} svz_server_clients (svz_server_t@tie{}*@var{server})
+Return a list of clients (socket structures) which are associated
+with the given server instance @var{server}.  If there is no such
+socket, return @code{NULL}.  Caller should @code{svz_array_destroy}
+the returned array.
+@end deftypefun
+
+@deftypefun {svz_server_t *} svz_server_get (char@tie{}*@var{name})
+Get the server instance with the given instance name @var{name}.
+Return @code{NULL} if there is no such server yet.
+@end deftypefun
+
+@deftypefun {int} svz_updn_all_servers (int@tie{}@var{direction})
+If @var{direction} is non-zero, run the initializers of all
+servers, returning -1 if some server did not think it is a good
+idea to run.  Otherwise, run the local finalizers for all
+server instances.
+@end deftypefun
+
+@node Server configuration
+@subsubsection Configuration
+
+These functions provide an interface for configuring a server.  They are
+used to create and modify the default configuration of a server type in
+order to create a server configuration.
+
+@deftypefun {int} svz_config_type_instantiate (char@tie{}*@var{type}, char@tie{}*@var{name}, char@tie{}*@var{instance}, void@tie{}*@var{options}, svz_config_accessor_t@tie{}*@var{accessor}, size_t@tie{}@var{ebufsz}, char@tie{}*@var{ebuf})
+Instantiate a configurable type.  The @var{type} argument specifies
+the configurable type name, @var{name} the name of the type (in the
+domain of the configurable type) and @var{instance} the instance
+name of the type.  Return zero on success, otherwise -1.
+@end deftypefun
+
+@deftypefun {void} svz_config_free (svz_config_prototype_t@tie{}*@var{prototype}, void@tie{}*@var{cfg})
+Release the configuration @var{cfg} of the given configuration
+prototype @var{prototype}.  If @var{cfg} is @code{NULL}, do nothing.
+@end deftypefun
+
+@deftypefun {void *} svz_collect (int@tie{}@var{type}, size_t@tie{}@var{count}, void@tie{}*@var{data})
+Create a collection of @var{type}, given the @var{count}
+items of @var{data}.  Valid values of @var{type} are one of:
+@code{SVZ_INTARRAY}, @code{SVZ_STRARRAY}, @code{SVZ_STRHASH}.
+For a string hash, @var{data} should be alternating keys and values;
+the returned hash table will have @code{@var{count} / 2} elements.
+The C type of @var{data} for an int array should be @code{int[]},
+and for string array or hash it should be @code{char*[]}.
+On error (either bad @var{type} or odd @var{count} for string hash),
+return @code{NULL}.
+@end deftypefun
+
+@noindent
+Here are some convenience macros for @code{svz_collect}:
+
+@defmac SVZ_COLLECT_INTARRAY (cvar)
+Return an integer array @code{svz_array_t *}
+created from @code{int @var{cvar}[]}.
+@end defmac
+
+@defmac SVZ_COLLECT_STRARRAY (cvar)
+Return a string array @code{svz_array_t *}
+created from @code{char *@var{cvar}[]}.
+@end defmac
+
+@defmac SVZ_COLLECT_STRHASH (cvar)
+Return a string hash @code{svz_hash_t *}
+created from @code{char *@var{cvar}[]}.
+@end defmac
+
+@node Server binding
+@subsubsection Bindings
+
+The following functionality represents the relationship between port
+configurations as described in @ref{Port config funcs} and server
+instances.  When binding a server to a specific port configuration the
+core library creates listeners as needed by itself.
+
+@deftypefun {int} svz_server_bind (svz_server_t@tie{}*@var{server}, svz_portcfg_t@tie{}*@var{port})
+Bind the server instance @var{server} to the port configuration
+@var{port} if possible.  Return non-zero on errors, otherwise zero.
+It might occur that a single server is bound to more than one network
+port if, e.g., the TCP/IP address is specified by @samp{*} (asterisk)
+since this gets expanded to the known list of interfaces.
+@end deftypefun
+
+@deftypefun {svz_array_t *} svz_server_portcfgs (svz_server_t@tie{}*@var{server})
+Return an array of port configurations to which the server instance
+@var{server} is currently bound to, or @code{NULL} if there is no such
+binding.  Caller should @code{svz_array_destroy} the returned array
+when done.
+@end deftypefun
+
+@deftypefun {svz_array_t *} svz_server_listeners (svz_server_t@tie{}*@var{server})
+Return an array of listening socket structures to which the server
+instance @var{server} is currently bound to, or @code{NULL} if there
+is no such binding.  Caller should @code{svz_array_destroy} the
+returned array when done.
+@end deftypefun
+
+@deftypefun {svz_array_t *} svz_sock_servers (svz_socket_t@tie{}*@var{sock})
+Return the array of server instances bound to the listening
+@var{sock}, or @code{NULL} if there are no bindings.  Caller
+should @code{svz_array_destroy} the returned array when done.
+@end deftypefun
+
+@deftypefun {int} svz_binding_contains_server (svz_socket_t@tie{}*@var{sock}, svz_server_t@tie{}*@var{server})
+Checks whether the server instance @var{server} is
+bound to the server socket structure @var{sock}.
+Return one if so, otherwise zero.
+@end deftypefun
+
+@deftypefun {size_t} svz_pp_server_bindings (char@tie{}*@var{buf}, size_t@tie{}@var{size}, svz_server_t@tie{}*@var{server})
+Format a space-separated list of current port configuration
+bindings for @var{server} into @var{buf}, which has @var{size}
+bytes.  The string is guaranteed to be nul-terminated.  Return the
+length (at most @code{@var{size} - 1}) of the formatted string.
+@end deftypefun
+
+@node Server core
+@subsubsection Server core
+
+@deftypevar {svz_t_handle} svz_child_died
+Set to a non-zero value whenever the server
+receives a SIGCHLD signal.
+@end deftypevar
+
+@deftypefun {int} svz_shutting_down_p (void)
+Return non-zero if the core is in the process of shutting down
+(typically as a result of a signal).
+@end deftypefun
+
+@deftypefun {int} svz_foreach_socket (svz_socket_do_t@tie{}*@var{func}, void@tie{}*@var{closure})
+Call @var{func} for each socket, passing additionally the second arg
+@var{closure}.  If @var{func} returns a negative value, return immediately
+with that value (breaking out of the loop), otherwise, return 0.
+@end deftypefun
+
+@deftypefun {svz_socket_t *} svz_sock_find (int@tie{}@var{id}, int@tie{}@var{version})
+Return the socket structure for the socket id @var{id} and the version
+@var{version}, or @code{NULL} if no such socket exists.  If @var{version}
+is -1 it is not checked.
+@end deftypefun
+
+@deftypefun {int} svz_sock_schedule_for_shutdown (svz_socket_t@tie{}*@var{sock})
+Mark socket @var{sock} as killed.  That means that no further operations
+except disconnecting and freeing are allowed.  All marked sockets will be
+deleted once the server loop is through.
+@end deftypefun
+
+@deftypefun {int} svz_sock_enqueue (svz_socket_t@tie{}*@var{sock})
+Enqueue the socket @var{sock} into the list of sockets handled by
+the server loop.
+@end deftypefun
+
+@deftypefun {void} svz_sock_setparent (svz_socket_t@tie{}*@var{child}, svz_socket_t@tie{}*@var{parent})
+Set the @var{child} socket's parent to @var{parent}.
+
+This should be called whenever a listener accepts a
+connection and creates a new child socket.
+@end deftypefun
+
+@deftypefun {svz_socket_t *} svz_sock_getparent (svz_socket_t@tie{}*@var{child})
+Return the @var{child} socket's parent socket structure, or @code{NULL}
+if this socket does not exist anymore.  This might happen if a listener
+dies for some reason.
+@end deftypefun
+
+@deftypefun {void} svz_sock_setreferrer (svz_socket_t@tie{}*@var{sock}, svz_socket_t@tie{}*@var{referrer})
+Set the referring socket structure of @var{sock} to @var{referrer}.
+If @var{referrer} is @code{NULL} the reference will be invalidated.
+
+This can be used to create some relationship
+between two socket structures.
+@end deftypefun
+
+@deftypefun {svz_socket_t *} svz_sock_getreferrer (svz_socket_t@tie{}*@var{sock})
+Get the referrer of the socket structure @var{sock}.
+Return @code{NULL} if there is no such socket.
+@end deftypefun
+
+@deftypefun {svz_portcfg_t *} svz_sock_portcfg (svz_socket_t@tie{}*@var{sock})
+Return the parent's port configuration of @var{sock},
+or @code{NULL} if the given socket has no parent, i.e. is a listener.
+@end deftypefun
+
+@node Server loop
+@subsubsection Server loop
+
+This section describes the main server loop functionality.  There two
+modes of operation.  The default mode as used in Serveez is to jump into
+the loop and wait until the core library drops out of it.  In the other
+mode, the caller tells the Serveez core library to scan (and process)
+its socket chain once and return immediately.  Thus, caller is able to
+issue additional functionality in between each pass, useful if such
+functionality cannot be handled within the timers (notifiers) of servers
+and sockets.
+
+@deftypefun {void} svz_loop_pre (void)
+Initialize top-of-cycle state.
+
+Call this function once before using @code{svz_loop_one}.
+@end deftypefun
+
+@deftypefun {void} svz_loop_post (void)
+Clean up bottom-of-cycle state.
+
+Call this function once after using @code{svz_loop_one}.
+@end deftypefun
+
+@deftypefun {void} svz_loop (void)
+Loop, serving.  In other words, handle all signals, incoming and outgoing
+connections and listening server sockets.
+@end deftypefun
+
+@deftypefun {void} svz_loop_one (void)
+Handle all things once.
+
+This function is called regularly by @code{svz_loop}.
+@end deftypefun
+
+@node Server socket
+@subsubsection Server sockets
+
+This section deals with creating and handling listeners.  These
+functions provide the default routines invoked when accepting a new
+connection on a listener.  This is necessary for connection oriented
+protocols (TCP and named pipes) only.
+
+[FIXME: All funcs internalized!  Write something else here!]
+
+@node Port config funcs
+@subsection Port configurations
+
+A port configuration is a structure defining a network or file system
+configuration.  Depending on the type of a server, it can be bound to
+one or more port configurations.  There are two major types of port
+configurations: connection oriented (TCP and PIPE), and packet oriented
+(ICMP, UDP and RAW).
+
+@deftypefun {struct sockaddr_in *} svz_portcfg_addr (svz_portcfg_t@tie{}*@var{port})
+Return the pointer of the @code{sockaddr_in} structure of the given
+port configuration @var{port} if it is a network port configuration.
+Otherwise return @code{NULL}.
+@end deftypefun
+
+@deftypefun {in_port_t} svz_portcfg_port (svz_portcfg_t@tie{}*@var{port})
+Return the UDP or TCP port of the given port configuration or zero
+if it neither TCP nor UDP.
+@end deftypefun
+
+@deftypefun {char *} svz_portcfg_ipaddr (svz_portcfg_t@tie{}*@var{port})
+Return the pointer to the ip address @code{ipaddr} of the given
+port configuration @var{port} if it is a network port configuration.
+Otherwise return @code{NULL}.
+@end deftypefun
+
+@deftypefun {char *} svz_portcfg_device (svz_portcfg_t@tie{}*@var{port})
+Return the network device name stored in the given port
+configuration @var{port} if it is a network port configuration.
+Return @code{NULL} if there is no such device set
+or if the port configuration is not a network port configuration.
+@end deftypefun
+
+Serveez maintains an internal list of port configurations, with each
+identified by its name.  When you bind a server to a port configuration,
+it does not get bound to a certain name but to its content.  If there
+are two or more port configuration specifying the same network or file
+system configuration just a single one gets actually used.
+
+@deftypefun {svz_portcfg_t *} svz_portcfg_create (void)
+Create a new blank port configuration.
+@end deftypefun
+
+@deftypefun {int} svz_portcfg_equal (svz_portcfg_t@tie{}*@var{a}, svz_portcfg_t@tie{}*@var{b})
+Check if two given port configurations structures are equal, i.e.
+specifying the same network port or pipe files.  Return
+@code{SVZ_PORTCFG_EQUAL} if @var{a} and @var{b} are identical,
+@code{SVZ_PORTCFG_MATCH} if the network address of either port
+configuration contains the other (INADDR_ANY match), and otherwise
+@code{SVZ_PORTCFG_NOMATCH} or possibly @code{SVZ_PORTCFG_CONFLICT}.
+@end deftypefun
+
+@deftypefun {svz_portcfg_t *} svz_portcfg_add (char@tie{}*@var{name}, svz_portcfg_t@tie{}*@var{port})
+Add the given port configuration @var{port} associated with the name
+@var{name} to the list of known port configurations.  Return @code{NULL}
+on errors.  If the return port configuration equals the given port
+configuration the given one has been successfully added.
+@end deftypefun
+
+@deftypefun {svz_portcfg_t *} svz_portcfg_get (char@tie{}*@var{name})
+Return the port configuration associated with the given name @var{name}.
+Return @code{NULL} on errors.
+@end deftypefun
+
+@deftypefun {void} svz_portcfg_destroy (svz_portcfg_t@tie{}*@var{port})
+Make the given port configuration @var{port} completely unusable,
+removing it from the list of known port configurations.
+Do nothing if @var{port} is @code{NULL}.
+@end deftypefun
+
+@deftypefun {int} svz_portcfg_mkaddr (svz_portcfg_t@tie{}*@var{this})
+Construct the @code{sockaddr_in} fields from the @code{ipaddr} field.
+Return zero if it worked.  If it does not work, the @code{ipaddr} field
+did not consist of an ip address in dotted decimal form.
+@end deftypefun
+
+@deftypefun {svz_portcfg_t *} svz_portcfg_dup (svz_portcfg_t@tie{}*@var{port})
+Make a copy of the given port configuration @var{port}.
+@end deftypefun
+
+@node Booting
+@subsection Boot functions
+
+The most important functions are @code{svz_boot} and @code{svz_halt}
+which must be the first and the last call to the core API.
+
+@deftypefun {void} svz_boot (char@tie{}const@tie{}*@var{client})
+Initialize the core library.
+@var{client} is typically a program's @code{argv[0]}.
+If @code{NULL}, take it to be @samp{anonymous}.
+@end deftypefun
+
+@deftypefun {long} svz_uptime (void)
+Return the number of seconds since @code{svz_boot} was called,
+or -1 if @code{svz_boot} has not yet been called.
+@end deftypefun
+
+@deftypefun {void} svz_halt (void)
+Finalization of the core library.
+@end deftypefun
+
+@subsubsection Runtime parameters
+
+There are several runtime parameters indicating the abilities of the
+libserveez core API:
+
+@table @code
+@item SVZ_RUNPARM_VERBOSITY
+The log-level verbosity.
+
+@item SVZ_RUNPARM_MAX_SOCKETS
+Maxium number of clients allowed to connect.
+@end table
+
+These are manipulated by @code{svz_runparm} and two convenience macros,
+both of which accept @dfn{nick}, a C token without the prefix
+@samp{SVZ_RUNPARM_} (e.g., @code{VERBOSITY}).
+
+@deftypefun {int} svz_runparm (int@tie{}@var{a}, int@tie{}@var{b})
+Set or get a runtime parameter.
+If @var{a} is -1, return the value of runtime parameter
+@var{b}.  If @var{a} specifies a runtime parameter,
+set it to @var{b} and return 0.  Otherwise, return -1.
+@end deftypefun
+
+@defmac SVZ_RUNPARM (nick)
+Return the value of runtime parameter @var{nick}.
+@end defmac
+
+@defmac SVZ_RUNPARM_X (nick, val)
+Set the runtime paramater @var{nick}
+to have value @var{val}, an integer.
+@end defmac
+
+@node Interface
+@subsection Network interface functions
+
+The network interface functions of the Serveez core API allow access to
+the network devices on your system.  The system administrator can set up
+these devices to be bound to different Internet addresses and thereby
+split the network configuration into different @dfn{domains}.  Thus, the
+system is able to separate the traffic of different networks.  If set up
+correctly, Serveez can follow these rules.
+
+@deftypefun {int} svz_foreach_interface (svz_interface_do_t@tie{}*@var{func}, void@tie{}*@var{closure})
+Call @var{func} for each interface, passing additionally the second arg
+@var{closure}.  If @var{func} returns a negative value, return immediately
+with that value (breaking out of the loop), otherwise, return 0.
+@end deftypefun
+
+@deftypefun {int} svz_interface_add (size_t@tie{}@var{index}, char@tie{}*@var{desc}, int@tie{}@var{family}, const@tie{}void@tie{}*@var{bits}, int@tie{}@var{detected})
+Add a network interface to the current list of known interfaces.  Drop
+duplicate entries.  The given arguments @var{index} specifies the network
+interface index number, @var{desc} an interface desription,
+@var{family} an address-family (e.g., @code{AF_INET}), @var{bits} the
+address data in network-byte order, and the @var{detected} flag if
+the given network interface has been detected by Serveez itself or not.
+@end deftypefun
+
+@node Windoze
+@subsection Useful Windows functions
+
+Serveez is meant to run on Windows systems as well (with some
+restrictions of course).  These functions are available with the Windows
+implementation of the Serveez core API only.  They allow access to the
+Windows registry database and some other useful things.
+
+@deftypefun {int} svz_windoze_daemon_control (char@tie{}*@var{prog})
+If @var{prog} is non-NULL, start the daemon thread with it.
+Otherwise (if @var{prog} is NULL), stop the daemon thread.
+Return 0 on success, -1 on failure.
+@end deftypefun
+
+@deftypefun {WCHAR *} svz_windoze_asc2uni (CHAR@tie{}*@var{asc})
+Convert an ASCII string into a UNICODE string.
+@end deftypefun
+
+@deftypefun {CHAR *} svz_windoze_uni2asc (WCHAR@tie{}*@var{unicode})
+Convert a UNICODE string into an ASCII string.
+@end deftypefun

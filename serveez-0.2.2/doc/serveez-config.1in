@@ -1,0 +1,40 @@
+.\" serveez-config.1in                                  -*- nroff -*-
+.\"
+.\" Copyright (C) 2013 Thien-Thi Nguyen
+.\"
+.\" Copying and distribution of this file, with or without modification,
+.\" are permitted in any medium without royalty provided the copyright
+.\" notice and this notice are preserved.  This file is offered as-is,
+.\" without any warranty.
+.\"
+.so mb-rel
+.ds pr serveez-config
+.ds pb \fB\*(pr\fR
+.TH "\*(pr" 1 "\*(Dt" "\*(SZ \*(Rv"
+.SH NAME
+\*(pr \- The \*(SZ configuration script.
+.SH SYNOPSIS
+\*(pb \fIcommand\fR
+.SH DESCRIPTION
+If you plan to embed libserveez into standalone C/C++ applications,
+or to call to its functions dynamically, you need to tell the
+compiler and linker where to find the headers and libraries.
+The \*(pb script, installed with \*(SZ
+(presuming it was configured with \fB--enable-libserveez-install\fR),
+provides the correct compiler and linker flags for your installation.
+.SH COMMANDS
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+show installed Serveez version
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+show usage info (this message)
+.TP
+\fB\-l\fR, \fB\-\-ldflags\fR
+print libraries to link with
+.TP
+\fB\-c\fR, \fB\-\-cflags\fR
+print C compiler flags to compile with
+.so mb-tail
+.\"
+.\" serveez-config.1in ends here

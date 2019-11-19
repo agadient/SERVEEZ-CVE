@@ -1,0 +1,172 @@
+;;; common --- vars, procs and load-time actions useful for most tests
+
+;; Copyright (C) 2011-2013 Thien-Thi Nguyen
+;;
+;; This is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This software is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
+
+;;;---------------------------------------------------------------------------
+;;; variables
+
+(define TESTBASE #f)
+(define VERBOSE? #f)
+
+;;;---------------------------------------------------------------------------
+;;; procedures
+
+(define (hex n)
+  (number->string n 16))
+
+(define (fs s . args)
+  (apply simple-format #f s args))
+
+(define (fso s . args)
+  (apply simple-format #t s args))
+
+(define (fse s . args)
+  (apply simple-format (current-error-port) s args))
+
+(define (config-filename)
+  (string-append TESTBASE ".cfg"))
+
+(define (write-config! config)
+  (with-output-to-file (config-filename)
+    (lambda ()
+      (for-each write config))))
+
+(define (the-serveez-binary)
+  (or (getenv "SERVEEZ_BINARY")
+      "../src/serveez"))
+
+(define (simple-serveez-invocation)
+  (fs "~A -f ~A -l ~A"
+      (the-serveez-binary)
+      (config-filename)
+      (fs "~A.log" TESTBASE)))
+
+(define (exec-serveez!)
+  (execl (the-serveez-binary) "serveez"
+         "-l" (string-append TESTBASE ".log")
+         "-f" (config-filename))
+  (exit #f))
+
+(define (interrupt-process!-proc pid)
+  (lambda ()
+    (kill pid SIGINT)))
+
+(define (read-until-proc end dispose as)
+  (let ((end? (cond ((procedure? end) end)
+                    ((number? end) (let ((n end))
+                                     (lambda (c)
+                                       (let ((rv (zero? n)))
+                                         (set! n (1- n))
+                                         rv))))
+                    (else eof-object?))))
+    (lambda (sock)
+      (let loop ((acc '()))
+        (let ((c (read-char sock)))
+          (if (end? c)
+              (apply dispose (reverse! acc))
+              (loop (cons (as c) acc))))))))
+
+(define (disconnect! sock)
+  (shutdown sock 2)
+  (close-port sock))
+
+(define (drain-proc dispose as)
+  (read-until-proc #t dispose as))
+
+(define (drain-and-disconnect! dispose as)
+  (let ((drain (drain-proc dispose as)))
+    (lambda (sock)
+      (let ((rv (drain sock)))
+        (disconnect! sock)
+        rv))))
+
+(define string<-drain (drain-and-disconnect! string identity))
+(define intvec<-drain (drain-and-disconnect! vector char->integer))
+
+(define (parental-duties pid)
+
+  (define (kill-child!)
+    (kill pid SIGINT))
+
+  (define (try-connect patience v4-addr port)
+    (let ((sock (socket PF_INET SOCK_STREAM 0)))
+      (let loop ((patience patience))
+        (catch 'system-error
+               (lambda ()
+                 (connect sock AF_INET (inet-aton v4-addr) port)
+                 (and VERBOSE? (fso "(connected) ~A\n" sock))
+                 sock)
+               (lambda (key . args)
+                 (and VERBOSE?
+                      (apply fso (string-append
+                                  "(patience) ~A -- ~A: "
+                                  (cadr args)
+                                  "\n")
+                             patience
+                             (car args) (caddr args)))
+                 (cond ((zero? patience)
+                        (kill-child!)
+                        (exit #f))
+                       (else
+                        (usleep 200000)
+                        (loop (1- patience)))))))))
+
+  (define (cleanup!)
+    (kill-child!)
+    (waitpid pid)
+    (delete-file (config-filename)))
+
+  ;; rv
+  (lambda (command . args)
+    (apply (case command
+             ((#:try-connect) try-connect)
+             ((#:done!) (cleanup!) exit)
+             (else (error "bad command:" command)))
+           args)))
+
+(define (oneshot-loopback-datagram port msg)
+  (let* ((sent (sendto
+                ;; oneshot
+                (socket PF_INET SOCK_DGRAM 0)
+                msg
+                ;; loopback
+                AF_INET (logior (ash 127 24) 1)
+                port))
+         (ok? (equal? (string-length msg)
+                      sent)))
+    (and (or VERBOSE? (not ok?))
+         (fse "~A: ~A: sendto rv: ~S~%"
+              TESTBASE
+              (if ok? 'INFO 'ERROR)
+              sent))
+    ok?))
+
+(define (bud!)
+  (let ((pid (primitive-fork)))
+    (if (zero? pid)
+        (exec-serveez!)
+        (parental-duties pid))))
+
+;;;---------------------------------------------------------------------------
+;;; load-time actions
+
+(set! VERBOSE? (equal? "1" (getenv "VERBOSE")))
+
+;;; Local variables:
+;;; mode: scheme
+;;; End:

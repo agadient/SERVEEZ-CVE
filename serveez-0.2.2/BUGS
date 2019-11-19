@@ -1,0 +1,221 @@
+BUGS (database) for GNU Serveez
+
+See end for copying conditions.
+
+This file is intended to collect all known bugs (fixed or unfixed) in
+this package.  We will consider fixing these sooner or later.  Please
+send Serveez bug reports to <bug-serveez@gnu.org>.
+
+Bug:         B0023
+From:        ttn
+State:       fixed (2013-11-30/ttn)
+Date:        2013-11-01
+Description: Server core uses ‘svz_socket_t.data’ to store an array
+             of the socket's bindings.
+Fix:         Use private socket property (binding.c).
+
+Bug:         B0022
+From:        ttn
+State:       fixed (2013-11-27/ttn)
+Date:        2013-11-01
+Description: Coservers use ‘svz_socket_t.data’.
+Fix:         Use private hash table.
+
+Bug:         B0021
+From:        Eric Bavier
+State:       fixed (2013-10-21/ttn)
+Date:        2013-10-19
+Description: "make check" fails for VPATH build.  See also:
+             <http://lists.gnu.org/archive/html/bug-serveez/2013-10/msg00000.html>.
+Fix:         Jam ‘GUILE_LOAD_PATH’ in ‘TESTS_ENVIRONMENT’ and
+             use ‘primitive-load-path’ everywhere.
+
+Bug:         B0020
+From:        Mike Gran
+State:       fixed (2013-11-06/ttn)
+Date:        2013-03-25
+Description: From Guile, the ‘svz_socket_t *’ SMOBs fail to retain object
+             properties set on them since they are constructed on demand.
+Fix:         Construct and cache on first access.  Finalize "appropriately".
+
+Bug:         B0019
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed
+Date:        2002-06-07
+Description: On a GNU/Linux system on x86 out-of-band data can be detected
+             by select() and poll().  When trying to `recv(..., MSG_OOB)'
+             the byte the system call returns EINVAL when sent too
+             frequently and detected by poll().  In case of select() this
+             does not occur.  Currently we are using `ioctl(SIOCATMARK)'
+             to detect if recv() would fail.  This is a work-around, not
+             a real fix.
+Fix:         When POLLPRI has been detected you are meant to
+             `recv(..., MSG_OOB)' immediately.  The EINVAL error occurred
+             when both POLLOUT/POLLIN *and* POLLPRI was detected and
+             `send(..., 0)' or `recv(..., 0)' has been called before
+             `recv(..., MSG_OOB)'.
+
+Bug:         B0018
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       cant-reproduce-wont-fix
+Date:        2000-07-01
+Description: Cannot recompute the Linux kernel's checksums of larger (larger
+             than a single MTU, fragmented) ICMP packets.  It seems like the
+             defragmented user level packet (IP header) contains the
+             checksum of the first fragment with its length and the
+             More-Fragments-Flag set.
+
+Bug:         B0017
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2001-05-04/stefan)
+Date:        2000-11-11
+Description: There is no standard raw socket support in the Winsock API.
+             Maybe we should use the ICMP.DLL API instead?
+Fix:         Noticed that the above DLL is unusable for our purposes.
+             M$-Windows 2000 is said to support raw sockets as Unix systems
+             do, but it is *not* well known to work properly.
+
+Bug:         B0016
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2000-11-11/stefan)
+Date:        2000-11-04
+Description: The Winsock API cannot sendto() or recvfrom() "connected"
+             UDP and ICMP sockets.  The calls return with "Socket is already
+             connected".  Thus the tunnel server will not work properly.
+Fix:         Use send() and recv() instead of their -to() and -from()
+             versions.
+
+Bug:         B0015
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2001-09-15/stefan)
+Date:        2000-09-20
+Description: The named pipes on Win32 do not work properly yet.
+Fix:         Due to the bad documentation and the lack of open source
+             example code I needed a lot of trial and error to get them
+             finally working.
+
+Bug:         B0014
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2000-10-01/mgrabmue)
+Date:        2000-09-20
+Description: Serveez does not run on i64 Linux.
+Fix:         Made minor changes to the Sizzle core library (garbage
+             collection).
+
+Bug:         B0013
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2000-10-03/stefan)
+Date:        2000-09-12
+Description: Bigger CGI scripts under Win95 will lock the server.  (Bigger
+             means more content production here.)  This happened with batch
+             files (.bat) which `type file.txt'.
+Fix:         Pipes have been done non-blocking via PeekNamedPipe() in the
+             Win32 port.
+
+Bug:         B0012
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       cant-reproduce-wont-fix
+Date:        2000-09-12
+Description: If the server has many open connections with much traffic
+             Linux starts deadlocking for some reason.  This corresponds
+             with the occurrence of EWOULDBLOCK or EAGAIN on network
+             sockets.  Seems that if one socket starts this, all want to
+             do the same: nothing but wasting time in kernel space.
+             Errors happen to be on outgoing connections only.
+
+Bug:         B0011
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2000-09-22/stefan)
+Date:        2000-09-12
+Description: On some Linuxs the named pipe behaviour is not as it is
+             documented.  See `man 4 fifo' for more information.
+Fix:         Checking for the file flags (S_ISFIFO) of a previously created
+             named pipe.  This has been a problem on NFS mounts.
+
+Bug:         B0010
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2000-08-20/stefan)
+Date:        2000-08-19
+Description: Ident coserver dies because of queue overrun.  Thus the
+             socket references cannot get decreased.
+Fix:         Using a general coserver request hash instead of socket
+             structure references.
+
+Bug:         B0009
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2000-07-06/raimi)
+Date:        2000-06-21
+Description: Filesize 0 (zero) for HTTP files is not handled specifically.
+             HTTP directory listing does not show the actual directory.
+Fix:         Added some extra code for this.
+
+Bug:         B0008
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (2000-11-11/stefan)
+Date:        2000-04-24
+Description: HTTP cache inconsistency.
+Fix:         With help of a special paranoid checking function all bugs
+             have been caught.
+
+Bug:         B0007
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (1999-11-18/stefan)
+Date:        1999-10-27
+Description: accept() fails under Cygwin with a "bad address" error.
+Fix:         Set accept()'s third argument (addrlen) beforehand.
+
+Bug:         B0006
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (1999-11-18/stefan)
+Date:        1999-10-27
+Description: accept() fails under SunOS 5.6 with a "bad address" error.
+
+Bug:         B0005
+From:        Stefan Jahn <stefan@lkcc.org>
+State:       fixed (1999-10-27/mgrabmue)
+Date:        1999-10-27
+Description: Disabling floodprotection on port <vielzuhohezahl> ... War
+             vermutlich derselbe Fehler, in der 4er ist das bloss nicht
+             gestorben.
+
+Bug:         B0004
+From:        Raimund Jacob <raimi@cs.tu-berlin.de>
+State:       fixed (1999-10-27/mgrabmue)
+Date:        1999-10-27
+Description: Segmentation fault: das passiert wenn ein Bot oder
+             Operator connected und auf diesem Port die
+             floodprotection ausgemacht werden soll... (vermutl. denn
+             das ist es, was die connects gemeinsam haben). Normale
+             connects scheinen zu gehen.
+
+Bug:         B0003
+From:        Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+State:       fixed (1999-10-25/mgrabmue)
+Date:        1999-10-21
+Description: Serveez sometimes segfaults when the massclient
+             disconnects.
+
+Bug:         B0002
+From:        Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+State:       fixed (1999-10-25/mgrabmue)
+Date:        1999-10-21
+Description: Serveez goes into an endless loop or something when many
+             massclients are connected.  Process uses 100% CPU and
+             does not accept connections anymore.
+
+Bug:         B0001
+From:        Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+State:       fixed (1999-10-21/raimi)
+Date:        1999-10-19
+Description: Perl master server dies after a while when more than four
+             massclients connect.
+
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2000, 2001, 2002 Stefan Jahn <stefan@lkcc.org>
+Copyright (C) 2000 Raimund Jacob <raimi@lkcc.org>
+Copyright (C) 1999 Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

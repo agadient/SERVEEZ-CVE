@@ -1,0 +1,67 @@
+THANKS for GNU Serveez
+See end for copying conditions.
+
+
+A big thanks go to the following people for suggesting features and
+reporting bugs (sometimes with fixes) for GNU Serveez 0.2.0 and up:
+
+  Mike Gran
+  Karl Berry
+  Raimund Jacob
+  Julian Graham
+  Antonio Diaz Diaz
+  Eric Bavier
+
+
+----------8<----- snip ------------------------------------------------
+This is the pre-0.2.0 THANKS file.
+
+Here are listed all the hackers who helped creating this package:
+
+Andreas Rottmann <a.rottmann@gmx.at> for contributing the "configurable
+	type" idea and appropriate patches.  Also thanks for sending
+	patches regarding Guile 1.7.x support and maintaining the Debian
+	packages.
+
+John Fitzgerald <webmaster@has.org.nz> for giving an idea about ASN.1
+        (Abstract Syntax Notation One), PDUs (Protocol Data Units) and
+        their representation as lists resulting in the "Binary Smob".
+	Thanks for reviewing parts of the documentation and sending
+	patches for it.
+
+Martin Grabmueller <mgrabmue@cs.tu-berlin.de> for writing the initial
+	version and continuing to accept bug reports and patches for
+        Sizzle, which we were using for configuration file parsing.
+	Thanks for giving information about how to embed Guile into
+	Serveez and use it as configuration file parser.
+	Also for implementing the Guile servers and helping to convince
+	the Guile people to keep the Guile distribution portable to Win32.
+
+Martin Rother <m.rother@berlin.de> for supplying working M$-Windows
+	installations (2k, NT and 98) and testing on these platforms.
+
+----------8<----- snip ------------------------------------------------
+This is the initial THANKS file written by Martin Grabmueller:
+
+Raimund Jacob <raimi@lkcc.org> for a patch that made the whole
+	beast work, and for heavy debugging and testing.  Also for
+	brave diff'ing Stefan's and his patches.
+	Kudos for the Cygwin port go to both Raimi and Stefan.
+	Thanks also for bugging me to keep this stuff up.
+
+Stefan Jahn <stefan@lkcc.org> for debugging and trying
+	this crap under Cygwin.  Also for finding the weird ‘accept’
+	bug and submitting a patch for it.
+	For speeding up request handling and bug hunting.
+	Kudos for the Cygwin port go to both Stefan and Raimi.
+---------->8----- snap ------------------------------------------------
+
+
+
+Copyright (C) 2011-2013 Thien-Thi Nguyen
+Copyright (C) 2000, 2001, 2002, 2003 Stefan Jahn <stefan@lkcc.org>
+Copyright (C) 2000 Raimund Jacob <raimi@lkcc.org>
+Copyright (C) 1999 Martin Grabmueller <mgrabmue@cs.tu-berlin.de>
+
+Copying and distribution of this file, with or without modification,
+are permitted provided the copyright notice and this notice are preserved.

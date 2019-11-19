@@ -1,0 +1,271 @@
+#!/bin/sh
+exec ${GUILE-guile} -e '(guile-baux s3as)' -s $0 "$@" # -*- scheme -*-
+!#
+;;; s3as --- "slash star star" and Scheme for doc comments from C code
+
+;; Copyright (C) 2011-2013 Thien-Thi Nguyen
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
+
+;;; Commentary:
+
+;; Usage: s3as [-o outfile] [file...]
+;;
+;; Scan FILE... for regions that look like:
+;;
+;;   /**
+;;    * DOCSTRING
+;;    */
+;;   ITEM
+;;
+;; where ITEM is one of:
+;;
+;;   #define NAME(...)             (1 line) preprocessor macro
+;;
+;;   TYPE NAME;                    (1 line) variable declaration
+;;
+;;   RET-TYPE                      (3+ lines) function definition
+;;   NAME (...)
+;;   {
+;;     ...
+;;
+;; and display a tsar file (to OUTFILE if specified) composed entirely of
+;; "titled text block" entries.  The entry title is a string of the form
+;; "C NAME", where C ∈ {M, V, F} (for macro, variable and function,
+;; respectively) and NAME is as above.  The entry blurb is DOCSTRING,
+;; preceded by an appropriately formatted texinfo directive, one of
+;; ‘@defmac’, ‘@deftypevar’ or ‘@deftypefun’, respectively, and followed
+;; by the matching "@end foo" directive.  The entry category is ‘#f’.
+;;
+;; Options processing in DOCSTRING a la tsar and c-tsar is not supported.
+;; The tsar coding is unconditionally ‘utf-8’.
+;;
+;; Note: The input must not contain trailing whitespace.
+
+;;; Code:
+
+(define-module (guile-baux s3as)
+  #:export (main)
+  #:use-module ((guile-baux common) #:select (fs check-hv qop<-args))
+  #:use-module ((guile-baux ts-base) #:select (split-filename
+                                               make-ts))
+  #:use-module ((guile-baux ts-output) #:select (ar<-snippets
+                                                 write-ar))
+  #:use-module ((srfi srfi-1) #:select (append-map))
+  #:use-module ((srfi srfi-13) #:select (string-concatenate
+                                         (string-trim-both . tight)
+                                         string-tokenize
+                                         string-skip-right
+                                         string-suffix?
+                                         string-join))
+  #:use-module ((srfi srfi-14) #:select (char-set-complement
+                                         char-set-adjoin
+                                         char-set
+                                         char-set:graphic
+                                         char-set:letter+digit))
+  #:use-module ((ice-9 regex) #:select (match:substring))
+  #:use-module ((ice-9 rdelim) #:select (read-line)))
+
+(define V-RX (make-regexp (string-append
+                           "^([[:alnum:]_ ]+[[:alnum:]_])"
+                           "[[:space:]]+"
+                           "([[:alnum:]_]+);$")))
+(define M-RX (make-regexp (string-append
+                           "^#[[:space:]]*define[[:space:]]"
+                           "([[:alnum:]_]+)"
+                           "(\\([^()]*\\))")))
+
+(define arglist
+  (let ((surrounding (char-set #\space #\( #\)))
+        (except-comma (char-set-complement (char-set #\,))))
+    ;; arglist
+    (lambda (s)
+      (map tight (string-tokenize (tight s surrounding) except-comma)))))
+
+(define type-pair
+  (let ((identifier (char-set-adjoin char-set:letter+digit
+                                     #\_ #\[ #\])))
+    ;; type-pair
+    (lambda (s)
+      (cond ((string-skip-right s identifier)
+             => (lambda (pos)
+                  (set! pos (1+ pos))
+                  (cons (tight (substring s 0 pos))
+                        (tight (substring s pos)))))
+            (else (string->symbol s))))))
+
+(define (lfsep . ls)
+  (string-join ls "\n"))
+
+(define (scan filename)
+  (let ((p (open-input-file filename))
+        (ents '()))
+
+    (define (next)
+      (let ((line (read-line p)))
+        (cond ((eof-object? line)
+               (close-port p)
+               #f)
+              (else
+               line))))
+
+    (define (get-details)
+      (let ((first (next))
+            (lno (port-line p)))
+        (cond
+
+         ;; variable
+         ((regexp-exec V-RX first)
+          => (lambda (m)
+               (list 'V lno
+                     (string->symbol (match:substring m 2))
+                     (match:substring m 1))))
+
+         ;; macro
+         ((regexp-exec M-RX first)
+          => (lambda (m)
+               (cons* 'M lno (string->symbol (match:substring m 1))
+                      (arglist (match:substring m 2)))))
+
+         ;; function
+         (else
+          (let* ((ret-type first)
+                 (name (read p))
+                 (args (let more ((acc (list (next))))
+                         (if (string=? "{" (car acc))
+                             (string-concatenate (reverse! (cdr acc)))
+                             (more (cons (next) acc))))))
+            (cons* 'F (1+ lno) name
+                   (if (string-index ret-type #\space)
+                       ret-type
+                       (string->symbol ret-type))
+                   (map type-pair (arglist args))))))))
+
+    (define (ent! head doc)
+      (set! ents (acons head doc ents)))
+
+    (define (un-prefix line)
+      ;; Strip leading " * " or " *" as the case may be.  We make
+      ;; do with ‘string-length’ because options processing is not
+      ;; supported.  If/when that happens, this needs to be changed
+      ;; to use ‘string-prefix?’.
+      (substring line (min 3 (string-length line))))
+
+    (let loop ((line (next)))
+      (cond ((not line)
+             ;; rv
+             ents)
+            ((string=? "/**" line)
+             (let more ((acc (list (next))))
+               (if (string=? " */" (car acc))
+                   (ent! (get-details)
+                         (apply lfsep (map un-prefix (reverse! (cdr acc)))))
+                   (more (cons (next) acc))))
+             (loop (next)))
+            (else (loop (next)))))))
+
+(define (prettily ents)
+
+  (define (title detail)
+    (fs "~A ~A"
+        ;; one of: V, M, F
+        (car detail)
+        ;; name
+        (caddr detail)))
+
+  (define (csep ls)
+    (string-join ls ", "))
+
+  (define (render-typed-arg arg)
+
+    (define (at-var s)
+      (cond ((string-index s #\[)
+             => (lambda (pos)
+                  ;; Say "@var{NAME}[FOO]" instead of "@var{NAME[FOO]}",
+                  ;; which elicits an "unlikely char [ in @var" warning
+                  ;; from makeinfo.
+                  (fs "@var{~A}~A"
+                      (substring s 0 pos)
+                      (substring s pos))))
+            (else
+             (fs "@var{~A}" s))))
+
+    (cond ((not (pair? arg))
+           (fs "~A" arg))
+          ((equal? '("..." . "") arg)
+           "@dots{}")
+          (else
+           (let* ((type (car arg))
+                  (name (at-var (cdr arg)))
+                  ;; Say "TYPE *NAME" instead of "TYPE * NAME".
+                  (full (if (string-suffix? "*" type)
+                            (string-append type name)
+                            (fs "~A ~A" type name)))
+                  ;; Replace all spaces with unbreakable space.
+                  (ls (string-tokenize full char-set:graphic)))
+             (string-join ls "@tie{}")))))
+
+  (let ((renderers
+         `((V deftypevar
+              ,(lambda (name type)
+                 (fs "{~A} ~A" type name)))
+           (M defmac
+              ,(lambda (name . args)
+                 (fs "~A (~A)" name (csep args))))
+           (F deftypefun
+              ,(lambda (name ret-type . args)
+                 (fs "{~A} ~A (~A)"
+                     ret-type name
+                     (csep (map render-typed-arg args))))))))
+
+    (define (render det doc)
+      (list (vector (cadr det) 0 0 0)
+            (title det)
+            (let* ((label+top (assq-ref renderers (car det)))
+                   (label (car label+top))
+                   (top (cadr label+top)))
+              (lfsep (fs "@~A ~A" label (apply top (cddr det)))
+                     doc
+                     (fs "@end ~A" label)))))
+
+    (map render
+         (map car ents)
+         (map cdr ents))))
+
+(define (collect filename)
+  (let ((ents (prettily (scan filename)))
+        (two (split-filename filename)))
+    (define (proper at name blurb)
+      (make-ts name '(-- s3as sez thx tsin --) two blurb #f #f at '()))
+    (map (lambda (ent)
+           (apply proper ent))
+         ents)))
+
+(define (main/qop qop)
+  (qop 'output (lambda (filename)
+                 (set-current-output-port
+                  (open-output-file filename))))
+  (let* ((ar (ar<-snippets 'utf-8 (append-map collect (qop '())))))
+    (write-ar ar (current-output-port))))
+
+(define (main args)
+  (check-hv args '((package . "GNU Serveez")
+                   (version . "1.0")
+                   (help . commentary)))
+  (main/qop (qop<-args
+             args '((output (single-char #\o) (value #t))))))
+
+;;; s3as ends here
