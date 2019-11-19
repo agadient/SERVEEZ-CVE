@@ -1,4 +1,4 @@
-###Vulnerability Details###
+### Vulnerability Details
 
 There is a bug in the http_cgi_write function under http-cgi.c that causes an information leak.
 The issue occurs on line 269 with this check:
@@ -22,7 +22,7 @@ We can set contentlength to a negative value by suppling a sufficiently large un
 
 I recommend fixing this by changing the contentlength variable to an unsigned value in line 78 of http-core.h.
 
-###Reproducing the Vulnerability###
+### Reproducing the Vulnerability
 
 Go to /build/bin directory in one terminal and run an ASAN compiled 32-bit version of serveez with ./serveez
 In another terminal, go to the attack_files folder and run ./leak.py leak\_pkt.dat
