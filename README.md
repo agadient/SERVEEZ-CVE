@@ -1,4 +1,28 @@
-INSTRUCTIONS:
+**Vulnerability Details**
+
+There is a bug in the http_cgi_write function under http-cgi.c that causes an information leak.
+The issue occurs on line 269 with this check:
+
+  if (do_write > http->contentlength)
+    do_write = http->contentlength;
+
+The content length field is passed as a parameter in the content-length header of an http packet. However, the contentlength variable is an int, so it is signed.
+On the other hand, do_write is an unsigned value. If we are able to make contentlength a negative value, the above check will pass but do_write will
+be set to a huge unsigned value.
+
+do_write is later used on line 280 for non-windows systems:
+
+    if ((num_written = write (sock->pipe_desc[SVZ_WRITE],
+                             sock->recv_buffer, do_write)) == -1)
+
+do_write is the length of the write system call.
+A large value in do_write will cause write() to send an excessive amount of data to the cgi process resulting in an information leak to that process or possibly a segmentation fault.
+
+We can set contentlength to a negative value by suppling a sufficiently large unsigned value in a malicious http packet.
+
+I recommend fixing this by changing the contentlength variable to an unsigned value in line 78 of http-core.h.
+
+**Reproducing the Vulnerability**
 
 Go to /build/bin directory in one terminal and run an ASAN compiled 32-bit version of serveez with ./serveez
 In another terminal, go to the attack_files folder and run ./leak.py leak\_pkt.dat
